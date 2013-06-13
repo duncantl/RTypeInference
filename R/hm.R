@@ -47,6 +47,7 @@ infer_assignment = function(x) {
 
 # walk the tree and make a table
 inferType = function(func) {
+  
   f_list = as.list(func)
   f_text = as.vector(f_list[[2]])
   
@@ -92,12 +93,11 @@ unify = function(tb) {
   colnames(unique_guess) = c("name", "type")
   
   # reduce types
-  sapply(unique(unique_guess$name), function(x) {
-    s = subset(unique_guess, name == x)
-    
-    
-    
+  #sapply(unique(unique_guess$name), function(x) {
+  #  s = subset(unique_guess, name == x)
   #})
+  
+  return(unique_guess)
   
 }
 
