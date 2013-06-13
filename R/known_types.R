@@ -13,6 +13,8 @@ known_table = as.data.frame(t(cbind(
   c("[", "nil"),
   c("length", "int")
 )))
+
+colnames(known_table) = c("varname", "type")
   
 # ultimately would use this table, once it's filled out
 unknown_table = as.data.frame(t(cbind(
