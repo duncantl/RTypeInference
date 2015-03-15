@@ -46,23 +46,17 @@ infer_assignment = function(x) {
 }
 
 # walk the tree and make a table
-inferType = function(func) {
+inferType =
+function(x, ...)
+  UseMethod("inferType")
+
+inferType.function =
+function(x, ...) {    
   
-  f_list = as.list(func)
+  f_list = as.list(x)
   f_text = as.vector(f_list[[2]])
   
-  foo = sapply(f_text, function(x) {
-    
-    # assignments are easy; add them to a type table
-    if(class(x) == "=" || class(x) == "<-") {
-      return(data.frame(varname=as.character(x[[2]]), var_type=infer_assignment(x))) 
-      
-    }
-    
-    # TODO, what about non-assignments?
-    # ie, the last line / return line
-    
-  })
+  foo = sapply(f_text, inferType, ...)
   
   foo = foo[!sapply(foo, is.null)]
   foo = unify(as.data.frame(t(sapply(foo, unlist))))
@@ -70,6 +64,34 @@ inferType = function(func) {
   return(foo)
 
 }
+
+
+`inferType.<-` = `infeType.=` =
+function(x, ...)
+{
+    # assignments are easy; add them to a type table
+ data.frame(varname = as.character(x[[2]]),
+            var_type = infer_assignment(x))) 
+}
+
+
+inferType.if =
+function(x, ...)
+{
+  inferType(x[[4]])
+}
+
+`inferType.{` =
+function(x, ...)
+{
+  lapply(x[-1], inferType, ...)
+}
+
+    # TODO, what about non-assignments?
+    # ie, the last line / return line
+    
+
+
 
 # collapse this table down into best guesses for each variable
 unify = function(tb) {
