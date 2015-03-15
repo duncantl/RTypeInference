@@ -1,5 +1,4 @@
-
-infer_rhs = function(rhs) {
+infer_rhs = function(rhs, typeCollector, ...) {
   
   if(length(rhs) > 1) {
     
@@ -42,64 +41,133 @@ infer_rhs = function(rhs) {
 
 # given an assignment line, tries to figure out
 # what the type on the RHS is.
-infer_assignment = function(x) {
+infer_assignment = function(x, typeCollector = typeInferenceCollector(), ...) {
   # check the right side first
-  infer_rhs(x[[3]])
+#  infer_rhs(x[[3]])
+   inferType(x[[3]], typeCollector, ...)
 }
 
 # walk the tree and make a table
 inferType =
-function(x, ...)
+function(x, typeCollector = typeInferenceCollector(), ...)
   UseMethod("inferType")
 
-inferType.function =
-function(x, ...) {    
-  
-#  f_list = as.list(x)
-#  f_text = as.vector(f_list[[2]])
 
+inferType.numeric =
+function(x, typeCollector = typeInferenceCollector(), ...) {
+   isInt = all(x == floor(x))
+  if(length(x) == 1) {
+      if(isInt)
+         "int"
+      else
+         "double"
+  } else
+      if(isInt)
+          "integer"
+      else
+          "numeric"
+}
+
+inferType.logical =
+function(x, typeCollector = typeInferenceCollector(), ...)
+{
+   if(length(x) == 1) "boolean" else "logical"
+}
+
+inferType.character =
+function(x, typeCollector = typeInferenceCollector(), ...)
+{
+   if(length(x) == 1) "string" else "character"
+}
+
+
+`inferType.(` =
+function(x, typeCollector = typeInferenceCollector(), ...)
+{
+    inferType(x[[2]], typeCollector, ...)
+}
+
+inferType.function =
+function(x, typeCollector = typeInferenceCollector(), ...)
+{    
   b = body(x)
   if(class(b) != "{")
       b = substitute({ b }, list(b = b))
   
-  foo = lapply(b[-1], inferType, ...)
-browser()
-  foo = foo[!sapply(foo, is.null)]
-#  foo = unify(as.data.frame(t(sapply(foo, unlist))))
-  foo =  matrix(unlist(foo), , 2, byrow = TRUE)
-  foo = unify(as.data.frame(foo))  
-  
-  return(foo)
+  foo = lapply(b[-1], inferType, typeCollector, ...)
 
+#  foo = foo[!sapply(foo, is.null)]
+#  foo =  matrix(unlist(foo), , 2, byrow = TRUE)
+#  foo = unify(as.data.frame(foo))  
+  
+  return(typeCollector)
 }
 
 
 `inferType.<-` = `inferType.=` =
-function(x, ...)
+function(x, typeCollector, ...)
 {
     # assignments are easy; add them to a type table
- data.frame(varname = as.character(x[[2]]),
-            var_type = infer_assignment(x),
-            stringsAsFactors = FALSE) 
+ varname = as.character(x[[2]])
+# var_type = infer_assignment(x, typeCollector, ...)
+ var_type = inferType(x[[3]], typeCollector, ...)  
+ typeCollector$addType(varname, var_type)
 }
 
 inferType.call =
-function(x, ...)
+function(x, typeCollector, ...)
 {
- 
+        # Math and logical operators
+        # This is quite similar to what we are doing in the RLLVMCompile so we should consolidate the code.
+   fnName = as.character(x[[1]])
+
+   if(fnName == "return")
+      return(typeCollector$addReturn(inferType(x[[2]], typeCollector, ...)))
+   
+   if(fnName %in% names(knownFunctionTypes))
+      return(knownFunctionTypes[[ fnName ]])
+
+   if(fnName %in% c("+", "-", "*", "/")) {
+      return(inferMathOpType(x, typeCollector, ...))
+   }
+
+   if(fnName %in% c("<", ">", "<=", ">=", "==", "!=")) {
+      return(inferLogicOpType(x, typeCollector, ...))
+   }
+
+   return(NA)
+}
+
+inferType.name =
+function(x, typeCollector, ...)
+{
+  typeCollector$getType(x)
 }
 
 inferType.if =
-function(x, ...)
+function(x, typeCollector, ...)
 {
-  lapply(x[-(1:2)], inferType, ...)
-  
+  types = lapply(x[-(1:2)], inferType, typeCollector, ...)
+
+    # if all branches have the same type, then collapse this down.
+  tmp = unique(unlist(types))
+  if(length(tmp) == 1)
+      types[[1]]
+  else
+      types
 }
 
-`inferType.{` =
-function(x, ...)
+inferType.for =
+function(x, typeCollector, ...)
 {
-  lapply(x[-1], inferType, ...)
+  inferType(x[[4]], typeCollector, ...)
+}
+
+
+`inferType.{` =
+function(x, typeCollector, ...)
+{
+  lapply(x[-1], inferType, typeCollector, ...)
 }
 
     # TODO, what about non-assignments?

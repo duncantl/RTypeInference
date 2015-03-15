@@ -1,7 +1,8 @@
 # This is Ross' 2D random walk again.
 #
 rw2d1 =
-function(n = 100) {
+function(n = 100)
+{
     xpos = ypos = numeric(n)
     for(i in 2:n) {
           # Decide whether we are moving horizontally or vertically.

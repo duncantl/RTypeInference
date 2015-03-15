@@ -1,0 +1,16 @@
+<topics>
+<topic>
+<title>Features</title>
+<items>
+<item>
+Identifying updating by subset assignment.
+</item>
+<item>
+Identify an if statement, and its different possible outcomes.
+</item>
+<item>
+Add information about vectorized functions and which argument tells us if they are scalars, etc.
+</item>
+</items>
+</topic>
+</topics>

@@ -5,8 +5,11 @@ test_function = function(x) {
   blah = 2.5
   blah1 = 3.5
   blah2 = 1
-  yavar = (10 * 1:10)
+  yavar = (10L * 1:10)
   foo1 = length(yavar)
+
+  ll = y > .25
+  ll2 = blah > 2
   
   if(length(z) > (x / 2))
   {

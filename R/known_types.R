@@ -1,22 +1,27 @@
 
 # cheap known table
-known_table = as.data.frame(t(cbind(
-  c("rnorm", "double"),
-  c("^", "double"),
-  c("which", "int"),
-  c("<", "boolean"),
-  c(">", "boolean"),
-  c("==", "boolean"),
-  c(":", "vector"),
-  c("*", "double"),
-  c("(", "nil"),
-  c("[", "nil"),
-  c("length", "int")
-)))
+knownFunctionTypes =
+list(
+  "rnorm" = "numeric",
+  "^" = "numeric",
+  "which" = "integer",
+  "numeric" = "numeric",
+  ":" = "integer",
+#  "<" = "logical",
+#  ">" = "logical",
+#  "==" = "logical",    
+#  "*" = "numeric",
+#  "(" = "nil",
+  "[" = "nil",
+  "length" = "int"    
+  )
 
-colnames(known_table) = c("varname", "type")
+# Can retire this when we remove infer_rhs()
+known_table = data.frame(varname = names(knownFunctionTypes), type = knownFunctionTypes, stringsAsFactors = FALSE)
+
   
 # ultimately would use this table, once it's filled out
+# This comes from ../TU/primitives.R
 unknown_table = as.data.frame(t(cbind(
   c("if", "unknown"),
   c("while", "unknown"),
