@@ -2,7 +2,7 @@ Package: RTypeInference
 Version: 0.1-0
 Title: Tools for inferring the types of inputs and outputs for functions and expressions
 Author: Duncan Temple Lang 
-Maintainer: Duncan Temple Lang <duncan@wald.ucdavis.edu>
+Maintainer: Duncan Temple Lang <duncan@r-project.org>
 Description: This package is an effort to infer the types of 
   the inputs and ouputs of expressions and functions in R.
   The idea is to be able to associate information with a function

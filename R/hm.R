@@ -4,9 +4,7 @@ infer_rhs = function(rhs) {
   if(length(rhs) > 1) {
     
     # pick apart the rhs expression
-    rhs_types = sapply(rhs, function(x) {
-      infer_rhs(x)
-    })
+    rhs_types = sapply(rhs, infer_rhs)
     
     # we just don't know which yet
     return(paste(rhs_types, sep = "", collapse = ","))
@@ -18,22 +16,26 @@ infer_rhs = function(rhs) {
     # don't know yet
     if(is.na(num_type)) {
       # FIXME
-      if(exists(as.character(rhs))) {
+      if(exists(as.character(rhs))) { # ?? - don't get the function. We know this is a call. FIX
         if(class(get(as.character(rhs))) == "function") {
           
           # do we know about this function?
           var_type = subset(known_table, varname == as.character(rhs))
-          if(nrow(var_type) > 0) { return(as.character(var_type$type)) }
+          if(nrow(var_type) > 0)
+             return(as.character(var_type$type)) 
           
           return(rhs)
         }
       }
-      else { return(as.character(rhs)) }
+      else 
+         return(as.character(rhs)) 
     }
     
     # int? or double?
-    if(as.integer(as.character(rhs)) == as.numeric(as.character(rhs))) { return("int")}
-    return("double")
+    if(as.integer(as.character(rhs)) == as.numeric(as.character(rhs)))
+       return("int")
+    else
+       return("double")
     
   }
 }
@@ -53,32 +55,45 @@ function(x, ...)
 inferType.function =
 function(x, ...) {    
   
-  f_list = as.list(x)
-  f_text = as.vector(f_list[[2]])
+#  f_list = as.list(x)
+#  f_text = as.vector(f_list[[2]])
+
+  b = body(x)
+  if(class(b) != "{")
+      b = substitute({ b }, list(b = b))
   
-  foo = sapply(f_text, inferType, ...)
-  
+  foo = lapply(b[-1], inferType, ...)
+browser()
   foo = foo[!sapply(foo, is.null)]
-  foo = unify(as.data.frame(t(sapply(foo, unlist))))
+#  foo = unify(as.data.frame(t(sapply(foo, unlist))))
+  foo =  matrix(unlist(foo), , 2, byrow = TRUE)
+  foo = unify(as.data.frame(foo))  
   
   return(foo)
 
 }
 
 
-`inferType.<-` = `infeType.=` =
+`inferType.<-` = `inferType.=` =
 function(x, ...)
 {
     # assignments are easy; add them to a type table
  data.frame(varname = as.character(x[[2]]),
-            var_type = infer_assignment(x))) 
+            var_type = infer_assignment(x),
+            stringsAsFactors = FALSE) 
 }
 
+inferType.call =
+function(x, ...)
+{
+ 
+}
 
 inferType.if =
 function(x, ...)
 {
-  inferType(x[[4]])
+  lapply(x[-(1:2)], inferType, ...)
+  
 }
 
 `inferType.{` =
