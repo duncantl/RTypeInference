@@ -108,11 +108,19 @@ function(x, typeCollector = typeInferenceCollector(), ...)
 function(x, typeCollector, ...)
 {
     # assignments are easy; add them to a type table
- varname = as.character(x[[2]])
-# var_type = infer_assignment(x, typeCollector, ...)
- var_type = inferType(x[[3]], typeCollector, ...)  
- typeCollector$addType(varname, var_type)
+ var_type = inferType(x[[3]], typeCollector, ...)
+
+
+ if(is.call(x[[2]])) {
+    varname = getVarName(x[[2]])
+    typeCollector$addType(varname, UpdateType(var_type, varname))
+ } else {
+   varname = as.character(x[[2]])[1] 
+   typeCollector$addType(varname, var_type)
+ }
 }
+
+
 
 inferType.call =
 function(x, typeCollector, ...)
