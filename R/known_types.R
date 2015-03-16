@@ -12,7 +12,7 @@ list(
 #  "==" = "logical",    
 #  "*" = "numeric",
 #  "(" = "nil",
-  "[" = "nil",
+#  "[" = "nil",
   "length" = "int"    
   )
 

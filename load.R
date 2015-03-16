@@ -3,6 +3,8 @@ source("tests/test_functions.R")
 source("R/hm.R")
 source("R/typeCollector.R")
 source("R/mathHandler.R")
+source("R/aClasses.R")
+source("R/utils.R")
 
 #test = inferType(test_function)
 #print(test)

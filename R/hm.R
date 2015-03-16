@@ -107,13 +107,23 @@ function(x, typeCollector = typeInferenceCollector(), ...)
 `inferType.<-` = `inferType.=` =
 function(x, typeCollector, ...)
 {
-    # assignments are easy; add them to a type table
- var_type = inferType(x[[3]], typeCollector, ...)
+  var_type = inferType(x[[3]], typeCollector, ...)
+
+   # Dealing with x = y = value
+   # The order of the definitions is reversed here since we process y = value before x = y
+   # We control this and could do it in the appropriate order.
+
+ if(is.call(x[[3]]) && as.character(x[[3]][[1]]) %in% c("=", "<-")) {
+        # Fix doesn't yet handle x = y[i] = value
+        # use getVarName(x[[3]][[2]]) ?
+     var_type = typeCollector$getType(var_type)
+ } 
 
 
  if(is.call(x[[2]])) {
     varname = getVarName(x[[2]])
-    typeCollector$addType(varname, UpdateType(var_type, varname))
+    ty = UpdateType(var_type, varname)
+    typeCollector$addType(varname, ty)
  } else {
    varname = as.character(x[[2]])[1] 
    typeCollector$addType(varname, var_type)
@@ -135,6 +145,9 @@ function(x, typeCollector, ...)
    if(fnName %in% names(knownFunctionTypes))
       return(knownFunctionTypes[[ fnName ]])
 
+   if(fnName == "[")
+       return(inferSubsetType(x, typeCollector, ...))
+   
    if(fnName %in% c("+", "-", "*", "/")) {
       return(inferMathOpType(x, typeCollector, ...))
    }
@@ -165,9 +178,17 @@ function(x, typeCollector, ...)
       types
 }
 
+
 inferType.for =
 function(x, typeCollector, ...)
 {
+  ty = inferType(x[[3]], typeCollector, ...)
+     # Then get the element type of this.
+
+  if(ty %in% BasicRVectorTypes)
+     ty = mapTypeToScalar(ty)
+  typeCollector$addType(as.character(x[[2]]), ty) # Identify this as a loop variable.
+    
   inferType(x[[4]], typeCollector, ...)
 }
 

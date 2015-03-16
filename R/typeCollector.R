@@ -4,6 +4,7 @@ typeInferenceCollector =
                            returnTypes = "list"),
                 methods = list(
                         addType = function(name, types) {
+if(is(types, "UpdateType")) browser()                            
                             n = length(varTypes) + 1L
                             varTypes [[ n ]] <<- types
                             names(varTypes)[n] <<- name
