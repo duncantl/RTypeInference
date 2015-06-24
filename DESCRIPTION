@@ -17,6 +17,7 @@ Description: This package is an effort to infer the types of
   scalar and vector types.
 License: GPL2
 Depends: CodeDepends, codetools
+Suggests: testthat
 URL:  https://github.com/duncantl/RTypeInference
       http://www.omegahat.org/RTypeInference
 Note:  Connect with the TypeInfo package, both to read type information
