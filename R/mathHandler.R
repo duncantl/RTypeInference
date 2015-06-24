@@ -1,7 +1,7 @@
 inferMathOpType =
 function(x, typeCollector, ...)
 {
-  types = lapply(x[-1], inferType, typeCollector, ...)
+  types = lapply(x[-1], inferTypes, typeCollector, ...)
 #browser()  
   if(any(types == "numeric"))
       "numeric"
@@ -17,7 +17,7 @@ function(x, typeCollector, ...)
 inferLogicOpType =
 function(x, typeCollector, ...)
 {
-  types = lapply(x[-1], inferType, typeCollector, ...)
+  types = lapply(x[-1], inferTypes, typeCollector, ...)
   if(all(types %in% c("boolean", "int", "double")))
       "boolean"
   else
@@ -68,5 +68,5 @@ function(call, type, varname, typeCollector, ...)
 {
 # have to handle matrices.
 #    
-  isScalar( inferType(call[[3]], typeCollector, ...) )
+  isScalar( inferTypes(call[[3]], typeCollector, ...) )
 }
