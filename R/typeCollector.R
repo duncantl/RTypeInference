@@ -1,23 +1,30 @@
+# Description:
+#   Definition of reference class for collecting type information.
+
 typeInferenceCollector =
-    setRefClass("TypeInferenceCollector",
-                fields = c(varTypes = "list",
-                           returnTypes = "list"),
-                methods = list(
-                        addType = function(name, types) {
-if(is(types, "UpdateType")) browser()                            
-                            n = length(varTypes) + 1L
-                            varTypes [[ n ]] <<- types
-                            names(varTypes)[n] <<- name
-                        },
+setRefClass("TypeInferenceCollector",
+  fields = list(
+    varTypes = "list",
+    returnTypes = "list"
+  ),
 
-                        getType = function(name) {
-                             i = match(as.character(name), names(varTypes))
-                             if(is.na(i))
-                                 return(NA)
-                              varTypes[[ max(i) ]]
-                        },
+  methods = list(
+    addType = function(name, types) {
+      if(is(types, "UpdateType")) browser()                            
+      n = length(varTypes) + 1L
+      varTypes [[ n ]] <<- types
+      names(varTypes)[n] <<- name
+    },
 
-                        addReturn = function(type) {
-                            returnTypes[[ length( returnTypes) + 1L ]] <<- type
-                        }
-                    ))
+    getType = function(name) {
+      i = match(as.character(name), names(varTypes))
+      if(is.na(i))
+        return(NA)
+      varTypes[[ max(i) ]]
+    },
+
+    addReturn = function(type) {
+      returnTypes[[ length( returnTypes) + 1L ]] <<- type
+    }
+  )
+)
