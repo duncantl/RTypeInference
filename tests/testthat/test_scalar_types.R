@@ -19,6 +19,9 @@ test_that("numeric types work", {
 test_that("complex types work", {
   type = inferTypes(1-12i)
   expect_is(type, "ComplexType")
+
+  type = inferTypes(-3i)
+  expect_is(type, "ComplexType")
 })
 
 test_that("character types work", {

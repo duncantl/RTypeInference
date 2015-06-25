@@ -10,10 +10,6 @@
 #   * Unify return type.
 #   * Scoping?
 
-# FIXME:
-#   * Complex addition: 0+3i
-#   * Complex negation: -3i
-
 #infer_rhs = function(rhs, typeCollector, ...) {
 #  
 #  if(length(rhs) > 1) {
@@ -161,23 +157,17 @@ function(x, typeCollector = typeInferenceCollector(), ...)
   call_name = as.character(x[[1]])
 
   if(call_name == "return")
-    return(typeCollector$addReturn(inferTypes(x[[2]], typeCollector, ...)))
-  
-  if(call_name %in% names(knownFunctionTypes))
-    return(knownFunctionTypes[[ call_name ]])
-
-  if(call_name == "[")
-      return(inferSubsetType(x, typeCollector, ...))
-  
-  if(call_name %in% c("+", "-", "*", "/")) {
-    return(inferMathOpType(x, typeCollector, ...))
-  }
-
-  if(call_name %in% c("<", ">", "<=", ">=", "==", "!=")) {
-    return(inferLogicOpType(x, typeCollector, ...))
-  }
-
-  return(NA)
+    typeCollector$addReturn(inferTypes(x[[2]], typeCollector, ...))
+  else if(call_name == "[")
+    inferSubsetType(x, typeCollector, ...)
+  else if(call_name %in% MATH_OPS)
+    inferMathOpType(x, typeCollector, ...)
+  else if(call_name %in% LOGIC_OPS)
+    inferLogicOpType(x, typeCollector, ...)
+  else if(call_name %in% names(knownFunctionTypes))
+    knownFunctionTypes[[ call_name ]]
+  else
+    NA
 }
 
 
@@ -201,6 +191,7 @@ function(x, typeCollector = typeInferenceCollector(), ...)
   types = lapply(x[-(1:2)], inferTypes, typeCollector, ...)
 
   # If all branches have the same type, then collapse to that type.
+  # TODO: Does this work for vectors of different lengths?
   unique_types = unique(types)
   if(length(unique_types) == 1)
       types[[1]]

@@ -1,6 +1,8 @@
 # Description:
 #   Functions for handling operators.
 
+MATH_OPS = c("+", "-", "*", "/")
+LOGIC_OPS = c("<", ">", "<=", ">=", "==", "!=", "|", "||", "&", "&&")
 
 inferMathOpType =
 function(x, typeCollector, ...)
@@ -48,11 +50,22 @@ function(x, typeCollector, ...)
 inferLogicOpType =
 function(x, typeCollector, ...)
 {
+  # TODO: What if a generic logical op is used and return type isn't
+  # logical?
+  op_name = as.character(x[[1]])
+
   types = lapply(x[-1], inferTypes, typeCollector, ...)
-  if(all(types %in% c("boolean", "int", "double")))
-      "boolean"
-  else
-      "logical"
+
+  # Check if any operands are vectors.
+  vector_types = types[vapply(types, is, TRUE, "VectorType")]
+
+  if (length(vector_types) == 0 || op_name %in% c("||", "&&")) {
+    new("LogicalType")
+
+  } else {
+    length = max(sapply(vector_types, slot, "length"))
+    new("LogicalVectorType", length = length)
+  }
 }
 
 

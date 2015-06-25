@@ -47,7 +47,7 @@ test_that("scalar-vector addition works", {
   expect_equal(type@length, length(x))
 })
 
-test_that("vector-vector additon works", {
+test_that("vector-vector addition works", {
   x = c(TRUE, FALSE, TRUE)
   expr = substitute(
     c(TRUE, TRUE, TRUE) + x,
@@ -59,7 +59,7 @@ test_that("vector-vector additon works", {
   expect_equal(type@length, length(x))
 })
 
-test_that("recycled vector-vector additon works", {
+test_that("recycled vector-vector addition works", {
   x = c(1.1, 2.3, 5.1, -1.4, 99.1)
   expr = substitute(
     c(1.3, -1.7) + x,
