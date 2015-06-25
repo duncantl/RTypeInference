@@ -10,6 +10,10 @@
 #   * Unify return type.
 #   * Scoping?
 
+# FIXME:
+#   * Complex addition: 0+3i
+#   * Complex negation: -3i
+
 #infer_rhs = function(rhs, typeCollector, ...) {
 #  
 #  if(length(rhs) > 1) {
@@ -99,6 +103,7 @@ function(x, typeCollector = typeInferenceCollector(), ...)
   UseMethod("inferTypes")
 }
 
+
 inferTypes.function =
 function(x, typeCollector = typeInferenceCollector(), ...)
 {    
@@ -115,6 +120,7 @@ function(x, typeCollector = typeInferenceCollector(), ...)
   
   return(typeCollector)
 }
+
 
 `inferTypes.<-` = `inferTypes.=` =
 function(x, typeCollector = typeInferenceCollector(), ...)
@@ -145,33 +151,35 @@ function(x, typeCollector = typeInferenceCollector(), ...)
     }
 }
 
+
 inferTypes.call =
 function(x, typeCollector = typeInferenceCollector(), ...)
 {
   # Math and logical operators
   # This is quite similar to what we are doing in the RLLVMCompile so we
   # should consolidate the code.
-  fnName = as.character(x[[1]])
+  call_name = as.character(x[[1]])
 
-  if(fnName == "return")
+  if(call_name == "return")
     return(typeCollector$addReturn(inferTypes(x[[2]], typeCollector, ...)))
   
-  if(fnName %in% names(knownFunctionTypes))
-    return(knownFunctionTypes[[ fnName ]])
+  if(call_name %in% names(knownFunctionTypes))
+    return(knownFunctionTypes[[ call_name ]])
 
-  if(fnName == "[")
+  if(call_name == "[")
       return(inferSubsetType(x, typeCollector, ...))
   
-  if(fnName %in% c("+", "-", "*", "/")) {
+  if(call_name %in% c("+", "-", "*", "/")) {
     return(inferMathOpType(x, typeCollector, ...))
   }
 
-  if(fnName %in% c("<", ">", "<=", ">=", "==", "!=")) {
+  if(call_name %in% c("<", ">", "<=", ">=", "==", "!=")) {
     return(inferLogicOpType(x, typeCollector, ...))
   }
 
   return(NA)
 }
+
 
 inferTypes.name =
 function(x, typeCollector = typeInferenceCollector(), ...)
@@ -181,6 +189,7 @@ function(x, typeCollector = typeInferenceCollector(), ...)
 
   # TODO: Might want to set up a reference to this name.
 }
+
 
 # Flow Control --------------------------------------------------
 
@@ -199,6 +208,7 @@ function(x, typeCollector = typeInferenceCollector(), ...)
       types
 }
 
+
 inferTypes.for =
 function(x, typeCollector = typeInferenceCollector(), ...)
 {
@@ -213,11 +223,13 @@ function(x, typeCollector = typeInferenceCollector(), ...)
   inferTypes(x[[4]], typeCollector, ...)
 }
 
+
 `inferTypes.{` =
 function(x, typeCollector = typeInferenceCollector(), ...)
 {
   lapply(x[-1], inferTypes, typeCollector, ...)
 }
+
 
 `inferTypes.(` =
 function(x, typeCollector = typeInferenceCollector(), ...)
@@ -225,6 +237,7 @@ function(x, typeCollector = typeInferenceCollector(), ...)
   # Infer type of contents.
   inferTypes(x[[2]], typeCollector, ...)
 }
+
 
 # Atomic Types --------------------------------------------------
 
@@ -238,6 +251,7 @@ function(x, typeCollector = typeInferenceCollector(), ...)
     new("LogicalVectorType", length = length)
 }
 
+
 inferTypes.integer =
 function(x, typeCollector = typeInferenceCollector(), ...)
 {
@@ -247,6 +261,7 @@ function(x, typeCollector = typeInferenceCollector(), ...)
   else
     new("IntegerVectorType", length = length)
 }
+
 
 inferTypes.numeric =
 function(x, typeCollector = typeInferenceCollector(), ...)
@@ -263,6 +278,7 @@ function(x, typeCollector = typeInferenceCollector(), ...)
     new("NumericVectorType", length = length)
 }
 
+
 inferTypes.complex =
 function(x, typeCollector = typeInferenceCollector(), ...)
 {
@@ -273,6 +289,7 @@ function(x, typeCollector = typeInferenceCollector(), ...)
     new("ComplexVectorType", length = length)
 }
 
+
 inferTypes.character =
 function(x, typeCollector = typeInferenceCollector(), ...)
 {
@@ -282,6 +299,7 @@ function(x, typeCollector = typeInferenceCollector(), ...)
   else
     new("CharacterVectorType", length = length)
 }
+
 
 inferTypes.list =
 function(x, typeCollector = typeInferenceCollector(), ...)

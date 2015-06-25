@@ -1,3 +1,15 @@
+# Description:
+#   Utility functions.
+
+
+any_is =
+function(object, class2)
+  # Test inheritance for multiple objects.
+{
+  any(vapply(object, is, TRUE, class2))
+}
+
+
 getVarName =
     # determine the variable being updated. x is the LHS of an assignment.
 function(x)

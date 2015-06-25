@@ -1,16 +1,47 @@
+# Description:
+#   Functions for handling operators.
+
+
 inferMathOpType =
 function(x, typeCollector, ...)
 {
+  # logical -> integer -> numeric -> complex
+  # Division always produces numeric or complex.
+  op_name = as.character(x[[1]])
+
   types = lapply(x[-1], inferTypes, typeCollector, ...)
-#browser()  
-  if(any(types == "numeric"))
-      "numeric"
-  else if(any(types == "double"))
-      "double"
-  else if(any(types == "integer"))
-      "integer"
-  else
-      "int"
+
+  # Check if any operands are vectors.
+  vector_types = types[vapply(types, is, TRUE, "VectorType")]
+
+  if (length(vector_types) == 0) {
+    # TODO: A supertype calculation function would be useful here.
+    if (any_is(types, "ComplexType"))
+      new("ComplexType")
+    else if (any_is(types, "NumericType") || op_name == "/")
+      new("NumericType")
+    else if(any_is(types, "IntegerType"))
+      new("IntegerType")
+    else if(any_is(types, "LogicalType"))
+      new("IntegerType")
+    else
+      NA
+
+  } else {
+    # Get the length of the longest vector.
+    length = max(sapply(vector_types, slot, "length"))
+
+    if (any_is(types, "ComplexVectorType"))
+      new("ComplexVectorType", length = length)
+    else if (any_is(types, "NumericVectorType") || op_name == "/")
+      new("NumericVectorType", length = length)
+    else if(any_is(types, "IntegerVectorType"))
+      new("IntegerVectorType", length = length)
+    else if(any_is(types, "LogicalVectorType"))
+      new("IntegerVectorType", length = length)
+    else
+      NA
+  }
 }
 
 
