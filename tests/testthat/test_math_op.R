@@ -35,6 +35,23 @@ test_that("scalar division works", {
   expect_is(type, "ComplexType")
 })
 
+test_that("scalar exponentiation works", {
+  expr = quote(
+    1L ^ 2L
+  )
+
+  type = inferTypes(expr)
+  expect_is(type, "NumericType")
+
+  # Complex types
+  expr = quote(
+    TRUE ^ 1i
+  )
+
+  type = inferTypes(expr)
+  expect_is(type, "ComplexType")
+})
+
 test_that("scalar-vector addition works", {
   x = c(1.1, 2.3, 5.1)
   expr = substitute(

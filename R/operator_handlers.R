@@ -1,14 +1,14 @@
 # Description:
 #   Functions for handling operators.
 
-MATH_OPS = c("+", "-", "*", "/")
+MATH_OPS = c("+", "-", "*", "/", "^")
 LOGIC_OPS = c("<", ">", "<=", ">=", "==", "!=", "|", "||", "&", "&&")
 
 inferMathOpType =
 function(x, typeCollector, ...)
 {
   # logical -> integer -> numeric -> complex
-  # Division always produces numeric or complex.
+  # Division and exponentiation alway produce numeric or complex.
   op_name = as.character(x[[1]])
 
   types = lapply(x[-1], inferTypes, typeCollector, ...)
@@ -20,7 +20,7 @@ function(x, typeCollector, ...)
     # TODO: A supertype calculation function would be useful here.
     if (any_is(types, "ComplexType"))
       new("ComplexType")
-    else if (any_is(types, "NumericType") || op_name == "/")
+    else if (any_is(types, "NumericType") || op_name %in% c("/", "^"))
       new("NumericType")
     else if(any_is(types, "IntegerType"))
       new("IntegerType")
