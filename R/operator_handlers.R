@@ -4,6 +4,7 @@
 MATH_OPS = c("+", "-", "*", "/", "^")
 LOGIC_OPS = c("<", ">", "<=", ">=", "==", "!=", "|", "||", "&", "&&")
 
+
 inferMathOpType =
 function(x, typeCollector, ...)
 {
@@ -89,23 +90,6 @@ browser()
   }
 }
 
-
-isScalar =
-function(type)
-{
-  all(type %in% c("boolean", "int", "double", "string")) # ADD    
-#  type %in% c("logical", "integer", "numeric", "character") # ADD
-}
-
-RToScalarMap = c(logical = "boolean", integer = "int", numeric = "double", character = "string")
-
-BasicRVectorTypes = names(RToScalarMap)
-
-mapTypeToScalar =
-function(type)
-{
-   RToScalarMap[type]
-}
 
 isScalarSubset =
 function(call, type, varname, typeCollector, ...)    

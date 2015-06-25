@@ -27,3 +27,21 @@ setClass("ComplexVectorType", contains = "VectorType")
 setClass("CharacterVectorType", contains = "VectorType")
 setClass("ListVectorType", contains = "VectorType")
 
+# Utilities --------------------------------------------------
+vectorTypeToScalarType =
+function(type)
+{
+  if (is(type, "ScalarType"))
+    return(type)
+
+  switch(class(type)[[1]],
+    "LogicalVectorType" = new("LogicalType"),
+    "IntegerVectorType" = new("IntegerType"),
+    "NumericVectorType" = new("NumericType"),
+    "ComplexVectorType" = new("ComplexType"),
+    "CharacterVectorType" = new("CharacterType"),
+    "ListVectorType" = new("ListType"),
+    NA
+  )
+}
+
