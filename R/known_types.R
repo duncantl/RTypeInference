@@ -4,22 +4,35 @@
 # cheap known table
 knownFunctionTypes =
 list(
-  "rnorm" = "numeric",
-  "^" = "numeric",
-  "which" = "integer",
-  "numeric" = "numeric",
-  ":" = "integer",
-#  "<" = "logical",
-#  ">" = "logical",
-#  "==" = "logical",    
-#  "*" = "numeric",
+  # Trivial cases.
+  "length" = new("IntegerType"),
+
+  # Easy cases.
+  "rnorm" = ConditionalType(list(
+      Condition_q(n == 1, new("NumericType")),
+      Condition_q(n > 1, NumericVectorType(n))
+    ), NullType()),
+  "numeric" = ConditionalType(list(
+      Condition_q(length == 1, new("NumericType")),
+      Condition_q(length > 1, NumericVectorType(length))
+    ), NullType()),
+  
+  # Moderate cases.
+  ":" = ConditionalType(list(
+      Condition_q(x == y,
+        new("IntegerType")),
+      Condition_q(x != y, IntegerVectorType(abs(x - y) + 1))
+    ), NullType()),
+
+  # Difficult cases.
+  "c" = "",
+  "which" = IntegerVectorType(NA)
 #  "(" = "nil",
 #  "[" = "nil",
-  "length" = "int"    
   )
 
 # Can retire this when we remove infer_rhs()
-known_table = data.frame(varname = names(knownFunctionTypes), type = knownFunctionTypes, stringsAsFactors = FALSE)
+#known_table = data.frame(varname = names(knownFunctionTypes), type = knownFunctionTypes, stringsAsFactors = FALSE)
   
 # ultimately would use this table, once it's filled out
 # This comes from ../TU/primitives.R

@@ -7,7 +7,9 @@ test_that("simple if statements work", {
   )
 
   type = inferTypes(expr)
-  expect_is(type, "NumericType")
+  expect_is(type, "ConditionalType")
+  expect_is(type@conditions[[1]]@type, "NumericType")
+  expect_is(type@default, "NullType")
 })
 
 test_that("simple if-else statements work", {
@@ -44,23 +46,22 @@ test_that("if-else statements work", {
       1L
   )
 
-  types = inferTypes(expr)
-  expect_is(types, "list")
-  expect_equal(length(types), 2)
-  expect_is(types[[1]], "CharacterType")
-  expect_is(types[[2]], "IntegerType")
+  type = inferTypes(expr)
+  expect_is(type, "ConditionalType")
+  expect_is(type@conditions[[1]]@type, "CharacterType")
+  expect_is(type@default, "IntegerType")
 })
 
-test_that("if-else statements collapse vector types", {
-  # TODO: Is this the right behavior?
-  expr = quote(
-    if (x + 1 > 10)
-      "cookies"
-    else
-      c("cookies", "cake")
-  )
-
-  types = inferTypes(expr)
-  expect_is(types, "CharacterVectorType")
-})
+#test_that("if-else statements collapse vector types", {
+#  # TODO: Is this the right behavior?
+#  expr = quote(
+#    if (x + 1 > 10)
+#      "cookies"
+#    else
+#      c("cookies", "cake")
+#  )
+#
+#  types = inferTypes(expr)
+#  expect_is(types, "CharacterVectorType")
+#})
 

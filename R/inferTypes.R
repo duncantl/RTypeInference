@@ -9,6 +9,7 @@
 #   * Should typeCollector always have a default?
 #   * Unify return type.
 #   * Scoping?
+#   * Modify logic operator handler to evaluate simple conditions.
 
 #infer_rhs = function(rhs, typeCollector, ...) {
 #  
@@ -164,9 +165,20 @@ function(x, typeCollector = typeInferenceCollector(), ...)
     inferMathOpType(x, typeCollector, ...)
   else if(call_name %in% LOGIC_OPS)
     inferLogicOpType(x, typeCollector, ...)
-  else if(call_name %in% names(knownFunctionTypes))
-    knownFunctionTypes[[ call_name ]]
-  else
+
+  else if(call_name %in% names(knownFunctionTypes)) {
+    # TODO: Need better handling for primitives.
+    call = as.list(standardise_call(x))
+    type = knownFunctionTypes[[ call_name ]]
+
+    is_literal = !sapply(call[-1, drop = FALSE], is.language)
+
+    if (is(type, "ConditionalType") && all(is_literal))
+      infer(type, call[-1, drop = FALSE])
+    else
+      type
+
+  } else
     NA
 }
 
@@ -187,30 +199,46 @@ inferTypes.if =
 function(x, typeCollector = typeInferenceCollector(), ...)
 {
   # Infer type of each branch.
-  # TODO: What if a branch has multiple instructions?
-  types = lapply(x[-(1:2)], inferTypes, typeCollector, ...)
+  # TODO: What if a branch contains multiple instructions?
+  if_type = inferTypes(x[[3]], typeCollector, ...)
+  
+  else_type = 
+    # if (<condition>) <body> else
+    if (length(x) == 4)
+      inferTypes(x[[4]], typeCollector, ...)
+    else
+      NullType()
 
-  # If all branches have the same type, then collapse to that type.
-  # TODO: Does this work for vectors of different lengths?
-  unique_types = unique(types)
-  if(length(unique_types) == 1)
-      types[[1]]
-  else
-      types
+  if (is(else_type, "ConditionalType")) {
+    # Else branch is really an else if; merge into one ConditionalType object.
+    addCondition(else_type, x[[2]], if_type)
+
+  } else if (identical(if_type, else_type)) {
+    # Branches have the same type, so collapse to that type.
+    # TODO: Is using identical() robust enough?
+    if_type
+
+  } else {
+    # Branches have different types.
+    condition = Condition(x[[2]], if_type)
+    ConditionalType(list(condition), else_type)
+  }
 }
 
 
 inferTypes.for =
 function(x, typeCollector = typeInferenceCollector(), ...)
 {
-  ty = inferTypes(x[[3]], typeCollector, ...)
-     # Then get the element type of this.
+  # Infer type of iterator.
+  type = inferTypes(x[[3]], typeCollector, ...)
 
-  if(ty %in% BasicRVectorTypes)
-     ty = mapTypeToScalar(ty)
-  # Identify this as a loop variable.
-  typeCollector$addType(as.character(x[[2]]), ty)
+  # Then get the element type of this.
+  type = scalarTypeToVectorType(type)
+
+  # TODO: Identify this as a loop index variable.
+  typeCollector$addType(as.character(x[[2]]), type)
     
+  # Infer type of contents.
   inferTypes(x[[4]], typeCollector, ...)
 }
 

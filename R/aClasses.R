@@ -1,4 +1,8 @@
-setClass("BasicTypeInfo", representation(name = "character"), contains = "character")
+# Description:
+#   S4 classes for type information.
+
+setClass("BasicTypeInfo", representation(name = "character"),
+    contains = "character")
            
 
 setClass("UpdateType", contains = "BasicTypeInfo")
