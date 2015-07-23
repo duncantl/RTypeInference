@@ -15,74 +15,82 @@ setClass("IndexType", contains = "Type",
   )
 )
 
-setClassUnion("TypeOrCall", c("Type", "call"))
-setGeneric("infer", function(expr, envir) {
+setGeneric("infer", function(self, args) {
   standardGeneric("infer")
 })
 
 setClass("ConditionalType", contains = "Type",
   slots = list(
-    conditions = "list",
-    default = "TypeOrCall"
+    handler = "function"
   )
 )
 
-ConditionalType = function(conditions, default)
+ConditionalType = function(handler = function(args) {})
+  # Construct a ConditionalType.
 {
-  new("ConditionalType", conditions = conditions, default = default)
+  # TODO: S4 validation.
+
+  # Check that handler includes a condition list.
+  if ( !("args" %in% names(formals(handler))) )
+    stop("Handler must have parameter 'args'.")
+
+  if ( body(handler)[[1]] != "{" )
+    body(handler) = call("{", body(handler))
+
+  new("ConditionalType", handler = handler)
 }
 
-addCondition = function(self, condition, type)
+pushCondition_q = function(self, condition, if_type, else_type)
+  # Push a new condition onto the ConditionalType.
 {
-  rule = Condition(condition = condition, type = type)
-  self@conditions = append(self@conditions, rule)
+  body = body(self@handler)
 
-  self
+  # Conditions are stored in the final if-else statement.
+  length = length(body)
+  if_statement = body[[length]]
+
+  if (class(if_statement) == "if") {
+    # Push branch onto existing if-else statement.
+    if_statement = call("if", condition, if_type, if_statement)
+    body[length] = list(if_statement)
+
+  } else if (!missing(else_type)) {
+    # No if-else statement, so create one.
+    if_statement = call("if", condition, if_type, else_type)
+    body[length + 1] = list(if_statement)
+
+  } else {
+    stop("There was no existing else_type, so one must be supplied.")
+  }
+
+  body(self@handler) = body
+  return(self)
+}
+
+pushCondition = function(self, condition, if_type, else_type)
+{
+  pushCondition_q(self, substitute(condition), substitute(if_type),
+    substitute(else_type))
+}
+
+getBranchTypes = function(self)
+{
+  # TODO: WIP so tests can check branch types.
+  body = body(self@handler)
+
+  length = length(body)
+  if_statement = body[[length]]
+
+  # Walk through the branches, getting the type of each.
+  # if <condition> <body> <else>
+  type = class(if_statement[[3]])
 }
 
 setMethod("infer",
-  list(expr = "ConditionalType"),
-  function(expr, envir)
+  list(self = "ConditionalType"),
+  function(self, args)
   {
-    # TODO:
-    # What if multiple conditions are true? We could just stop at the first
-    # true condition.
-    true_conditions = sapply(expr@conditions, infer, envir)
-    selection = match(TRUE, true_conditions)
-
-    type =
-      if (is.na(selection))
-        expr@default
-      else
-        expr@conditions[[selection]]@type
-
-    eval(type, envir)
-  }
-)
-
-Condition = 
-setClass("Condition",
-  slots = list(
-    condition = "language",
-    type = "TypeOrCall"
-  )
-)
-
-Condition = function(condition, type)
-{
-  new("Condition", condition = condition, type = type)
-}
-
-Condition_q = function(condition, type)
-{
-  new("Condition", condition = substitute(condition), type = substitute(type))
-}
-
-setMethod("infer", 
-  c(expr = "Condition"),
-  function(expr, envir)
-  {
-    eval(expr@condition, envir = envir)
+    self@handler(args)
   }
 )
 

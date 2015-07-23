@@ -8,24 +8,46 @@ list(
   "length" = new("IntegerType"),
 
   # Easy cases.
-  "rnorm" = ConditionalType(list(
-      Condition_q(n == 1, new("NumericType")),
-      Condition_q(n > 1, NumericVectorType(n))
-    ), NullType()),
-  "numeric" = ConditionalType(list(
-      Condition_q(length == 1, new("NumericType")),
-      Condition_q(length > 1, NumericVectorType(length))
-    ), NullType()),
+  "rnorm" = ConditionalType(
+    function(args) {
+      if (args$n == 1)
+        new("NumericType")
+      else if (args$n > 1)
+        NumericVectorType(args$n)
+      else
+        NullType()
+    }),
+  "numeric" = ConditionalType(
+    function(args) {
+      if (args$length == 1)
+        new("NumericType")
+      else if (args$length > 1)
+        NumericVectorType(args$length)
+      else
+        NullType()
+    }),
   
   # Moderate cases.
-  ":" = ConditionalType(list(
-      Condition_q(x == y,
-        new("IntegerType")),
-      Condition_q(x != y, IntegerVectorType(abs(x - y) + 1))
-    ), NullType()),
+  ":" = ConditionalType(
+    function(args) {
+      # FIXME: Numerics
+      if (args[[1]] == args[[2]])
+        new("IntegerType")
+      else {
+        len = abs(args[[1]] - args[[2]]) + 1
+        IntegerVectorType(len)
+      }
+    }),
 
   # Difficult cases.
-  "c" = "",
+  "c" = ConditionalType(
+    function(args) {
+      len = sum(sapply(args, length))
+      types = sapply(args, inferTypes)
+
+      # FIXME: use upcasting function to determine type.
+      NullType()
+    }),
   "which" = IntegerVectorType(NA)
 #  "(" = "nil",
 #  "[" = "nil",

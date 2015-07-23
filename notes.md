@@ -107,3 +107,12 @@ need to generate the handler function. So handling the conditions dynamically
 becomes slightly harder, but this could be hidden by a set of helper methods 
 for adding and querying the conditions.
 
+Storing conditional types as handler functions could make it harder for the 
+compiler to inspect the types on each branch. Types may be stored as a literal 
+value or as a call to construct the type (and this is not any different from 
+when not using handler functions). A call to construct a type really just 
+represents partial information: we know the type class but not its parameters. 
+Is there a better way to handle this information?
+
+
+

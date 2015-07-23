@@ -200,6 +200,7 @@ function(x, typeCollector = typeInferenceCollector(), ...)
 {
   # Infer type of each branch.
   # TODO: What if a branch contains multiple instructions?
+  # We need (unit) tests to check we have the correct behavior.
   if_type = inferTypes(x[[3]], typeCollector, ...)
   
   else_type = 
@@ -211,7 +212,7 @@ function(x, typeCollector = typeInferenceCollector(), ...)
 
   if (is(else_type, "ConditionalType")) {
     # Else branch is really an else if; merge into one ConditionalType object.
-    addCondition(else_type, x[[2]], if_type)
+    pushCondition_q(else_type, x[[2]], if_type)
 
   } else if (identical(if_type, else_type)) {
     # Branches have the same type, so collapse to that type.
@@ -219,9 +220,8 @@ function(x, typeCollector = typeInferenceCollector(), ...)
     if_type
 
   } else {
-    # Branches have different types.
-    condition = Condition(x[[2]], if_type)
-    ConditionalType(list(condition), else_type)
+    # Branches have different types, so construct a ConditionalType object.
+    pushCondition_q(ConditionalType(), x[[2]], if_type, else_type)
   }
 }
 
