@@ -54,7 +54,7 @@
 #
 ## given an assignment line, tries to figure out
 ## what the type on the RHS is.
-#infer_assignment = function(x, typeCollector = typeInferenceCollector(), ...) {
+#infer_assignment = function(x, typeCollector = TypeCollector(), ...) {
 #  # check the right side first
 #  #  infer_rhs(x[[3]])
 #   inferTypes(x[[3]], typeCollector, ...)
@@ -93,16 +93,16 @@
 # inferTypes
 # =========
 
-# walk the tree and make a table
 inferTypes =
-function(x, typeCollector = typeInferenceCollector(), ...)
+function(x, typeCollector = TypeCollector(), ...)
+  # Walk the tree and make a symbol table.
 {
   UseMethod("inferTypes")
 }
 
 
 inferTypes.function =
-function(x, typeCollector = typeInferenceCollector(), ...)
+function(x, typeCollector = TypeCollector(), ...)
 {    
   b = body(x)
   # TODO: Is really necessary to add `{` here?
@@ -120,37 +120,52 @@ function(x, typeCollector = typeInferenceCollector(), ...)
 
 
 `inferTypes.<-` = `inferTypes.=` =
-function(x, typeCollector = typeInferenceCollector(), ...)
+function(x, typeCollector = TypeCollector(), ...)
 {
-    # Try to infer type of RHS.
-    rhs = x[[3]]
-    # This is potentially recursive.
-    var_type = inferTypes(rhs, typeCollector, ...)
+  # When we see an assignment, try to infer the type of the RHS and then add
+  # the name on the LHS to the symbol table.
+  # Arrays and function call assignments `foo(x)<-` are special cases.
 
-    # Handle return from recursive x = y = value
-    # The order of the definitions is reversed here since we process
-    # y = value before x = y
-    # We control this and could do it in the appropriate order.
-    if(is.call(rhs) && as.character(rhs[[1]]) %in% c("=", "<-")) {
-        # FIXME: Doesn't yet handle x = y[i] = value
-        # use getVarName(x[[3]][[2]]) ?
-        var_type = typeCollector$getType(var_type)
-    } 
+  # Try to infer type of RHS. This is potentially recursive.
+  rhs = x[[3]]
+  type = inferTypes(rhs, typeCollector, ...)
 
+  # Update the symbol table.
+  lhs = x[[2]]
 
-    if(is.call(x[[2]])) {
-        varname = getVarName(x[[2]])
-        ty = UpdateType(var_type, varname)
-        typeCollector$addType(varname, ty)
-    } else {
-        varname = as.character(x[[2]])[1] 
-        typeCollector$addType(varname, var_type)
-    }
+  if (class(lhs) == "name") {
+    name = as.character(lhs)
+    typeCollector$addType(name, type)
+
+  } else if (class(lhs) == "call") {
+    # The tricky case.
+  }
+
+  # Handle return from recursive x = y = value
+  # The order of the definitions is reversed here since we process
+  # y = value before x = y
+  # We control this and could do it in the appropriate order.
+  #if(is.call(rhs) && as.character(rhs[[1]]) %in% c("=", "<-")) {
+      # FIXME: Doesn't yet handle x = y[i] = value
+      # use getVarName(x[[3]][[2]]) ?
+  #    var_type = typeCollector$getType(var_type)
+  #} 
+
+  #if(is.call(x[[2]])) {
+  #    varname = getVarName(x[[2]])
+  #    ty = UpdateType(var_type, varname)
+  #    typeCollector$addType(varname, ty)
+  #} else {
+  #    varname = as.character(x[[2]])[1] 
+  #    typeCollector$addType(varname, var_type)
+  #}
+
+  return(type)
 }
 
 
 inferTypes.call =
-function(x, typeCollector = typeInferenceCollector(), ...)
+function(x, typeCollector = TypeCollector(), ...)
 {
   # Math and logical operators
   # This is quite similar to what we are doing in the RLLVMCompile so we
@@ -184,7 +199,7 @@ function(x, typeCollector = typeInferenceCollector(), ...)
 
 
 inferTypes.name =
-function(x, typeCollector = typeInferenceCollector(), ...)
+function(x, typeCollector = TypeCollector(), ...)
 {
   # Try to retrieve type.
   typeCollector$getType(x)
@@ -196,7 +211,7 @@ function(x, typeCollector = typeInferenceCollector(), ...)
 # Flow Control --------------------------------------------------
 
 inferTypes.if =
-function(x, typeCollector = typeInferenceCollector(), ...)
+function(x, typeCollector = TypeCollector(), ...)
 {
   # Infer type of each branch.
   # TODO: What if a branch contains multiple instructions?
@@ -227,7 +242,7 @@ function(x, typeCollector = typeInferenceCollector(), ...)
 
 
 inferTypes.for =
-function(x, typeCollector = typeInferenceCollector(), ...)
+function(x, typeCollector = TypeCollector(), ...)
 {
   # Infer type of iterator.
   type = inferTypes(x[[3]], typeCollector, ...)
@@ -244,14 +259,14 @@ function(x, typeCollector = typeInferenceCollector(), ...)
 
 
 `inferTypes.{` =
-function(x, typeCollector = typeInferenceCollector(), ...)
+function(x, typeCollector = TypeCollector(), ...)
 {
   lapply(x[-1], inferTypes, typeCollector, ...)
 }
 
 
 `inferTypes.(` =
-function(x, typeCollector = typeInferenceCollector(), ...)
+function(x, typeCollector = TypeCollector(), ...)
 {
   # Infer type of contents.
   inferTypes(x[[2]], typeCollector, ...)
@@ -261,7 +276,7 @@ function(x, typeCollector = typeInferenceCollector(), ...)
 # Atomic Types --------------------------------------------------
 
 inferTypes.logical =
-function(x, typeCollector = typeInferenceCollector(), ...)
+function(x, typeCollector = TypeCollector(), ...)
 {
   length = length(x)
   if(length == 1)
@@ -272,7 +287,7 @@ function(x, typeCollector = typeInferenceCollector(), ...)
 
 
 inferTypes.integer =
-function(x, typeCollector = typeInferenceCollector(), ...)
+function(x, typeCollector = TypeCollector(), ...)
 {
   length = length(x)
   if(length == 1)
@@ -283,7 +298,7 @@ function(x, typeCollector = typeInferenceCollector(), ...)
 
 
 inferTypes.numeric =
-function(x, typeCollector = typeInferenceCollector(), ...)
+function(x, typeCollector = TypeCollector(), ...)
 {
   # TODO: Is it really a good idea to cast double to int?
   is_integer = all(x == floor(x))
@@ -299,7 +314,7 @@ function(x, typeCollector = typeInferenceCollector(), ...)
 
 
 inferTypes.complex =
-function(x, typeCollector = typeInferenceCollector(), ...)
+function(x, typeCollector = TypeCollector(), ...)
 {
   length = length(x)
   if(length == 1)
@@ -310,7 +325,7 @@ function(x, typeCollector = typeInferenceCollector(), ...)
 
 
 inferTypes.character =
-function(x, typeCollector = typeInferenceCollector(), ...)
+function(x, typeCollector = TypeCollector(), ...)
 {
   length = length(x)
   if(length == 1)
@@ -321,7 +336,7 @@ function(x, typeCollector = typeInferenceCollector(), ...)
 
 
 inferTypes.list =
-function(x, typeCollector = typeInferenceCollector(), ...)
+function(x, typeCollector = TypeCollector(), ...)
 {
   length = length(x)
   if(length == 1)

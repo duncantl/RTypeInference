@@ -6,6 +6,15 @@
 ConditionalType is just a `phi()` in disguise. Maybe it would make more sense 
 (especially with SSA) to treat it as such.
 
+What's the correct behavior for assignment to a call? For instance:
+```
+names(x) = c("a", "b", "c")
+```
+For now we can just ignore inference in this situation, but this could be 
+useful for picking up type information, e.g., with `dim<-`. Alternatively, 
+these could be something that gets rewritten out, although that might be 
+difficult if there are many assignment functions.
+
 ---
 
 ## Design

@@ -1,6 +1,20 @@
 
 # Examples
 
+## 2015.07.31 Array Assignment
+
+```
+x[3] = 5
+```
+In this example, we can infer that `x` is a list or a numeric vector, but 
+little else.
+
+## 2015.07.31 Assignment Functions
+
+```
+dim(x) = c(5, 4)
+```
+
 ## 2015.07.26 Variable Changes Type in Branch
 
 Consider the example:

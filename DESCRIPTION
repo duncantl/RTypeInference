@@ -35,7 +35,7 @@ Collate:
   primitiveNames.R
   inferTypes.R
   operator_handlers.R
-  typeCollector.R
+  TypeCollector.R
   utilities.R
 
 
