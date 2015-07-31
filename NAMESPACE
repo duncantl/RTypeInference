@@ -1,6 +1,5 @@
 exportPattern(".*")
 
 export(inferTypes)
-exportMethods(inferTypes)
 
 
