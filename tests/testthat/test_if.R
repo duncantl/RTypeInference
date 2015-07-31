@@ -8,8 +8,8 @@ test_that("simple if statements work", {
 
   type = inferTypes(expr)
   expect_is(type, "ConditionalType")
-  expect_is(type@conditions[[1]]@type, "NumericType")
-  expect_is(type@default, "NullType")
+  branch_types = getBranchTypes(type)
+  expect_equal(branch_types, c("NumericType", "NullType"))
 })
 
 test_that("simple if-else statements work", {
@@ -48,8 +48,8 @@ test_that("if-else statements work", {
 
   type = inferTypes(expr)
   expect_is(type, "ConditionalType")
-  expect_is(type@conditions[[1]]@type, "CharacterType")
-  expect_is(type@default, "IntegerType")
+  branch_types = getBranchTypes(type)
+  expect_equal(branch_types, c("CharacterType", "IntegerType"))
 })
 
 #test_that("if-else statements collapse vector types", {

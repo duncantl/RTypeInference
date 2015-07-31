@@ -1,6 +1,13 @@
 
 # Notes
 
+## 2015.07.31
+
+ConditionalType is just a `phi()` in disguise. Maybe it would make more sense 
+(especially with SSA) to treat it as such.
+
+---
+
 ## Design
 
 The ultimate goal is to infer types for *functions*, since that's what's 

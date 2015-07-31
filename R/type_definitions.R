@@ -74,16 +74,34 @@ pushCondition = function(self, condition, if_type, else_type)
 }
 
 getBranchTypes = function(self)
+  # Get the type on each branch.
 {
-  # TODO: WIP so tests can check branch types.
   body = body(self@handler)
 
   length = length(body)
   if_statement = body[[length]]
 
-  # Walk through the branches, getting the type of each.
+  if_apply(if_statement, class)
+}
+
+if_apply = function(statement, f, simplify = TRUE)
+  # Map over the branches of an if-else statement.
+{
   # if <condition> <body> <else>
-  type = class(if_statement[[3]])
+  answer = list( f(statement[[3]]) )
+
+  if (length(statement) > 3) {
+    answer = append(answer,
+      if (class(statement[[4]]) == "if")
+        if_apply(statement[[4]], f)
+      else
+        f(statement[[4]])
+    )
+  }
+
+  if (simplify)
+    simplify2array(answer)
+  else answer
 }
 
 setMethod("infer",
