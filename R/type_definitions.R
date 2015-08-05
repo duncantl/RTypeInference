@@ -3,13 +3,13 @@
 
 setClass("Type")
 
-# Special Types --------------------------------------------------
+# Semantic Types --------------------------------------------------
 
 NullType =
 setClass("NullType", contains = "Type")
 
 
-setClass("IndexType", contains = "Type",
+setClass("IteratorType", contains = "Type",
   slots = list(
     type = "Type"
   )

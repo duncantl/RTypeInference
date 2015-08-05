@@ -129,6 +129,9 @@ function(x, typeCollector = TypeCollector(), ...)
   # Try to infer type of RHS. This is potentially recursive.
   rhs = x[[3]]
   type = inferTypes(rhs, typeCollector, ...)
+  # Unravel iterator types.
+  if (is(type, "IteratorType"))
+    type = type@type
 
   # Update the symbol table.
   lhs = x[[2]]
@@ -138,7 +141,7 @@ function(x, typeCollector = TypeCollector(), ...)
     typeCollector$addType(name, type)
 
   } else if (class(lhs) == "call") {
-    # The tricky case.
+    # Array or function assignment. For now, do nothing.
   }
 
   # Handle return from recursive x = y = value
@@ -244,24 +247,31 @@ function(x, typeCollector = TypeCollector(), ...)
 inferTypes.for =
 function(x, typeCollector = TypeCollector(), ...)
 {
-  # Infer type of iterator.
+  # TODO: Handle loop variables that get assigned iterator.
+
+  # Infer the type of the iterator.
   type = inferTypes(x[[3]], typeCollector, ...)
 
-  # Then get the element type of this.
-  type = scalarTypeToVectorType(type)
+  type = vectorTypeToScalarType(type)
+  type = new("IteratorType", type = type)
 
-  # TODO: Identify this as a loop index variable.
   typeCollector$addType(as.character(x[[2]]), type)
     
   # Infer type of contents.
   inferTypes(x[[4]], typeCollector, ...)
+
+  return(type)
 }
 
 
 `inferTypes.{` =
 function(x, typeCollector = TypeCollector(), ...)
 {
-  lapply(x[-1], inferTypes, typeCollector, ...)
+  types = lapply(x[-1], inferTypes, typeCollector, ...)
+  if (length(types) == 0)
+    new("NullType")
+  else
+    tail(types, 1)[[1]]
 }
 
 
@@ -344,4 +354,11 @@ function(x, typeCollector = TypeCollector(), ...)
     new("ListType")
   else
     new("ListVectorType", length = length)
+}
+
+
+inferTypes.NULL =
+function(x, typeCollector = TypeCollector(), ...)
+{
+  new("NullType")
 }

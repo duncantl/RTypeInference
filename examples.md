@@ -1,6 +1,17 @@
 
 # Examples
 
+## 2015.07.31
+
+```
+for (i in 1:10)
+  x = i
+```
+We label `i` as an IteratorType, but should we label `x` as an IteratorType? In 
+a less contrived example, `x` might be computed from `i`, so probably not. On 
+the other hand, we want to tell the compiler that `x` changes on every 
+iteration.
+
 ## 2015.07.31 Array Assignment
 
 ```
@@ -14,6 +25,9 @@ little else.
 ```
 dim(x) = c(5, 4)
 ```
+This assignment gives us metadata about the type of `x`, but not the actual 
+type. For now, we can ignore the information and simply return the type of the 
+right-hand side (in case this will be used by the caller).
 
 ## 2015.07.26 Variable Changes Type in Branch
 
