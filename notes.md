@@ -1,6 +1,59 @@
 
 # Notes
 
+## 2015.08.05
+
+Inferring the return type of a function is a small challenge. Functions can 
+return at any point, and it's not enough to just build a list of possible 
+return types--we also need the conditions that lead to those return types. A 
+function with multiple branches should return a ConditionalType. This seems at 
+odds with our AST-walking algorithm, unless we add more state into the 
+`TypeCollector` object to inform calls higher up the tree that a return was 
+detected.
+
+In other words, we need to handle returns in `inferTypes.if()`, even though 
+they'll be detected farther down in `returnTypes.call()`. We could set up a 
+queue of returns in the `TypeCollector`. However, how do we handle nested if 
+statements?
+
+## 2015.08.04
+
+Upcasting is used for inference in several different places, including 
+operators and known functions. Perhaps the `upcast()` function in `utilities.R` 
+can be generalized for reuse.
+
+The primary motivation for using mixins or multiple inheritance in the type 
+system is to easily attach information to a type. For instance, to mark a 
+numeric type as a vector, we'd mix in a vector type. 
+
+New idea: make all of the semantic types (where it makes sense) a composition 
+of "base" types: character, numeric, integer, etc. Then we can use a 
+`getBaseType()` method to reduce any semantic types to a base type, which makes 
+upcasting a lot easier. Similarly, a `setBaseType()` method could be used to 
+change the base type of a semantic type. The constructors for semantic types
+could take a base type as an argument, so it's equally easy to go from base 
+type to semantic type (for instance, to promote a scalar to a vector). With 
+this approach, we can still use `is()` to check whether a type is a vector or 
+not. Further thought is needed to address the case where a variable has 
+multiple semantic types--for instance, a vector-valued iterator. These cases do 
+seem to be uncommon, though.
+
+For a function, `inferTypes()` should return the type of the returned value. 
+This way, the caller can do whatever they need to with it. It's possible that 
+this will make the slot for return type on `TypeCollector` unnecessary, but it 
+might be good to keep anyways, for convenience.
+
+We also need to support type annotations, possibly using a `.Type()` or similar 
+at the beginning of a function. This should match the existing infrastructure 
+in the compiler as closely as possible. The annotation function should be a 
+no-op, or at least minimize interference with standard interpretation. Letting 
+the user annotate types through an argument to `inferTypes()` could also be 
+useful, but seems like a lower priority since it violates locality.
+
+Once the features above are implemented, we should test them on case studies. 
+These can be integrated into the test suite, as long as they don't take too 
+long to test.
+
 ## 2015.07.31
 
 ConditionalType is just a `phi()` in disguise. Maybe it would make more sense 

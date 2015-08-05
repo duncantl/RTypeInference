@@ -104,18 +104,14 @@ function(x, typeCollector = TypeCollector(), ...)
 inferTypes.function =
 function(x, typeCollector = TypeCollector(), ...)
 {    
-  b = body(x)
-  # TODO: Is really necessary to add `{` here?
-  if(class(b) != "{")
-    b = substitute({ b }, list(b = b))
-  
-  foo = lapply(b[-1], inferTypes, typeCollector, ...)
+  body = body(x)
 
-#  foo = foo[!sapply(foo, is.null)]
-#  foo =  matrix(unlist(foo), , 2, byrow = TRUE)
-#  foo = unify(as.data.frame(foo))  
+  # Rewrite with { and delegate work to inferTypes.{
+  # TODO: Move to rewrite package?
+  if(class(body) != "{")
+    body = substitute({body}, list(body = body))
   
-  return(typeCollector)
+  inferTypes(body, typeCollector)
 }
 
 
