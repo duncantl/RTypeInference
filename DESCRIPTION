@@ -15,9 +15,9 @@ Description: This package is an effort to infer the types of
   accept and return and as a result the types are very dynamic.
   It is further complicated when we want to differentiate between
   scalar and vector types.
-License: GPL2
+License: GPL-2
 Depends:
-  CodeDepends,
+  methods,
   codetools,
   pryr
 Suggests:

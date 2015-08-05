@@ -1,5 +1,6 @@
 exportPattern(".*")
 
+import(methods, codetools, pryr)
 export(inferTypes)
 
 
