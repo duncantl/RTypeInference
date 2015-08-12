@@ -18,6 +18,11 @@ setRefClass("TypeCollector",
       varTypes[[name]] <<- types
     },
 
+    mergeTypeList = function(type_list) {
+      # Merge a list of types into the existing list.
+      varTypes[names(type_list)] <<- type_list
+    },
+
     getType = function(name) {
       idx = match(as.character(name), names(varTypes))
       if(is.na(idx))

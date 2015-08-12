@@ -111,6 +111,8 @@ function(x, typeCollector = TypeCollector(), ...)
   if(class(body) != "{")
     body = substitute({body}, list(body = body))
   
+  # Return last value. What we really need to do is work with the CFG, so exit
+  # blocks will always have only one return type.
   inferTypes(body, typeCollector)
 }
 
@@ -173,7 +175,13 @@ function(x, typeCollector = TypeCollector(), ...)
 
   if(call_name == "return")
     typeCollector$addReturn(inferTypes(x[[2]], typeCollector, ...))
-  else if(call_name == "[")
+  else if (call_name == ".typeInfo") {
+    # Get types from annotation and add to collector.
+    type_list = to_type_list(x)
+    typeCollector$mergeTypeList(type_list)
+    # TODO: Unclear what type we should return for this.
+    new("NullType")
+  } else if(call_name == "[")
     inferSubsetType(x, typeCollector, ...)
   else if(call_name %in% MATH_OPS)
     inferMathOpType(x, typeCollector, ...)
