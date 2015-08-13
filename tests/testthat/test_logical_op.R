@@ -18,8 +18,9 @@ test_that("vector-vector | works", {
   )
 
   type = inferTypes(expr)
-  expect_is(type, "LogicalVectorType")
-  expect_equal(type@length, length(x))
+  expect_is(type, "VectorType")
+  expect_is(atomicType(type), "LogicalType")
+  expect_equal(length(type), length(x))
 })
 
 test_that("vector || and && work", {

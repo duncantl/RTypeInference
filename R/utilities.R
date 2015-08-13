@@ -1,24 +1,28 @@
 # Description:
 #   Utility functions.
 
-to_type_list =
+evalTypeInfo =
 function(annotation)
-  # Convert an annotation expression to a list of types.
+  # Evaluate the contents of a .typeInfo annotation.
 {
-  annotation = as.list(annotation)[-1]
-  lapply(annotation,
-    function(text) {
-      type = as.list(text)
-      type[[1]] = as.character(type[[1]])
-      do.call(new, type)
-    })
+  lapply(as.list(annotation)[-1], eval)
+}
+
+makeVector =
+function(atom, length) 
+  # Make a vector unless length is 1.
+{
+  if(length == 1)
+    atom
+  else
+    VectorType(atom = atom, length = length)
 }
 
 any_is =
-function(object, class2)
+function(objects, class2)
   # Test inheritance for multiple objects.
 {
-  any(vapply(object, is, TRUE, class2))
+  any(vapply(objects, is, TRUE, class2))
 }
 
 upcast =
@@ -28,21 +32,23 @@ function(types)
   # character > complex > numeric > integer > logical
   # TODO:
   #   * Merge with math operator upcasting?
-  #   * Semantic types
-  #   * Vector types
-  is_character = sapply(types, is, "CharacterType")
+  #   * Test on semantic types
+
+  types = lapply(types, atomicType)
+
   if (any_is(types, "CharacterType"))
-    new("CharacterType")
+    CharacterType()
   else if (any_is(types, "ComplexType"))
-    new("ComplexType")
+    ComplexType()
   else if (any_is(types, "NumericType"))
-    new("NumericType")
+    NumericType()
   else if (any_is(types, "IntegerType"))
-    new("IntegerType")
+    IntegerType()
   else if (any_is(types, "LogicalType"))
-    new("LogicalType")
+    LogicalType()
   else
-    NA
+    # FIXME:
+    stop("Upcast fell through!")
 }
 
 getVarName =

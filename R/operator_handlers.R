@@ -8,43 +8,29 @@ LOGIC_OPS = c("<", ">", "<=", ">=", "==", "!=", "|", "||", "&", "&&")
 inferMathOpType =
 function(x, typeCollector, ...)
 {
-  # logical -> integer -> numeric -> complex
+  # complex > numeric > integer > logical
   # Division and exponentiation alway produce numeric or complex.
   op_name = as.character(x[[1]])
 
   types = lapply(x[-1], inferTypes, typeCollector, ...)
 
-  # Check if any operands are vectors.
-  vector_types = types[vapply(types, is, TRUE, "VectorType")]
+  length = max(vapply(types, length, 0L))
 
-  if (length(vector_types) == 0) {
-    # TODO: A supertype calculation function would be useful here.
-    if (any_is(types, "ComplexType"))
-      new("ComplexType")
-    else if (any_is(types, "NumericType") || op_name %in% c("/", "^"))
-      new("NumericType")
-    else if(any_is(types, "IntegerType"))
-      new("IntegerType")
-    else if(any_is(types, "LogicalType"))
-      new("IntegerType")
-    else
-      NA
+  types = lapply(types, atomicType)
+  atom =
+  if (any_is(types, "ComplexType"))
+    ComplexType()
+  else if (any_is(types, "NumericType") || op_name %in% c("/", "^"))
+    NumericType()
+  else if(any_is(types, "IntegerType"))
+    IntegerType()
+  else if(any_is(types, "LogicalType"))
+    # Note: logicals are implicitly casted to integers.
+    IntegerType()
+  else
+    stop(sprintf("Invalid type passed to operation `%s`.", op_name))
 
-  } else {
-    # Get the length of the longest vector.
-    length = max(sapply(vector_types, slot, "length"))
-
-    if (any_is(types, "ComplexVectorType"))
-      new("ComplexVectorType", length = length)
-    else if (any_is(types, "NumericVectorType") || op_name == "/")
-      new("NumericVectorType", length = length)
-    else if(any_is(types, "IntegerVectorType"))
-      new("IntegerVectorType", length = length)
-    else if(any_is(types, "LogicalVectorType"))
-      new("IntegerVectorType", length = length)
-    else
-      NA
-  }
+  makeVector(atom, length)
 }
 
 
@@ -57,16 +43,11 @@ function(x, typeCollector, ...)
 
   types = lapply(x[-1], inferTypes, typeCollector, ...)
 
-  # Check if any operands are vectors.
-  vector_types = types[vapply(types, is, TRUE, "VectorType")]
+  length = max(vapply(types, length, 0L))
+  if (op_name %in% c("||", "&&"))
+    length = 1L
 
-  if (length(vector_types) == 0 || op_name %in% c("||", "&&")) {
-    new("LogicalType")
-
-  } else {
-    length = max(sapply(vector_types, slot, "length"))
-    new("LogicalVectorType", length = length)
-  }
+  makeVector(LogicalType(), length)
 }
 
 

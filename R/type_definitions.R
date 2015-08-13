@@ -1,19 +1,100 @@
 # Description:
 #   S4 classes for types.
 
-setClass("Type")
+# Virtual Types
+
+setClass("Type", contains = "VIRTUAL")
+setClass("AtomicType", contains = c("Type", "VIRTUAL"))
+
+setClass("SemanticType", contains = c("Type", "VIRTUAL"),
+  slots = list(
+    atom = "AtomicType"
+  )
+)
+
+# Methods
+
+setGeneric("atomicType",
+  function(self) standardGeneric("atomicType"),
+  valueClass = "AtomicType")
+
+setMethod("atomicType",
+  list(self = "AtomicType"),
+  function(self) self
+)
+
+setMethod("atomicType",
+  list(self = "SemanticType"),
+  function(self) self@atom
+)
+
+setGeneric("atomicType<-",
+  function(self, value) standardGeneric("atomicType<-"),
+  valueClass = "Type")
+
+setMethod("atomicType<-",
+  list(self = "SemanticType"),
+  function(self, value) {
+    self@atom = value
+    return(self)
+  }
+)
+
+setMethod("length",
+  list(x = "Type"),
+  function(x) 1L
+)
+
+# Atomic Types
+
+NullType =
+  setClass("NullType", contains = "AtomicType")
+
+LogicalType =
+  setClass("LogicalType", contains = "AtomicType")
+IntegerType =
+  setClass("IntegerType", contains = "AtomicType")
+NumericType =
+  setClass("NumericType", contains = "AtomicType")
+ComplexType =
+  setClass("ComplexType", contains = "AtomicType")
+CharacterType =
+  setClass("CharacterType", contains = "AtomicType")
+#setClass("StringType", contains = "AtomicType")
 
 # Semantic Types --------------------------------------------------
 
-NullType =
-setClass("NullType", contains = "Type")
+VectorType =
+  function(atom, length) {
+    .VectorType(atom = atom, length = as.integer(length))
+  }
 
-
-setClass("IteratorType", contains = "Type",
-  slots = list(
-    type = "Type"
+.VectorType =
+  setClass("VectorType", contains = "SemanticType",
+    slots = list(
+      length = "integer"
+    )
   )
+
+setMethod("length",
+  list(x = "VectorType"),
+  function(x) x@length
 )
+
+setMethod("length<-",
+  list(x = "VectorType"),
+  function(x, value) {
+    x@length = as.integer(value)
+    return(x)
+  }
+)
+
+IteratorType =
+  setClass("IteratorType", contains = "SemanticType")
+#setClass("ListType", contains = "ScalarType")
+
+# Branch Type
+# FIXME: Set this up for the composable type system!
 
 setGeneric("infer", function(self, args) {
   standardGeneric("infer")
@@ -111,61 +192,3 @@ setMethod("infer",
     self@handler(args)
   }
 )
-
-# Scalar Types --------------------------------------------------
-setClass("ScalarType", contains = "Type")
-
-setClass("LogicalType", contains = "ScalarType")
-setClass("IntegerType", contains = "ScalarType")
-setClass("NumericType", contains = "ScalarType")
-setClass("ComplexType", contains = "ScalarType")
-setClass("CharacterType", contains = "ScalarType")
-setClass("ListType", contains = "ScalarType")
-
-# Vector Types --------------------------------------------------
-setClass("VectorType", contains = "Type",
-  slots = list(
-    length = "integer"
-  )
-) 
-
-setClass("LogicalVectorType", contains = "VectorType")
-LogicalVectorType = function(length)
-  new("LogicalVectorType", length = as.integer(length))
-
-setClass("IntegerVectorType", contains = "VectorType")
-IntegerVectorType = function(length) 
-  new("IntegerVectorType", length = as.integer(length))
-
-setClass("NumericVectorType", contains = "VectorType")
-NumericVectorType = function(length)
-  new("NumericVectorType", length = as.integer(length))
-
-setClass("ComplexVectorType", contains = "VectorType")
-ComplexVectorType = function(length)
-  new("ComplexVectorType", length = as.integer(length))
-
-setClass("CharacterVectorType", contains = "VectorType")
-CharacterVectorType = function(length) 
-  new("CharacterVectorType", length = as.integer(length))
-
-setClass("ListVectorType", contains = "VectorType")
-
-# Utilities --------------------------------------------------
-vectorTypeToScalarType =
-function(type)
-{
-  if (is(type, "ScalarType"))
-    return(type)
-
-  switch(class(type)[[1]],
-    "LogicalVectorType" = new("LogicalType"),
-    "IntegerVectorType" = new("IntegerType"),
-    "NumericVectorType" = new("NumericType"),
-    "ComplexVectorType" = new("ComplexType"),
-    "CharacterVectorType" = new("CharacterType"),
-    "ListVectorType" = new("ListType"),
-    NA
-  )
-}
-

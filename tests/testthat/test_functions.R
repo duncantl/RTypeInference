@@ -29,3 +29,16 @@ test_that("types are collected for functions", {
   expect_is(collector$getType("y"), "IntegerType")
   expect_is(collector$getType("z"), "CharacterType")
 })
+
+test_that("return type is inferred for functions that aren't type-stable", {
+  fun = function() {
+    if (rbinom(1, 1, 0.5) == 1)
+      return(13L)
+
+    return("Hello")
+  }
+  collector = TypeCollector()
+
+  result = inferTypes(fun, collector)
+  expect_is(result, "ConditionalType")
+})

@@ -11,7 +11,7 @@ test_that("iterator type is inferred for simple for loops", {
   result = inferTypes(expression, collector)
   type = collector$getType("i")
   expect_is(type, "IteratorType")
-  expect_is(type@type, "IntegerType")
+  expect_is(atomicType(type), "IntegerType")
 })
 
 test_that("types are collected for for loops", {

@@ -34,7 +34,7 @@ test_that("type is inferred for recursive literal assignments", {
 test_that("type is infered for known-type variable assignments", {
   expression = call("=", quote(x), quote(y))
   collector = TypeCollector()
-  collector$addType("y", new("NumericType"))
+  collector$addType("y", NumericType())
 
   result = inferTypes(expression, collector)
   expect_is(result, "NumericType")

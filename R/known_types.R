@@ -5,38 +5,25 @@
 knownFunctionTypes =
 list(
   # Trivial cases.
-  "length" = new("IntegerType"),
+  "length" = IntegerType(),
 
   # Easy cases.
   "rnorm" = ConditionalType(
     function(args) {
-      if (args$n == 1)
-        new("NumericType")
-      else if (args$n > 1)
-        NumericVectorType(args$n)
-      else
-        NullType()
+      # TODO: Handle case where n is unknown.
+      makeVector(NumericType(), args$n)
     }),
   "numeric" = ConditionalType(
     function(args) {
-      if (args$length == 1)
-        new("NumericType")
-      else if (args$length > 1)
-        NumericVectorType(args$length)
-      else
-        NullType()
+      makeVector(NumericType(), args$n)
     }),
   
   # Moderate cases.
   ":" = ConditionalType(
     function(args) {
       # FIXME: Numerics
-      if (args[[1]] == args[[2]])
-        new("IntegerType")
-      else {
-        len = abs(args[[1]] - args[[2]]) + 1
-        IntegerVectorType(len)
-      }
+      length = abs(args[[1]] - args[[2]]) + 1
+      makeVector(IntegerType(), length)
     }),
 
   # Difficult cases.
@@ -46,9 +33,12 @@ list(
       types = sapply(args, inferTypes)
 
       # FIXME: use upcasting function to determine type.
-      NullType()
+      if (any_is(types, "IntegerType"))
+        VectorType(IntegerType(), len)
+      else
+        NullType()
     }),
-  "which" = IntegerVectorType(NA)
+  "which" = VectorType(atom = IntegerType(), length = NA_integer_)
 #  "(" = "nil",
 #  "[" = "nil",
   )

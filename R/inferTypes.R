@@ -127,9 +127,9 @@ function(x, typeCollector = TypeCollector(), ...)
   # Try to infer type of RHS. This is potentially recursive.
   rhs = x[[3]]
   type = inferTypes(rhs, typeCollector, ...)
-  # Unravel iterator types.
+  # Get the atomic type for iterator types.
   if (is(type, "IteratorType"))
-    type = type@type
+    type = atomicType(type)
 
   # Update the symbol table.
   lhs = x[[2]]
@@ -177,10 +177,10 @@ function(x, typeCollector = TypeCollector(), ...)
     typeCollector$addReturn(inferTypes(x[[2]], typeCollector, ...))
   else if (call_name == ".typeInfo") {
     # Get types from annotation and add to collector.
-    type_list = to_type_list(x)
+    type_list = evalTypeInfo(x)
     typeCollector$mergeTypeList(type_list)
     # TODO: Unclear what type we should return for this.
-    new("NullType")
+    NullType()
   } else if(call_name == "[")
     inferSubsetType(x, typeCollector, ...)
   else if(call_name %in% MATH_OPS)
@@ -253,11 +253,9 @@ function(x, typeCollector = TypeCollector(), ...)
 {
   # TODO: Handle loop variables that get assigned iterator.
 
-  # Infer the type of the iterator.
-  type = inferTypes(x[[3]], typeCollector, ...)
-
-  type = vectorTypeToScalarType(type)
-  type = new("IteratorType", type = type)
+  atom = inferTypes(x[[3]], typeCollector, ...)
+  atom = atomicType(atom)
+  type = IteratorType(atom = atom)
 
   typeCollector$addType(as.character(x[[2]]), type)
     
@@ -273,7 +271,7 @@ function(x, typeCollector = TypeCollector(), ...)
 {
   types = lapply(x[-1], inferTypes, typeCollector, ...)
   if (length(types) == 0)
-    new("NullType")
+    NullType()
   else
     tail(types, 1)[[1]]
 }
@@ -292,22 +290,14 @@ function(x, typeCollector = TypeCollector(), ...)
 inferTypes.logical =
 function(x, typeCollector = TypeCollector(), ...)
 {
-  length = length(x)
-  if(length == 1)
-    new("LogicalType")
-  else
-    new("LogicalVectorType", length = length)
+  makeVector(LogicalType(), length(x))
 }
 
 
 inferTypes.integer =
 function(x, typeCollector = TypeCollector(), ...)
 {
-  length = length(x)
-  if(length == 1)
-    new("IntegerType")
-  else
-    new("IntegerVectorType", length = length)
+  makeVector(IntegerType(), length(x))
 }
 
 
@@ -319,50 +309,35 @@ function(x, typeCollector = TypeCollector(), ...)
   if (is_integer)
     return(inferTypes.integer(x))
 
-  length = length(x)
-  if(length(x) == 1)
-    new("NumericType")
-  else
-    new("NumericVectorType", length = length)
+  makeVector(NumericType(), length(x))
 }
 
 
 inferTypes.complex =
 function(x, typeCollector = TypeCollector(), ...)
 {
-  length = length(x)
-  if(length == 1)
-    new("ComplexType")
-  else
-    new("ComplexVectorType", length = length)
+  makeVector(ComplexType(), length(x))
 }
 
 
 inferTypes.character =
 function(x, typeCollector = TypeCollector(), ...)
 {
-  length = length(x)
-  if(length == 1)
-    new("CharacterType")
-  else
-    new("CharacterVectorType", length = length)
+  # TODO: Distinguish between characters and strings.
+  makeVector(CharacterType(), length(x))
 }
 
 
 inferTypes.list =
 function(x, typeCollector = TypeCollector(), ...)
 {
-  length = length(x)
-  if(length == 1)
-    # TODO: Unbox singleton lists?
-    new("ListType")
-  else
-    new("ListVectorType", length = length)
+  # FIXME:
+  stop("Lists are not yet supported!")
 }
 
 
 inferTypes.NULL =
 function(x, typeCollector = TypeCollector(), ...)
 {
-  new("NullType")
+  NullType()
 }

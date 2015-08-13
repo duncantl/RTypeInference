@@ -60,8 +60,9 @@ test_that("scalar-vector addition works", {
   )
 
   type = inferTypes(expr)
-  expect_is(type, "NumericVectorType")
-  expect_equal(type@length, length(x))
+  expect_is(type, "VectorType")
+  expect_is(atomicType(type), "NumericType")
+  expect_equal(length(type), length(x))
 })
 
 test_that("vector-vector addition works", {
@@ -72,18 +73,20 @@ test_that("vector-vector addition works", {
   )
 
   type = inferTypes(expr)
-  expect_is(type, "IntegerVectorType")
-  expect_equal(type@length, length(x))
+  expect_is(type, "VectorType")
+  expect_is(atomicType(type), "IntegerType")
+  expect_equal(length(type), length(x))
 })
 
 test_that("recycled vector-vector addition works", {
   x = c(1.1, 2.3, 5.1, -1.4, 99.1)
   expr = substitute(
-    c(1.3, -1.7) + x,
-    list(x = x)
+    y + x,
+    list(y = c(1.3, -1.7), x = x)
   )
 
   type = inferTypes(expr)
-  expect_is(type, "NumericVectorType")
-  expect_equal(type@length, length(x))
+  expect_is(type, "VectorType")
+  expect_is(atomicType(type), "NumericType")
+  expect_equal(length(type), length(x))
 })

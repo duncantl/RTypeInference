@@ -13,8 +13,9 @@ test_that("rnorm returns vector works", {
   expr = call("rnorm", len)
 
   type = inferTypes(expr)
-  expect_is(type, "NumericVectorType")
-  expect_equal(type@length, len)
+  expect_is(type, "VectorType")
+  expect_is(atomicType(type), "NumericType")
+  expect_equal(length(type), len)
 })
 
 test_that("rnorm gives ConditionalType on unknown arguments", {
