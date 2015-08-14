@@ -4,7 +4,16 @@
 # Virtual Types
 
 setClass("Type", contains = "VIRTUAL")
-setClass("AtomicType", contains = c("Type", "VIRTUAL"))
+
+setClass("AtomicType", contains = c("Type", "VIRTUAL"),
+  # TODO: Still not clear this is the right class to place the value slot on.
+  slots = list(
+    value = "ANY"
+  ),
+  prototype = list(
+    value = NA
+  )
+)
 
 setClass("SemanticType", contains = c("Type", "VIRTUAL"),
   slots = list(
@@ -13,6 +22,70 @@ setClass("SemanticType", contains = c("Type", "VIRTUAL"),
 )
 
 # Methods
+
+setGeneric("identicalType",
+  # Check whether two types are identical.
+  #
+  # This generic checks whether two types are identical up to value.
+  function(x, y) standardGeneric("identicalType"),
+  valueClass = "logical")
+
+setMethod("identicalType",
+  list(x = "ANY"),
+  function(x, y) identical(x, y)
+)
+
+setMethod("identicalType",
+  list(x = "AtomicType"),
+  function(x, y) is(x, class(y))
+)
+
+setMethod("identicalType",
+  list(x = "SemanticType"),
+  function(x, y) {
+    is_identical = is(x, class(y))
+
+    is_identical = 
+      is_identical &
+      sapply(slotNames(x),
+        function(name) {
+          identicalType(slot(x, name), slot(y, name))
+        }
+      )
+
+    all(is_identical)
+  }
+)
+
+# TODO: Check if value is a vector.
+setGeneric("value", function(self) standardGeneric("value"))
+
+setMethod("value",
+  list(self = "AtomicType"),
+  function(self) self@value
+)
+
+setMethod("value",
+  list(self = "SemanticType"),
+  function(self) value(atomicType(self))
+)
+setGeneric("value<-", function(self, value) standardGeneric("value<-"))
+
+setMethod("value<-",
+  list(self = "AtomicType"),
+  function(self, value) {
+    self@value = value
+    return(self)
+  }
+)
+
+setMethod("value<-",
+  list(self = "SemanticType"),
+  function(self, value) {
+    value(atomicType(self)) = value
+    return(self)
+  }
+)
 
 setGeneric("atomicType",
   function(self) standardGeneric("atomicType"),
@@ -46,6 +119,14 @@ setMethod("length",
 )
 
 # Atomic Types
+
+UnknownType =
+  setClass("UnknownType", contains = "AtomicType")
+
+setMethod("length",
+  list(x = "UnknownType"),
+  function(x) NA_integer_
+)
 
 NullType =
   setClass("NullType", contains = "AtomicType")

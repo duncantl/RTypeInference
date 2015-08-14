@@ -26,7 +26,7 @@ setRefClass("TypeCollector",
     getType = function(name) {
       idx = match(as.character(name), names(varTypes))
       if(is.na(idx))
-        NA
+        UnknownType()
       else
         varTypes[[idx]]
     },

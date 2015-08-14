@@ -1,6 +1,11 @@
 
 # Notes
 
+## 2015.08.13
+
+Later on, we could infer types of variables based on how they're used as 
+function arguments. This might make annotation unnecessary in some cases. 
+
 ## 2015.08.05
 
 Inferring the return type of a function is a small challenge. Functions can 

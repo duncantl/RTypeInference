@@ -4,12 +4,10 @@
 # TODO:
 #   * What about non-assignments? ie, the last line / return line.
 #   * Resolve any variable references.
-#   * Figure out the types of inputs.
 #   * Figure out the types of returns.
 #   * Should typeCollector always have a default?
 #   * Unify return type.
 #   * Scoping?
-#   * Modify logic operator handler to evaluate simple conditions.
 
 #infer_rhs = function(rhs, typeCollector, ...) {
 #  
@@ -173,6 +171,9 @@ function(x, typeCollector = TypeCollector(), ...)
   # should consolidate the code.
   call_name = as.character(x[[1]])
 
+  # TODO: 
+  #   * Move all call handlers to a separate file.
+  #   * Clean up this mess.
   if(call_name == "return")
     typeCollector$addReturn(inferTypes(x[[2]], typeCollector, ...))
   else if (call_name == ".typeInfo") {
@@ -189,29 +190,29 @@ function(x, typeCollector = TypeCollector(), ...)
     inferLogicOpType(x, typeCollector, ...)
 
   else if(call_name %in% names(knownFunctionTypes)) {
-    # TODO: Need better handling for primitives.
-    call = as.list(standardise_call(x))
     type = knownFunctionTypes[[ call_name ]]
 
-    is_literal = !sapply(call[-1, drop = FALSE], is.language)
+    if (is(type, "ConditionalType")) {
+      # Infer argument types and pass to handler.
+      arguments = standardise_call(x)[-1]
+      arg_types = lapply(arguments, inferTypes, typeCollector, ...)
+      type = infer(type, arg_types)
+    }
 
-    if (is(type, "ConditionalType") && all(is_literal))
-      infer(type, call[-1, drop = FALSE])
-    else
-      type
-
+    return(type)
   } else
-    NA
+    UnknownType()
 }
 
 
 inferTypes.name =
 function(x, typeCollector = TypeCollector(), ...)
 {
+  # TODO: Constants are already propagated, but we might want to set up a
+  # reference for to the variable for non-constants.
+
   # Try to retrieve type.
   typeCollector$getType(x)
-
-  # TODO: Might want to set up a reference to this name.
 }
 
 
@@ -236,9 +237,9 @@ function(x, typeCollector = TypeCollector(), ...)
     # Else branch is really an else if; merge into one ConditionalType object.
     pushCondition_q(else_type, x[[2]], if_type)
 
-  } else if (identical(if_type, else_type)) {
+  } else if (identicalType(if_type, else_type)) {
     # Branches have the same type, so collapse to that type.
-    # TODO: Is using identical() robust enough?
+    value(if_type) = NA
     if_type
 
   } else {
@@ -251,7 +252,7 @@ function(x, typeCollector = TypeCollector(), ...)
 inferTypes.for =
 function(x, typeCollector = TypeCollector(), ...)
 {
-  # TODO: Handle loop variables that get assigned iterator.
+  # TODO: Handle variables that are composed from an iterator variable.
 
   atom = inferTypes(x[[3]], typeCollector, ...)
   atom = atomicType(atom)
@@ -290,14 +291,20 @@ function(x, typeCollector = TypeCollector(), ...)
 inferTypes.logical =
 function(x, typeCollector = TypeCollector(), ...)
 {
-  makeVector(LogicalType(), length(x))
+  type = makeVector(LogicalType(), length(x))
+  value(type) = x
+
+  return(type)
 }
 
 
 inferTypes.integer =
 function(x, typeCollector = TypeCollector(), ...)
 {
-  makeVector(IntegerType(), length(x))
+  type = makeVector(IntegerType(), length(x))
+  value(type) = x
+
+  return(type)
 }
 
 
@@ -309,14 +316,20 @@ function(x, typeCollector = TypeCollector(), ...)
   if (is_integer)
     return(inferTypes.integer(x))
 
-  makeVector(NumericType(), length(x))
+  type = makeVector(NumericType(), length(x))
+  value(type) = x
+
+  return(type)
 }
 
 
 inferTypes.complex =
 function(x, typeCollector = TypeCollector(), ...)
 {
-  makeVector(ComplexType(), length(x))
+  type = makeVector(ComplexType(), length(x))
+  value(type) = x
+
+  return(type)
 }
 
 
@@ -324,7 +337,10 @@ inferTypes.character =
 function(x, typeCollector = TypeCollector(), ...)
 {
   # TODO: Distinguish between characters and strings.
-  makeVector(CharacterType(), length(x))
+  type = makeVector(CharacterType(), length(x))
+  value(type) = x
+
+  return(type)
 }
 
 

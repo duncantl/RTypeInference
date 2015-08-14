@@ -1,44 +1,61 @@
 # Description:
 #   Lists of known types for functions.
 
-# cheap known table
 knownFunctionTypes =
 list(
-  # Trivial cases.
+  # Type stable return type.
   "length" = IntegerType(),
+  "which" = VectorType(IntegerType(), NA),
 
-  # Easy cases.
+  # Type-dependent return type.
+  "abs" = ConditionalType(
+    function(args) {
+      atomicType(args$x)
+
+      atom =
+        if (is(atom, "ComplexType") || is(atom, "NumericType"))
+          NumericType()
+        else if (is(atom, "IntegerType"))
+          IntegerType()
+
+      atomicType(args$x) = atom
+      # FIXME:
+      value(args$x) = NA
+      return(args$x)
+    }),
+
+  # Value-dependent return type.
   "rnorm" = ConditionalType(
     function(args) {
-      # TODO: Handle case where n is unknown.
-      makeVector(NumericType(), args$n)
+      makeVector(NumericType(), value(args$n))
     }),
   "numeric" = ConditionalType(
     function(args) {
-      makeVector(NumericType(), args$n)
+      makeVector(NumericType(), value(args$n))
     }),
   
-  # Moderate cases.
   ":" = ConditionalType(
+    # `:()` downcasts to integer whenever possible, and works on vector
+    # arguments by taking the first elements.
     function(args) {
-      # FIXME: Numerics
-      length = abs(args[[1]] - args[[2]]) + 1
+      # FIXME: This function can also return NumericType.
+      x = args[[1]]
+      y = args[[2]]
+
+      length = abs(value(x) - value(y)) + 1
       makeVector(IntegerType(), length)
     }),
-
-  # Difficult cases.
   "c" = ConditionalType(
+    # FIXME:
     function(args) {
-      len = sum(sapply(args, length))
-      types = sapply(args, inferTypes)
+      length = sum(sapply(args, length))
 
       # FIXME: use upcasting function to determine type.
-      if (any_is(types, "IntegerType"))
-        VectorType(IntegerType(), len)
+      if (any_is(args, "IntegerType"))
+        VectorType(IntegerType(), length)
       else
         NullType()
-    }),
-  "which" = VectorType(atom = IntegerType(), length = NA_integer_)
+    })
 #  "(" = "nil",
 #  "[" = "nil",
   )

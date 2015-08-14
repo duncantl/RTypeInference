@@ -13,19 +13,20 @@ test_that("simple if statements work", {
 })
 
 test_that("simple if-else statements work", {
-  expr = quote(
+  expression = quote(
     if (y > -1)
       "hello"
     else
       "goodbye"
   )
 
-  type = inferTypes(expr)
-  expect_is(type, "CharacterType")
+  result = inferTypes(expression)
+  expect_is(result, "CharacterType")
+  expect_equal(value(result), NA)
 })
 
 test_that("simple if-else-if statements work", {
-  expr = quote(
+  expression = quote(
     if (y < 42)
       3i
     else if (y < 50)
@@ -34,8 +35,9 @@ test_that("simple if-else-if statements work", {
       -1i
   )
 
-  type = inferTypes(expr)
-  expect_is(type, "ComplexType")
+  result = inferTypes(expression)
+  expect_is(result, "ComplexType")
+  expect_equal(value(result), NA)
 })
 
 test_that("if-else statements work", {

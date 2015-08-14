@@ -2,9 +2,9 @@
 #   Tests of inference for for loops.
 
 test_that("iterator type is inferred for simple for loops", {
-  expression = quote(
-    for (i in 1:3)
-      print(i)
+  expression = substitute(
+    for (i in x) print(i),
+    list(x = 1:3)
   )
   collector = TypeCollector()
 

@@ -12,7 +12,7 @@ makeVector =
 function(atom, length) 
   # Make a vector unless length is 1.
 {
-  if(length == 1)
+  if(!is.na(length) && length == 1)
     atom
   else
     VectorType(atom = atom, length = length)
