@@ -14,13 +14,14 @@ function(annotation)
 }
 
 makeVector =
-function(atom, length) 
+function(atom, dimension) 
   # Make a vector unless length is 1.
 {
+  length = prod(dimension)
   if(!is.na(length) && length == 1)
     atom
   else
-    VectorType(atom = atom, length = length)
+    VectorType(atom, dimension)
 }
 
 any_is =

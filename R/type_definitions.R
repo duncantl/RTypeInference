@@ -167,26 +167,36 @@ CharacterType =
 # Semantic Types --------------------------------------------------
 
 VectorType =
-  function(atom, length) {
-    .VectorType(atom = atom, length = as.integer(length))
+  function(atom, dimension) {
+    .VectorType(atom = atom, dimension = as.integer(dimension))
   }
 
 .VectorType =
   setClass("VectorType", contains = "SemanticType",
     slots = list(
-      length = "integer"
+      dimension = "integer"
     )
   )
 
 setMethod("length",
   signature(x = "VectorType"),
-  function(x) x@length
+  function(x) prod(x@dimension)
 )
 
 setMethod("length<-",
   signature(x = "VectorType"),
+  function(x, value) dim(x) = value
+)
+
+setMethod("dim",
+  signature(x = "VectorType"),
+  function(x) x@dimension
+)
+
+setMethod("dim<-",
+  signature(x = "VectorType"),
   function(x, value) {
-    x@length = as.integer(value)
+    x@dimension = as.integer(value)
     return(x)
   }
 )

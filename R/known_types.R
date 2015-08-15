@@ -10,7 +10,7 @@ list(
   # Type-dependent return type.
   "abs" = ConditionalType(
     function(args) {
-      atomicType(args$x)
+      atom = atomicType(args$x)
 
       atom =
         if (is(atom, "ComplexType") || is(atom, "NumericType"))
@@ -33,6 +33,26 @@ list(
     function(args) {
       makeVector(NumericType(), value(args$n, NA))
     }),
+
+  "matrix" = ConditionalType(
+    function(args) {
+      # TODO:
+      #   * The default arguments should really be pulled using `formals()`.
+      #   * Propagate value if literal?
+      atom = atomicType(args$data)
+
+      nrow =
+        if ("nrow" %in% names(args)) value(args$nrow)
+        else 1L
+      ncol =
+        if ("ncol" %in% names(args)) value(args$ncol)
+        else 1L
+      dimension = c(nrow, ncol)
+
+      value(atom) = UnknownValue()
+
+      makeVector(atom, dimension)
+    }),
   
   ":" = ConditionalType(
     # `:()` downcasts to integer whenever possible, and works on vector
@@ -47,6 +67,7 @@ list(
     }),
   "c" = ConditionalType(
     function(args) {
+      # TODO: Propagate value if all args are literal?
       length = sum(sapply(args, length))
       makeVector(upcast(args), length)
     })
