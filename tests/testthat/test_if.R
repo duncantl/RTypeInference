@@ -22,7 +22,7 @@ test_that("simple if-else statements work", {
 
   result = inferTypes(expression)
   expect_is(result, "CharacterType")
-  expect_equal(value(result), NA)
+  expect_is(value(result), "UnknownValue")
 })
 
 test_that("simple if-else-if statements work", {
@@ -37,7 +37,7 @@ test_that("simple if-else-if statements work", {
 
   result = inferTypes(expression)
   expect_is(result, "ComplexType")
-  expect_equal(value(result), NA)
+  expect_is(value(result), "UnknownValue")
 })
 
 test_that("if-else statements work", {

@@ -1,6 +1,11 @@
 # Description:
 #   S4 classes for types.
 
+# Basic unknown value class. Later this could be expanded to a reference
+# system.
+UnknownValue =
+  setClass("UnknownValue", contains = "NULL")
+
 # Virtual Types
 
 setClass("Type", contains = "VIRTUAL")
@@ -11,7 +16,7 @@ setClass("AtomicType", contains = c("Type", "VIRTUAL"),
     value = "ANY"
   ),
   prototype = list(
-    value = NA
+    value = UnknownValue()
   )
 )
 
@@ -31,17 +36,17 @@ setGeneric("identicalType",
   valueClass = "logical")
 
 setMethod("identicalType",
-  list(x = "ANY"),
+  signature(x = "ANY"),
   function(x, y) identical(x, y)
 )
 
 setMethod("identicalType",
-  list(x = "AtomicType"),
+  signature(x = "AtomicType"),
   function(x, y) is(x, class(y))
 )
 
 setMethod("identicalType",
-  list(x = "SemanticType"),
+  signature(x = "SemanticType"),
   function(x, y) {
     is_identical = is(x, class(y))
 
@@ -58,21 +63,37 @@ setMethod("identicalType",
 )
 
 # TODO: Check if value is a vector.
-setGeneric("value", function(self) standardGeneric("value"))
-
-setMethod("value",
-  list(self = "AtomicType"),
-  function(self) self@value
+setGeneric("value",
+  function(self, unknown) standardGeneric("value")
 )
 
 setMethod("value",
-  list(self = "SemanticType"),
-  function(self) value(atomicType(self))
+  signature(self = "AtomicType", unknown = "missing"),
+  function(self, unknown) self@value
 )
+
+setMethod("value",
+  signature(self = "AtomicType"),
+  function(self, unknown) {
+    if (is(self@value, "UnknownValue"))
+      unknown
+    else
+      self@value
+  }
+)
+
+setMethod("value",
+  signature(self = "SemanticType"),
+  function(self, unknown) {
+    self = atomicType(self)
+    callGeneric()
+  }
+)
+
 setGeneric("value<-", function(self, value) standardGeneric("value<-"))
 
 setMethod("value<-",
-  list(self = "AtomicType"),
+  signature(self = "AtomicType"),
   function(self, value) {
     self@value = value
     return(self)
@@ -80,7 +101,7 @@ setMethod("value<-",
 )
 
 setMethod("value<-",
-  list(self = "SemanticType"),
+  signature(self = "SemanticType"),
   function(self, value) {
     value(atomicType(self)) = value
     return(self)
@@ -92,12 +113,12 @@ setGeneric("atomicType",
   valueClass = "AtomicType")
 
 setMethod("atomicType",
-  list(self = "AtomicType"),
+  signature(self = "AtomicType"),
   function(self) self
 )
 
 setMethod("atomicType",
-  list(self = "SemanticType"),
+  signature(self = "SemanticType"),
   function(self) self@atom
 )
 
@@ -106,7 +127,7 @@ setGeneric("atomicType<-",
   valueClass = "Type")
 
 setMethod("atomicType<-",
-  list(self = "SemanticType"),
+  signature(self = "SemanticType"),
   function(self, value) {
     self@atom = value
     return(self)
@@ -114,7 +135,7 @@ setMethod("atomicType<-",
 )
 
 setMethod("length",
-  list(x = "Type"),
+  signature(x = "Type"),
   function(x) 1L
 )
 
@@ -124,7 +145,7 @@ UnknownType =
   setClass("UnknownType", contains = "AtomicType")
 
 setMethod("length",
-  list(x = "UnknownType"),
+  signature(x = "UnknownType"),
   function(x) NA_integer_
 )
 
@@ -158,12 +179,12 @@ VectorType =
   )
 
 setMethod("length",
-  list(x = "VectorType"),
+  signature(x = "VectorType"),
   function(x) x@length
 )
 
 setMethod("length<-",
-  list(x = "VectorType"),
+  signature(x = "VectorType"),
   function(x, value) {
     x@length = as.integer(value)
     return(x)

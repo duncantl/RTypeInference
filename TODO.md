@@ -1,9 +1,10 @@
 
 # Pending:
 
-* Special handling for subset function `[` (?)
-* Inference for while loops.
 * Tests for larger bodies of code (not just snippets).
+* Inference for while loops.
+* Support extraction functions `[[` and `$`.
+* Support for multidimensional `[`.
 
 # Deferred:
 

@@ -1,6 +1,11 @@
 # Description:
 #   Utility functions.
 
+.typeInfo =
+function(...) 
+  # No-op function for type annotations.
+{}
+
 evalTypeInfo =
 function(annotation)
   # Evaluate the contents of a .typeInfo annotation.
@@ -33,6 +38,8 @@ function(types)
   # TODO:
   #   * Merge with math operator upcasting?
   #   * Test on semantic types
+
+  # FIXME: This breaks for things that make lists.
 
   types = lapply(types, atomicType)
 

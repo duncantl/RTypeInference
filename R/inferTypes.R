@@ -239,7 +239,7 @@ function(x, typeCollector = TypeCollector(), ...)
 
   } else if (identicalType(if_type, else_type)) {
     # Branches have the same type, so collapse to that type.
-    value(if_type) = NA
+    value(if_type) = UnknownValue()
     if_type
 
   } else {

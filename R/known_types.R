@@ -20,18 +20,18 @@ list(
 
       atomicType(args$x) = atom
       # FIXME:
-      value(args$x) = NA
+      value(args$x) = UnknownValue()
       return(args$x)
     }),
 
   # Value-dependent return type.
   "rnorm" = ConditionalType(
     function(args) {
-      makeVector(NumericType(), value(args$n))
+      makeVector(NumericType(), value(args$n, NA))
     }),
   "numeric" = ConditionalType(
     function(args) {
-      makeVector(NumericType(), value(args$n))
+      makeVector(NumericType(), value(args$n, NA))
     }),
   
   ":" = ConditionalType(
@@ -42,19 +42,13 @@ list(
       x = args[[1]]
       y = args[[2]]
 
-      length = abs(value(x) - value(y)) + 1
+      length = abs(value(x, NA) - value(y, NA)) + 1
       makeVector(IntegerType(), length)
     }),
   "c" = ConditionalType(
-    # FIXME:
     function(args) {
       length = sum(sapply(args, length))
-
-      # FIXME: use upcasting function to determine type.
-      if (any_is(args, "IntegerType"))
-        VectorType(IntegerType(), length)
-      else
-        NullType()
+      makeVector(upcast(args), length)
     })
 #  "(" = "nil",
 #  "[" = "nil",
