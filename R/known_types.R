@@ -54,9 +54,6 @@ list(
 #  "[" = "nil",
   )
 
-# Can retire this when we remove infer_rhs()
-#known_table = data.frame(varname = names(knownFunctionTypes), type = knownFunctionTypes, stringsAsFactors = FALSE)
-  
 # ultimately would use this table, once it's filled out
 # This comes from ../TU/primitives.R
 unknown_table = as.data.frame(t(cbind(

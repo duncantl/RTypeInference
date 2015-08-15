@@ -79,26 +79,4 @@ function(x, typeCollector, ...)
     stop("Multi-dimensional subsetting is not yet supported!")
 
   return(type)
-  #varname = getVarName(x)
-  #ty = typeCollector$getType(varname)
-  #if(is(ty, "UpdateType"))
-  #   ty = ty@type
-  #
-  #if(isScalar(ty)) {
-  #  ty
-  #} else {
-  #   if(isScalarSubset(x, type, varname, typeCollector, ...))
-  #       mapTypeToScalar(ty)
-  #   else
-  #     ty
-  #}
-}
-
-
-isScalarSubset =
-function(call, type, varname, typeCollector, ...)    
-{
-# have to handle matrices.
-#    
-  isScalar( inferTypes(call[[3]], typeCollector, ...) )
 }

@@ -30,7 +30,6 @@ Note:  Connect with the TypeInfo package, both to read type information
   the inferred types to a function.
 Collate:
   type_definitions.R
-  aClasses.R
   known_types.R
   primitiveNames.R
   inferTypes.R
