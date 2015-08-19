@@ -31,7 +31,7 @@ list(
     }),
   "numeric" = ConditionalType(
     function(args) {
-      makeVector(NumericType(), value(args$n, NA))
+      makeVector(NumericType(), value(args$length, NA))
     }),
 
   "matrix" = ConditionalType(
