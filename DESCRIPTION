@@ -10,17 +10,31 @@ Description: This package is an effort to infer the types of
   (There may be multiple input and output combinations.)
   We also want to do this for a script and identify the 
   types of each variable.  Here we may know the types of the original
-  inputs or begiven hints.
+  inputs or be given hints.
   This effort is complicated because R functions are very flexible in what they 
   accept and return and as a result the types are very dynamic.
   It is further complicated when we want to differentiate between
   scalar and vector types.
-License: GPL2
-Depends: CodeDepends, codetools
-URL:  https://github.com/duncantl/RTypeInference
-      http://www.omegahat.org/RTypeInference
-Note:  Connect with the TypeInfo package, both to read type information
+License: GPL-2
+Depends: 
+  methods,
+  codetools,
+  pryr
+Suggests: 
+  testthat,
+  knitr
+URL: 
+  https://github.com/duncantl/RTypeInference
+  http://www.omegahat.org/RTypeInference
+Note: Connect with the TypeInfo package, both to read type information
   users specify on functions and also as a possible way to attach
   the inferred types to a function.
-
-
+Collate: 
+  type_definitions.R
+  known_types.R
+  primitiveNames.R
+  inferTypes.R
+  operator_handlers.R
+  TypeCollector.R
+  utilities.R
+VignetteBuilder: knitr

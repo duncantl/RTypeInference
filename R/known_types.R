@@ -1,25 +1,80 @@
+# Description:
+#   Lists of known types for functions.
 
-# cheap known table
 knownFunctionTypes =
 list(
-  "rnorm" = "numeric",
-  "^" = "numeric",
-  "which" = "integer",
-  "numeric" = "numeric",
-  ":" = "integer",
-#  "<" = "logical",
-#  ">" = "logical",
-#  "==" = "logical",    
-#  "*" = "numeric",
+  # Type stable return type.
+  "length" = IntegerType(),
+  "which" = VectorType(IntegerType(), NA),
+
+  # Type-dependent return type.
+  "abs" = ConditionalType(
+    function(args) {
+      atom = atomicType(args$x)
+
+      atom =
+        if (is(atom, "ComplexType") || is(atom, "NumericType"))
+          NumericType()
+        else if (is(atom, "IntegerType"))
+          IntegerType()
+
+      atomicType(args$x) = atom
+      # FIXME:
+      value(args$x) = UnknownValue()
+      return(args$x)
+    }),
+
+  # Value-dependent return type.
+  "rnorm" = ConditionalType(
+    function(args) {
+      makeVector(NumericType(), value(args$n, NA))
+    }),
+  "numeric" = ConditionalType(
+    function(args) {
+      makeVector(NumericType(), value(args$length, NA))
+    }),
+
+  "matrix" = ConditionalType(
+    function(args) {
+      # TODO:
+      #   * The default arguments should really be pulled using `formals()`.
+      #   * Propagate value if literal?
+      atom = atomicType(args$data)
+
+      nrow =
+        if ("nrow" %in% names(args)) value(args$nrow)
+        else 1L
+      ncol =
+        if ("ncol" %in% names(args)) value(args$ncol)
+        else 1L
+      dimension = c(nrow, ncol)
+
+      value(atom) = UnknownValue()
+
+      makeVector(atom, dimension)
+    }),
+  
+  ":" = ConditionalType(
+    # `:()` downcasts to integer whenever possible, and works on vector
+    # arguments by taking the first elements.
+    function(args) {
+      # FIXME: This function can also return NumericType.
+      x = args[[1]]
+      y = args[[2]]
+
+      length = abs(value(x, NA) - value(y, NA)) + 1
+      makeVector(IntegerType(), length)
+    }),
+  "c" = ConditionalType(
+    function(args) {
+      # TODO: Propagate value if all args are literal?
+      length = sum(sapply(args, length))
+      makeVector(upcast(args), length)
+    })
 #  "(" = "nil",
 #  "[" = "nil",
-  "length" = "int"    
   )
 
-# Can retire this when we remove infer_rhs()
-known_table = data.frame(varname = names(knownFunctionTypes), type = knownFunctionTypes, stringsAsFactors = FALSE)
-
-  
 # ultimately would use this table, once it's filled out
 # This comes from ../TU/primitives.R
 unknown_table = as.data.frame(t(cbind(
