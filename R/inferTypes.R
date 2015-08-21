@@ -23,6 +23,11 @@ function(x, typeCollector = TypeCollector(), ...)
 inferTypes.function =
 function(x, typeCollector = TypeCollector(), ...)
 {    
+  # Check for type annotations.
+  type_list = attr(x, ".typeInfo")
+  if (!is.null(type_list))
+    typeCollector$mergeTypeList(type_list)
+
   body = body(x)
 
   # Rewrite with { and delegate work to inferTypes.{
@@ -32,7 +37,15 @@ function(x, typeCollector = TypeCollector(), ...)
   
   # Return last value. What we really need to do is work with the CFG, so exit
   # blocks will always have only one return type.
-  inferTypes(body, typeCollector)
+  return_type = inferTypes(body, typeCollector)
+
+  # If the last line wasn't a `return()`, add the return type.
+  # TODO: This is a hack; we should find a more elegant solution.
+  last_line = body[[length(body)]]
+  if (!is.call(last_line) || as.character(last_line[[1]]) != "return")
+    typeCollector$addReturn(return_type)
+
+  return(return_type)
 }
 
 
