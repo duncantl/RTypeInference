@@ -23,7 +23,12 @@ function(x, typeCollector = TypeCollector(), ...)
 inferTypes.function =
 function(x, typeCollector = TypeCollector(), ...)
 {    
-  # Check for type annotations.
+  # Check for type annotations in the arguments.
+  type_list = list(...)[[".typeInfo"]]
+  if (!is.null(type_list))
+    typeCollector$mergeTypeList(type_list)
+
+  # Check for type annotations as an attribute.
   type_list = attr(x, ".typeInfo")
   if (!is.null(type_list))
     typeCollector$mergeTypeList(type_list)
