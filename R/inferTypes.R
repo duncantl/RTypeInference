@@ -206,6 +206,19 @@ function(x, typeCollector = TypeCollector(), ...)
 }
 
 
+inferTypes.while =
+function(x, typeCollector = TypeCollector(), ...)
+{
+  # TODO: Iterator detection for while loops.
+  # FIXME: Why does inference on x + 1 with Unknown x return IntegerType?
+
+  atom = inferTypes(x[[3]], typeCollector, ...)
+  atom = atomicType(atom)
+
+  return(atom)
+}
+
+
 `inferTypes.{` =
 function(x, typeCollector = TypeCollector(), ...)
 {
