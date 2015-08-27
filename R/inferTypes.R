@@ -23,6 +23,10 @@ function(x, typeCollector = TypeCollector(), ...)
 inferTypes.function =
 function(x, typeCollector = TypeCollector(), ...)
 {    
+  # Get type information from the function's default arguments.
+  type_list = lapply(formals(x), inferTypes, typeCollector, ...)
+  typeCollector$mergeTypeList(type_list)
+
   # Check for type annotations in the arguments.
   type_list = list(...)[[".typeInfo"]]
   if (!is.null(type_list))
@@ -105,14 +109,12 @@ function(x, typeCollector = TypeCollector(), ...)
 inferTypes.call =
 function(x, typeCollector = TypeCollector(), ...)
 {
-  # Math and logical operators
-  # This is quite similar to what we are doing in the RLLVMCompile so we
-  # should consolidate the code.
   call_name = as.character(x[[1]])
 
   # TODO: 
-  #   * Move all call handlers to a separate file.
-  #   * Clean up this mess.
+  #   Ideally, all calls would be treated as known functions and handled that
+  #   way. Are there any calls that need special treatment besides `return()`
+  #   and `.typeInfo()`?
   if(call_name == "return")
     typeCollector$addReturn(inferTypes(x[[2]], typeCollector, ...))
   else if (call_name == ".typeInfo") {
@@ -121,8 +123,13 @@ function(x, typeCollector = TypeCollector(), ...)
     typeCollector$mergeTypeList(type_list)
     # TODO: Unclear what type we should return for this.
     NullType()
+
   } else if(call_name == "[")
     inferSubsetType(x, typeCollector, ...)
+  else if(call_name == "[[")
+    stop("[[ is not yet supported.")
+  else if(call_name == "$")
+    stop("$ is not yet supported.")
   else if(call_name %in% MATH_OPS)
     inferMathOpType(x, typeCollector, ...)
   else if(call_name %in% LOGIC_OPS)
