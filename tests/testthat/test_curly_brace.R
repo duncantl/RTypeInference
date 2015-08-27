@@ -31,7 +31,7 @@ test_that("type is collected for {", {
   collector = TypeCollector()
 
   inferTypes(expression, collector)
-  expect_is(collector$getType("a"), "IntegerType")
-  expect_is(collector$getType("b"), "ComplexType")
-  expect_is(collector$getType("c"), "IntegerType")
+  expect_is(collector$getVariableType("a"), "IntegerType")
+  expect_is(collector$getVariableType("b"), "ComplexType")
+  expect_is(collector$getVariableType("c"), "IntegerType")
 })

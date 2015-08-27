@@ -18,7 +18,7 @@ test_that("type is collected for literal assignments", {
   collector = TypeCollector()
 
   inferTypes(expression, collector)
-  expect_is(collector$getType("x"), "IntegerType")
+  expect_is(collector$getVariableType("x"), "IntegerType")
 })
 
 test_that("type is inferred for recursive literal assignments", {
@@ -27,18 +27,18 @@ test_that("type is inferred for recursive literal assignments", {
 
   result = inferTypes(expression, collector)
   expect_is(result, "IntegerType")
-  expect_is(collector$getType("x"), "IntegerType")
-  expect_is(collector$getType("y"), "IntegerType")
+  expect_is(collector$getVariableType("x"), "IntegerType")
+  expect_is(collector$getVariableType("y"), "IntegerType")
 })
 
 test_that("type is infered for known-type variable assignments", {
   expression = call("=", quote(x), quote(y))
   collector = TypeCollector()
-  collector$addType("y", NumericType())
+  collector$setVariableType("y", NumericType())
 
   result = inferTypes(expression, collector)
   expect_is(result, "NumericType")
-  expect_is(collector$getType("x"), "NumericType")
+  expect_is(collector$getVariableType("x"), "NumericType")
 })
 
 test_that("type is inferred for array assignments", {

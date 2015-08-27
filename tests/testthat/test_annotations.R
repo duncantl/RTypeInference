@@ -14,15 +14,15 @@ test_that("type annotations are collected from .typeInfo calls", {
 
   inferTypes(expression, collector)
 
-  expect_is(collector$getType("x"), "IntegerType")
-  expect_is(collector$getType("new_x"), "IntegerType")
+  expect_is(collector$getVariableType("x"), "IntegerType")
+  expect_is(collector$getVariableType("new_x"), "IntegerType")
 
-  y_type = collector$getType("y")
+  y_type = collector$getVariableType("y")
   expect_is(y_type, "VectorType")
   expect_is(atomicType(y_type), "NumericType")
   expect_equal(length(y_type), 3L)
 
-  new_y_type = collector$getType("new_y")
+  new_y_type = collector$getVariableType("new_y")
   expect_is(new_y_type, "VectorType")
   expect_is(atomicType(y_type), "NumericType")
   expect_equal(length(y_type), 3L)
@@ -41,15 +41,15 @@ test_that("type annotations are collected from .typeInfo attributes", {
   collector = TypeCollector()
   inferTypes(expression, collector)
 
-  expect_is(collector$getType("x"), "IntegerType")
-  expect_is(collector$getType("new_x"), "IntegerType")
+  expect_is(collector$getVariableType("x"), "IntegerType")
+  expect_is(collector$getVariableType("new_x"), "IntegerType")
 
-  y_type = collector$getType("y")
+  y_type = collector$getVariableType("y")
   expect_is(y_type, "VectorType")
   expect_is(atomicType(y_type), "NumericType")
   expect_equal(length(y_type), 3L)
 
-  new_y_type = collector$getType("new_y")
+  new_y_type = collector$getVariableType("new_y")
   expect_is(new_y_type, "VectorType")
   expect_is(atomicType(y_type), "NumericType")
   expect_equal(length(y_type), 3L)
@@ -68,15 +68,15 @@ test_that("type annotations are collected from .typeInfo parameter", {
   collector = TypeCollector()
   inferTypes(expression, collector, .typeInfo = type_list)
 
-  expect_is(collector$getType("x"), "IntegerType")
-  expect_is(collector$getType("new_x"), "IntegerType")
+  expect_is(collector$getVariableType("x"), "IntegerType")
+  expect_is(collector$getVariableType("new_x"), "IntegerType")
 
-  y_type = collector$getType("y")
+  y_type = collector$getVariableType("y")
   expect_is(y_type, "VectorType")
   expect_is(atomicType(y_type), "NumericType")
   expect_equal(length(y_type), 3L)
 
-  new_y_type = collector$getType("new_y")
+  new_y_type = collector$getVariableType("new_y")
   expect_is(new_y_type, "VectorType")
   expect_is(atomicType(y_type), "NumericType")
   expect_equal(length(y_type), 3L)

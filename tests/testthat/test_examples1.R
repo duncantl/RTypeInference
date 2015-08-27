@@ -16,7 +16,7 @@ test_that("types are inferred for isum()", {
   collector = TypeCollector()
   result = inferTypes(isum, collector)
 
-  expect_is(collector$getType("i"), "IteratorType")
-  expect_is(collector$getType("total"), "NumericType")
+  expect_is(collector$getVariableType("i"), "IteratorType")
+  expect_is(collector$getVariableType("total"), "NumericType")
   expect_is(result, "NumericType")
 })

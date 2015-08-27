@@ -10,7 +10,7 @@ test_that("default arguments are used to infer type", {
 
   result = inferTypes(fun, collector)
   expect_is(result, "CharacterType")
-  expect_is(collector$getType("x"), "UnknownType")
-  expect_is(collector$getType("y"), "IntegerType")
-  expect_is(collector$getType("z"), "UnknownType")
+  expect_is(collector$getVariableType("x"), "UnknownType")
+  expect_is(collector$getVariableType("y"), "IntegerType")
+  expect_is(collector$getVariableType("z"), "UnknownType")
 })

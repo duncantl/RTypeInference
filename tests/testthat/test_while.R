@@ -7,10 +7,10 @@ test_that("types are collected for simple while loops", {
       i = i + 1
   )
   collector = TypeCollector()
-  collector$addType("i", IntegerType())
+  collector$setVariableType("i", IntegerType())
 
   result = inferTypes(expression, collector)
-  type = collector$getType("i")
+  type = collector$getVariableType("i")
   expect_is(result, "IntegerType")
   expect_is(type, "IntegerType")
 })
@@ -24,11 +24,11 @@ test_that("types are collected for while loops", {
     }
   )
   collector = TypeCollector()
-  collector$addType("j", IntegerType())
+  collector$setVariableType("j", IntegerType())
 
   result = inferTypes(expression, collector)
   expect_is(result, "IntegerType")
-  expect_is(collector$getType("x"), "IntegerType")
-  expect_is(collector$getType("y"), "ComplexType")
-  expect_is(collector$getType("j"), "IntegerType")
+  expect_is(collector$getVariableType("x"), "IntegerType")
+  expect_is(collector$getVariableType("y"), "ComplexType")
+  expect_is(collector$getVariableType("j"), "IntegerType")
 })

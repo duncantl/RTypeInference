@@ -28,8 +28,8 @@ test_that("type inferred for 1d variable index subsetting", {
   collector = TypeCollector()
 
   len = 5L
-  collector$addType("x", VectorType(ComplexType(), 10L))
-  collector$addType("idx", VectorType(IntegerType(), len))
+  collector$setVariableType("x", VectorType(ComplexType(), 10L))
+  collector$setVariableType("idx", VectorType(IntegerType(), len))
 
   result = inferTypes(expression, collector)
   expect_is(result, "VectorType")

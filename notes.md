@@ -1,6 +1,28 @@
 
 # Notes
 
+## 2015.08.26
+
+The code for handling math and logic operators is very similar to the code for 
+handling other known functions. It makes sense to use a unified inference 
+strategy for all calls except special cases like `return()` and `.typeInfo()`.
+However, in order to reuse "similar" handler functions for several different 
+callers, handler functions need to accept the call name as an argument. What's 
+the best way to add this feature to ConditionalType without disrupting its use 
+for if statements?
+
+ConditionalType is for situations where the CFG branches and a variable has a 
+different type on each branch; it's essentially a phi function for types.
+
+One strategy for compiling a ConditionalType is to generate multiple copies of 
+a function, one for each type flow. A drawback of this approach is that the 
+correct type flow has to be determined at call time, which is inefficient for 
+conditions that depend on intermediate computations rather than the function 
+arguments.
+
+Another strategy is to compile every block, and perform branching at runtime. 
+This avoids issues with intermediate computations.
+
 ## 2015.08.13
 
 Later on, we could infer types of variables based on how they're used as 

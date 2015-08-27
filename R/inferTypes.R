@@ -23,19 +23,19 @@ function(x, typeCollector = TypeCollector(), ...)
 inferTypes.function =
 function(x, typeCollector = TypeCollector(), ...)
 {    
-  # Get type information from the function's default arguments.
-  type_list = lapply(formals(x), inferTypes, typeCollector, ...)
-  typeCollector$mergeTypeList(type_list)
+  # TODO: Type annotations should be handled from a top-level function.
 
   # Check for type annotations in the arguments.
   type_list = list(...)[[".typeInfo"]]
-  if (!is.null(type_list))
-    typeCollector$mergeTypeList(type_list)
+  typeCollector$mergeVariableTypeList(type_list, force = TRUE)
 
   # Check for type annotations as an attribute.
   type_list = attr(x, ".typeInfo")
-  if (!is.null(type_list))
-    typeCollector$mergeTypeList(type_list)
+  typeCollector$mergeVariableTypeList(type_list, force = TRUE)
+
+  # Get type information from the function's default arguments.
+  type_list = lapply(formals(x), inferTypes, typeCollector, ...)
+  typeCollector$mergeVariableTypeList(type_list)
 
   body = body(x)
 
@@ -77,7 +77,9 @@ function(x, typeCollector = TypeCollector(), ...)
 
   if (class(lhs) == "name") {
     name = as.character(lhs)
-    typeCollector$addType(name, type)
+    # TODO: If the variable already has a type, see if it's compatible for
+    # casting; throw an error on incompatible types.
+    typeCollector$setVariableType(name, type, force = TRUE)
 
   } else if (class(lhs) == "call") {
     # Array or function assignment. For now, do nothing.
@@ -120,7 +122,7 @@ function(x, typeCollector = TypeCollector(), ...)
   else if (call_name == ".typeInfo") {
     # Get types from annotation and add to collector.
     type_list = evalTypeInfo(x)
-    typeCollector$mergeTypeList(type_list)
+    typeCollector$mergeVariableTypeList(type_list, force = TRUE)
     # TODO: Unclear what type we should return for this.
     NullType()
 
@@ -158,7 +160,7 @@ function(x, typeCollector = TypeCollector(), ...)
   # reference for to the variable for non-constants.
 
   # Try to retrieve type.
-  typeCollector$getType(x)
+  typeCollector$getVariableType(x)
 }
 
 
@@ -204,7 +206,7 @@ function(x, typeCollector = TypeCollector(), ...)
   atom = atomicType(atom)
   type = IteratorType(atom = atom)
 
-  typeCollector$addType(as.character(x[[2]]), type)
+  typeCollector$setVariableType(as.character(x[[2]]), type)
     
   # Infer type of contents.
   inferTypes(x[[4]], typeCollector, ...)

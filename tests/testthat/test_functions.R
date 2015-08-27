@@ -25,9 +25,9 @@ test_that("types are collected for functions", {
 
   result = inferTypes(fun, collector)
   expect_is(result, "CharacterType")
-  expect_is(collector$getType("x"), "IntegerType")
-  expect_is(collector$getType("y"), "IntegerType")
-  expect_is(collector$getType("z"), "CharacterType")
+  expect_is(collector$getVariableType("x"), "IntegerType")
+  expect_is(collector$getVariableType("y"), "IntegerType")
+  expect_is(collector$getVariableType("z"), "CharacterType")
 })
 
 test_that("return type is inferred for functions that aren't type-stable", {
