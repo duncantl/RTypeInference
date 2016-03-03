@@ -3,7 +3,7 @@
 
 test_that("logical types work", {
   type = inferTypes(TRUE)
-  expect_is(type, "LogicalType")
+  expect_is(type, "BooleanType")
 })
 
 test_that("integer types work", {
@@ -13,7 +13,7 @@ test_that("integer types work", {
 
 test_that("numeric types work", {
   type = inferTypes(3.17)
-  expect_is(type, "NumericType")
+  expect_is(type, "RealType")
 })
 
 test_that("complex types work", {

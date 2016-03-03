@@ -9,7 +9,7 @@ test_that("simple if statements work", {
   type = inferTypes(expr)
   expect_is(type, "ConditionalType")
   branch_types = getBranchTypes(type)
-  expect_equal(branch_types, c("NumericType", "NullType"))
+  expect_equal(branch_types, c("RealType", "NullType"))
 })
 
 test_that("simple if-else statements work", {

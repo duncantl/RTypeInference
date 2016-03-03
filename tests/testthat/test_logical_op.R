@@ -7,7 +7,7 @@ test_that("scalar | works", {
   )
 
   type = inferTypes(expr)
-  expect_is(type, "LogicalType")
+  expect_is(type, "BooleanType")
 })
 
 test_that("vector-vector | works", {
@@ -18,8 +18,8 @@ test_that("vector-vector | works", {
   )
 
   type = inferTypes(expr)
-  expect_is(type, "VectorType")
-  expect_is(atomicType(type), "LogicalType")
+  expect_is(type, "ArrayType")
+  expect_is(element_type(type), "BooleanType")
   expect_equal(length(type), length(x))
 })
 
@@ -29,12 +29,12 @@ test_that("vector || and && work", {
   )
 
   type = inferTypes(expr)
-  expect_is(type, "LogicalType")
+  expect_is(type, "BooleanType")
 
   expr = quote(
     c(TRUE, TRUE, FALSE) && c(FALSE, FALSE, FALSE)
   )
 
   type = inferTypes(expr)
-  expect_is(type, "LogicalType")
+  expect_is(type, "BooleanType")
 })

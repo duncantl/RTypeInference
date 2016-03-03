@@ -68,9 +68,6 @@ function(x, typeCollector = TypeCollector(), ...)
   # Try to infer type of RHS. This is potentially recursive.
   rhs = x[[3]]
   type = inferTypes(rhs, typeCollector, ...)
-  # Get the atomic type for iterator types.
-  if (is(type, "IteratorType"))
-    type = atomicType(type)
 
   # Update the symbol table.
   lhs = x[[2]]
@@ -185,7 +182,7 @@ function(x, typeCollector = TypeCollector(), ...)
     # Else branch is really an else if; merge into one ConditionalType object.
     pushCondition_q(else_type, x[[2]], if_type)
 
-  } else if (identicalType(if_type, else_type)) {
+  } else if (same_type(if_type, else_type)) {
     # Branches have the same type, so collapse to that type.
     value(if_type) = UnknownValue()
     if_type
@@ -202,9 +199,8 @@ function(x, typeCollector = TypeCollector(), ...)
 {
   # TODO: Handle variables that are composed from an iterator variable.
 
-  atom = inferTypes(x[[3]], typeCollector, ...)
-  atom = atomicType(atom)
-  type = IteratorType(atom = atom)
+  type = inferTypes(x[[3]], typeCollector, ...)
+  type = add_context(element_type(type), "iterator")
 
   typeCollector$setVariableType(as.character(x[[2]]), type)
     
@@ -222,7 +218,7 @@ function(x, typeCollector = TypeCollector(), ...)
   # FIXME: Why does inference on x + 1 with Unknown x return IntegerType?
 
   atom = inferTypes(x[[3]], typeCollector, ...)
-  atom = atomicType(atom)
+  atom = element_type(atom)
 
   return(atom)
 }
@@ -252,7 +248,7 @@ function(x, typeCollector = TypeCollector(), ...)
 inferTypes.logical =
 function(x, typeCollector = TypeCollector(), ...)
 {
-  type = makeVector(LogicalType(), length(x))
+  type = makeVector(BooleanType(), length(x))
   value(type) = x
 
   return(type)
@@ -277,7 +273,7 @@ function(x, typeCollector = TypeCollector(), ...)
   if (is_integer)
     return(inferTypes.integer(x))
 
-  type = makeVector(NumericType(), length(x))
+  type = makeVector(RealType(), length(x))
   value(type) = x
 
   return(type)

@@ -21,7 +21,7 @@ function(atom, dimension)
   if(!is.na(length) && length == 1)
     atom
   else
-    VectorType(atom, dimension)
+    ArrayType(atom, dimension)
 }
 
 any_is =
@@ -42,18 +42,18 @@ function(types)
 
   # FIXME: This breaks for things that make lists.
 
-  types = lapply(types, atomicType)
+  types = lapply(types, element_type)
 
   if (any_is(types, "CharacterType"))
     CharacterType()
   else if (any_is(types, "ComplexType"))
     ComplexType()
-  else if (any_is(types, "NumericType"))
-    NumericType()
+  else if (any_is(types, "RealType"))
+    RealType()
   else if (any_is(types, "IntegerType"))
     IntegerType()
-  else if (any_is(types, "LogicalType"))
-    LogicalType()
+  else if (any_is(types, "BooleanType"))
+    BooleanType()
   else
     # FIXME:
     stop("Upcast fell through!")

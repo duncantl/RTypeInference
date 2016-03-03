@@ -5,20 +5,23 @@ knownFunctionTypes =
 list(
   # Type stable return type.
   "length" = IntegerType(),
-  "which" = VectorType(IntegerType(), NA),
+  "which" = ArrayType(IntegerType(), NA),
 
   # Type-dependent return type.
   "abs" = ConditionalType(
+    # complex|numeric -> numeric
+    # integer -> integer
     function(args) {
-      atom = atomicType(args$x)
+      # Here x should be an vector, not a list.
+      atom = element_type(args$x)
 
       atom =
-        if (is(atom, "ComplexType") || is(atom, "NumericType"))
-          NumericType()
+        if (is(atom, "ComplexType") || is(atom, "RealType"))
+          RealType()
         else if (is(atom, "IntegerType"))
           IntegerType()
 
-      atomicType(args$x) = atom
+      element_type(args$x) = atom
       # FIXME:
       value(args$x) = UnknownValue()
       return(args$x)
@@ -27,11 +30,11 @@ list(
   # Value-dependent return type.
   "rnorm" = ConditionalType(
     function(args) {
-      makeVector(NumericType(), value(args$n, NA))
+      makeVector(RealType(), value(args$n, NA))
     }),
   "numeric" = ConditionalType(
     function(args) {
-      makeVector(NumericType(), value(args$length, NA))
+      makeVector(RealType(), value(args$length, NA))
     }),
 
   "matrix" = ConditionalType(
@@ -39,7 +42,7 @@ list(
       # TODO:
       #   * The default arguments should really be pulled using `formals()`.
       #   * Propagate value if literal?
-      atom = atomicType(args$data)
+      atom = element_type(args$data)
 
       nrow =
         if ("nrow" %in% names(args)) value(args$nrow)
@@ -58,7 +61,7 @@ list(
     # `:()` downcasts to integer whenever possible, and works on vector
     # arguments by taking the first elements.
     function(args) {
-      # FIXME: This function can also return NumericType.
+      # FIXME: This function can also return RealType.
       x = args[[1]]
       y = args[[2]]
 

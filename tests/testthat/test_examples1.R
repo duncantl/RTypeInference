@@ -11,12 +11,13 @@ test_that("types are inferred for isum()", {
     total
   }
   attr(isum, ".typeInfo") =
-    list(x = VectorType(NumericType(), NA), n = IntegerType())
+    list(x = ArrayType(RealType(), NA), n = IntegerType())
 
   collector = TypeCollector()
   result = inferTypes(isum, collector)
 
-  expect_is(collector$getVariableType("i"), "IteratorType")
-  expect_is(collector$getVariableType("total"), "NumericType")
-  expect_is(result, "NumericType")
+  expect_true(has_context(collector$getVariableType("i"), "iterator"))
+  expect_is(collector$getVariableType("i"), "IntegerType")
+  expect_is(collector$getVariableType("total"), "RealType")
+  expect_is(result, "RealType")
 })

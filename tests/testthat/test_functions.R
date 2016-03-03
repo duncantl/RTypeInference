@@ -5,7 +5,7 @@ test_that("literal return type is inferred for functions", {
   fun = function() 8.1
 
   result = inferTypes(fun)
-  expect_is(result, "NumericType")
+  expect_is(result, "RealType")
 
   fun = function() {
     42L

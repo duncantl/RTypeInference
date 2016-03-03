@@ -7,7 +7,7 @@ test_that("scalar multiplication works", {
   )
 
   type = inferTypes(expr)
-  expect_is(type, "NumericType")
+  expect_is(type, "RealType")
 })
 
 test_that("scalar division works", {
@@ -16,7 +16,7 @@ test_that("scalar division works", {
   )
 
   type = inferTypes(expr)
-  expect_is(type, "NumericType")
+  expect_is(type, "RealType")
 
   # Mixed types
   expr = quote(
@@ -24,7 +24,7 @@ test_that("scalar division works", {
   )
 
   type = inferTypes(expr)
-  expect_is(type, "NumericType")
+  expect_is(type, "RealType")
 
   # Complex types
   expr = quote(
@@ -41,7 +41,7 @@ test_that("scalar exponentiation works", {
   )
 
   type = inferTypes(expr)
-  expect_is(type, "NumericType")
+  expect_is(type, "RealType")
 
   # Complex types
   expr = quote(
@@ -60,8 +60,8 @@ test_that("scalar-vector addition works", {
   )
 
   type = inferTypes(expr)
-  expect_is(type, "VectorType")
-  expect_is(atomicType(type), "NumericType")
+  expect_is(type, "ArrayType")
+  expect_is(element_type(type), "RealType")
   expect_equal(length(type), length(x))
 })
 
@@ -73,8 +73,8 @@ test_that("vector-vector addition works", {
   )
 
   type = inferTypes(expr)
-  expect_is(type, "VectorType")
-  expect_is(atomicType(type), "IntegerType")
+  expect_is(type, "ArrayType")
+  expect_is(element_type(type), "IntegerType")
   expect_equal(length(type), length(x))
 })
 
@@ -86,7 +86,7 @@ test_that("recycled vector-vector addition works", {
   )
 
   type = inferTypes(expr)
-  expect_is(type, "VectorType")
-  expect_is(atomicType(type), "NumericType")
+  expect_is(type, "ArrayType")
+  expect_is(element_type(type), "RealType")
   expect_equal(length(type), length(x))
 })

@@ -5,7 +5,7 @@ test_that("type annotations are collected from .typeInfo calls", {
   expression = quote({
     .typeInfo(
       x = IntegerType(),
-      y = VectorType(NumericType(), 3L)
+      y = ArrayType(RealType(), 3L)
     )
     new_x = x
     new_y = y
@@ -18,13 +18,13 @@ test_that("type annotations are collected from .typeInfo calls", {
   expect_is(collector$getVariableType("new_x"), "IntegerType")
 
   y_type = collector$getVariableType("y")
-  expect_is(y_type, "VectorType")
-  expect_is(atomicType(y_type), "NumericType")
+  expect_is(y_type, "ArrayType")
+  expect_is(element_type(y_type), "RealType")
   expect_equal(length(y_type), 3L)
 
   new_y_type = collector$getVariableType("new_y")
-  expect_is(new_y_type, "VectorType")
-  expect_is(atomicType(y_type), "NumericType")
+  expect_is(new_y_type, "ArrayType")
+  expect_is(element_type(y_type), "RealType")
   expect_equal(length(y_type), 3L)
 })
 
@@ -35,7 +35,7 @@ test_that("type annotations are collected from .typeInfo attributes", {
   }
   attr(expression, ".typeInfo") = list(
     x = IntegerType(),
-    y = VectorType(NumericType(), 3L)
+    y = ArrayType(RealType(), 3L)
   )
 
   collector = TypeCollector()
@@ -45,13 +45,13 @@ test_that("type annotations are collected from .typeInfo attributes", {
   expect_is(collector$getVariableType("new_x"), "IntegerType")
 
   y_type = collector$getVariableType("y")
-  expect_is(y_type, "VectorType")
-  expect_is(atomicType(y_type), "NumericType")
+  expect_is(y_type, "ArrayType")
+  expect_is(element_type(y_type), "RealType")
   expect_equal(length(y_type), 3L)
 
   new_y_type = collector$getVariableType("new_y")
-  expect_is(new_y_type, "VectorType")
-  expect_is(atomicType(y_type), "NumericType")
+  expect_is(new_y_type, "ArrayType")
+  expect_is(element_type(y_type), "RealType")
   expect_equal(length(y_type), 3L)
 })
 
@@ -62,7 +62,7 @@ test_that("type annotations are collected from .typeInfo parameter", {
   }
  type_list = list(
     x = IntegerType(),
-    y = VectorType(NumericType(), 3L)
+    y = ArrayType(RealType(), 3L)
   )
 
   collector = TypeCollector()
@@ -72,12 +72,12 @@ test_that("type annotations are collected from .typeInfo parameter", {
   expect_is(collector$getVariableType("new_x"), "IntegerType")
 
   y_type = collector$getVariableType("y")
-  expect_is(y_type, "VectorType")
-  expect_is(atomicType(y_type), "NumericType")
+  expect_is(y_type, "ArrayType")
+  expect_is(element_type(y_type), "RealType")
   expect_equal(length(y_type), 3L)
 
   new_y_type = collector$getVariableType("new_y")
-  expect_is(new_y_type, "VectorType")
-  expect_is(atomicType(y_type), "NumericType")
+  expect_is(new_y_type, "ArrayType")
+  expect_is(element_type(y_type), "RealType")
   expect_equal(length(y_type), 3L)
 })

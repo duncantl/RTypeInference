@@ -10,21 +10,23 @@ function(x, typeCollector, ...)
 {
   # complex > numeric > integer > logical
   # Division and exponentiation alway produce numeric or complex.
+  # Get operator name and argument types.
   op_name = as.character(x[[1]])
 
-  types = lapply(x[-1], inferTypes, typeCollector, ...)
+  args = lapply(x[-1], inferTypes, typeCollector, ...)
 
-  length = max(vapply(types, length, 0L))
+  length = max(vapply(args, length, 0L))
 
-  types = lapply(types, atomicType)
+  args = lapply(args, element_type)
+
   atom =
-  if (any_is(types, "ComplexType"))
+  if (any_is(args, "ComplexType"))
     ComplexType()
-  else if (any_is(types, "NumericType") || op_name %in% c("/", "^"))
-    NumericType()
-  else if(any_is(types, "IntegerType"))
+  else if (any_is(args, "RealType") || op_name %in% c("/", "^"))
+    RealType()
+  else if(any_is(args, "IntegerType"))
     IntegerType()
-  else if(any_is(types, "LogicalType"))
+  else if(any_is(args, "BooleanType"))
     # Note: logicals are implicitly casted to integers.
     IntegerType()
   else
@@ -47,7 +49,7 @@ function(x, typeCollector, ...)
   if (op_name %in% c("||", "&&"))
     length = 1L
 
-  makeVector(LogicalType(), length)
+  makeVector(BooleanType(), length)
 }
 
 
@@ -56,9 +58,10 @@ inferSubsetType =
 function(x, typeCollector, ...)
 {
   # FIXME: Empty arguments are not handled correctly.
+  # FIXME: Lists are not handled correctly.
   # TODO: For now, all we handle is single-dimension, constant subsets.
   types = lapply(x[-1], inferTypes, typeCollector, ...)
-  atom = atomicType(types[[1]])
+  atom = element_type(types[[1]])
   arg_types = types[-1]
 
   if (length(arg_types) == 1) {
@@ -66,7 +69,7 @@ function(x, typeCollector, ...)
     arg_type = arg_types[[1]]
 
     length = 
-      if (is(atomicType(arg_type), "LogicalType")) {
+      if (is(element_type(arg_type), "BooleanType")) {
         # For logical argument, length is number of TRUEs.
         sum(value(arg_type, NA))
       } else {

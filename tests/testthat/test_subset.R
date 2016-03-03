@@ -7,8 +7,8 @@ test_that("type inferred for 1d literal index subsetting", {
   collector = TypeCollector()
 
   result = inferTypes(expression, collector)
-  expect_is(result, "VectorType")
-  expect_is(atomicType(result), "UnknownType")
+  expect_is(result, "ArrayType")
+  expect_is(element_type(result), "UnknownType")
   expect_equal(length(result), length(idx))
 })
 
@@ -18,8 +18,8 @@ test_that("type inferred for 1d literal logical subsetting", {
   collector = TypeCollector()
 
   result = inferTypes(expression, collector)
-  expect_is(result, "VectorType")
-  expect_is(atomicType(result), "UnknownType")
+  expect_is(result, "ArrayType")
+  expect_is(element_type(result), "UnknownType")
   expect_equal(length(result), sum(subs))
 })
 
@@ -28,12 +28,12 @@ test_that("type inferred for 1d variable index subsetting", {
   collector = TypeCollector()
 
   len = 5L
-  collector$setVariableType("x", VectorType(ComplexType(), 10L))
-  collector$setVariableType("idx", VectorType(IntegerType(), len))
+  collector$setVariableType("x", ArrayType(ComplexType(), 10L))
+  collector$setVariableType("idx", ArrayType(IntegerType(), len))
 
   result = inferTypes(expression, collector)
-  expect_is(result, "VectorType")
-  expect_is(atomicType(result), "ComplexType")
+  expect_is(result, "ArrayType")
+  expect_is(element_type(result), "ComplexType")
   expect_equal(length(result), len)
 })
 
