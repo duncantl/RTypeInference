@@ -1,6 +1,7 @@
 exportPattern(".*")
 
-import(methods, codetools, pryr)
+import(methods, typesys)
+importFrom("utils", "tail")
 export(inferTypes)
 
 

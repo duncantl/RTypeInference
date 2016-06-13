@@ -139,7 +139,7 @@ function(x, typeCollector = TypeCollector(), ...)
 
     if (is(type, "ConditionalType")) {
       # Infer argument types and pass to handler.
-      arguments = standardise_call(x)[-1]
+      arguments = pryr::standardise_call(x)[-1]
       arg_types = lapply(arguments, inferTypes, typeCollector, ...)
       type = infer(type, arg_types)
     }

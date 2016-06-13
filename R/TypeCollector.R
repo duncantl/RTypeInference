@@ -32,7 +32,8 @@ setRefClass("TypeCollector",
       # Merge a list of variable types.
     {
       if (length(type_list) > 0)
-        mapply(.self$setVariableType, names(type_list), type_list, force)
+        mapply(.self$setVariableType, names(type_list), type_list, force,
+          SIMPLIFY = FALSE)
     },
 
     getVariableType = function(name) {

@@ -1,41 +1,32 @@
 Package: RTypeInference
-Version: 0.1-0
-Title: Tools for inferring the types of inputs and outputs for functions and expressions
-Author:
-  Duncan Temple Lang,
-  Nick Ulle
-Maintainer:
-  Duncan Temple Lang <duncan@r-project.org>,
-  Nick Ulle <nick.ulle@gmail.com>
-Description: This package is an effort to infer the types of 
-  the inputs and ouputs of expressions and functions in R.
-  The idea is to be able to associate information with a function
-  about the possible parameter types and the return value.
-  (There may be multiple input and output combinations.)
-  We also want to do this for a script and identify the 
-  types of each variable.  Here we may know the types of the original
-  inputs or be given hints.
-  This effort is complicated because R functions are very flexible in what they 
-  accept and return and as a result the types are very dynamic.
-  It is further complicated when we want to differentiate between
-  scalar and vector types.
+Title: Infer Types of Inputs and Outputs for R Expressions
+Version: 0.2-0
+Date: 2016-06-12
+Authors@R: c(
+  person("Nick", "Ulle", role = c("aut", "cre"),
+    email = "nick.ulle@gmail.com"),
+  person("Duncan", "Temple Lang", role = c("aut"),
+    email = "duncan@r-project.org")
+  )
+Description:
+  This package infers the types of inputs and outputs for R expresssions. More
+  specifically, the purpose is to derive information about the variables and
+  return values of functions and scripts based on the input types. This effort
+  is complicated because R functions are very flexible in the types they accept
+  and return. The primary application of type information is performance
+  optimization, but other uses are possible.
+URL: https://github.com/duncantl/RTypeInference
 License: GPL-2
-Depends: 
-  methods,
-  codetools,
-  pryr,
+Depends:
+  R (>= 3.2.0),
   typesys
+Imports: 
+  methods,
+  pryr
 Suggests: 
   testthat,
   knitr
-URL: 
-  https://github.com/duncantl/RTypeInference
-  http://www.omegahat.org/RTypeInference
-Note: Connect with the TypeInfo package, both to read type information
-  users specify on functions and also as a possible way to attach
-  the inferred types to a function.
 Collate: 
-  type_definitions.R
   known_types.R
   primitiveNames.R
   inferTypes.R
