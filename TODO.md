@@ -20,3 +20,4 @@
   assume user functions are type stable.
 * Detect iterator patterns in while loops.
 * Consolidate code for handling math operations with RLLVMCompile.
+* Mark aggregate (sum, min, max, range, sd, mean) results
