@@ -1,6 +1,9 @@
 # Description:
 #   Tests using default arguments to infer type.
 
+context("default args")
+
+
 test_that("default arguments are used to infer type", {
   fun = function(x, y = 3L, text = "Hello") {
     z = x
@@ -8,7 +11,7 @@ test_that("default arguments are used to infer type", {
   }
   collector = TypeCollector()
 
-  result = inferTypes(fun, collector)
+  result = .infer_types(fun, collector)
   expect_is(result, "CharacterType")
   expect_is(collector$getVariableType("x"), "UnknownType")
   expect_is(collector$getVariableType("y"), "IntegerType")

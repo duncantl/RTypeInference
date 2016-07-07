@@ -1,14 +1,18 @@
 # Description:
 #   Tests of inference for logical operators.
 
+context("logical ops")
+
+
 test_that("scalar | works", {
   expr = quote(
     TRUE | FALSE
   )
 
-  type = inferTypes(expr)
+  type = .infer_types(expr)
   expect_is(type, "BooleanType")
 })
+
 
 test_that("vector-vector | works", {
   x = c(FALSE, TRUE, TRUE)
@@ -17,24 +21,25 @@ test_that("vector-vector | works", {
     list(x = x)
   )
 
-  type = inferTypes(expr)
+  type = .infer_types(expr)
   expect_is(type, "ArrayType")
   expect_is(element_type(type), "BooleanType")
   expect_equal(length(type), length(x))
 })
+
 
 test_that("vector || and && work", {
   expr = quote(
     c(TRUE, FALSE, TRUE) || c(TRUE, TRUE, TRUE)
   )
 
-  type = inferTypes(expr)
+  type = .infer_types(expr)
   expect_is(type, "BooleanType")
 
   expr = quote(
     c(TRUE, TRUE, FALSE) && c(FALSE, FALSE, FALSE)
   )
 
-  type = inferTypes(expr)
+  type = .infer_types(expr)
   expect_is(type, "BooleanType")
 })

@@ -1,11 +1,15 @@
 # Description:
 #   Utility functions.
 
+
+#' Type Annotation
+#'
+#' This is a no-op function for annotating functions with types.
+#'
 #' @export
 .typeInfo =
-function(...) 
-  # No-op function for type annotations.
-{}
+function(...) {}
+
 
 evalTypeInfo =
 function(annotation)
@@ -13,6 +17,7 @@ function(annotation)
 {
   lapply(as.list(annotation)[-1], eval)
 }
+
 
 makeVector =
 function(atom, dimension) 
@@ -25,12 +30,14 @@ function(atom, dimension)
     ArrayType(atom, dimension)
 }
 
+
 any_is =
 function(objects, class2)
   # Test inheritance for multiple objects.
 {
   any(vapply(objects, is, TRUE, class2))
 }
+
 
 upcast =
 function(types)

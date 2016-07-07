@@ -56,7 +56,7 @@ collector = TypeCollector()
 Now we can infer the types of the function:
 
 ```{r}
-inferTypes(fib, collector)
+infer_types(fib, collector)
 ```
 
 Although the vector `acc` has numeric type in the R interpreter, its type is 

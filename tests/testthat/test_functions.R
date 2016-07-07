@@ -7,14 +7,14 @@ context("functions")
 test_that("literal return type is inferred for functions", {
   fun = function() 8.1
 
-  result = inferTypes(fun)
+  result = .infer_types(fun)
   expect_is(result, "RealType")
 
   fun = function() {
     42L
   }
 
-  result = inferTypes(fun)
+  result = .infer_types(fun)
   expect_is(result, "IntegerType")
 })
 
@@ -27,7 +27,7 @@ test_that("types are collected for functions", {
   }
   collector = TypeCollector()
 
-  result = inferTypes(fun, collector)
+  result = .infer_types(fun, collector)
   expect_is(result, "CharacterType")
   expect_is(collector$getVariableType("x"), "IntegerType")
   expect_is(collector$getVariableType("y"), "IntegerType")
@@ -45,6 +45,6 @@ test_that("return type is inferred for functions that aren't type-stable", {
   }
   collector = TypeCollector()
 
-  result = inferTypes(fun, collector)
+  result = .infer_types(fun, collector)
 #  expect_is(result, "ConditionalType")
 })

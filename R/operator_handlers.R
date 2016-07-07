@@ -6,14 +6,14 @@ LOGIC_OPS = c("<", ">", "<=", ">=", "==", "!=", "|", "||", "&", "&&")
 
 
 inferMathOpType =
-function(x, typeCollector, ...)
+function(x, tc, ...)
 {
   # complex > numeric > integer > logical
   # Division and exponentiation alway produce numeric or complex.
   # Get operator name and argument types.
   op_name = as.character(x[[1]])
 
-  args = lapply(x[-1], inferTypes, typeCollector, ...)
+  args = lapply(x[-1], .infer_types, tc, ...)
 
   length = max(vapply(args, length, 0L))
 
@@ -37,13 +37,13 @@ function(x, typeCollector, ...)
 
 
 inferLogicOpType =
-function(x, typeCollector, ...)
+function(x, tc, ...)
 {
   # TODO: What if a generic logical op is used and return type isn't
   # logical?
   op_name = as.character(x[[1]])
 
-  types = lapply(x[-1], inferTypes, typeCollector, ...)
+  types = lapply(x[-1], .infer_types, tc, ...)
 
   length = max(vapply(types, length, 0L))
   if (op_name %in% c("||", "&&"))
@@ -55,12 +55,12 @@ function(x, typeCollector, ...)
 
 inferSubsetType =
     # to handle var[i - 1]  and var[i, j] and var[ f(a, b, c) ]
-function(x, typeCollector, ...)
+function(x, tc, ...)
 {
   # FIXME: Empty arguments are not handled correctly.
   # FIXME: Lists are not handled correctly.
   # TODO: For now, all we handle is single-dimension, constant subsets.
-  types = lapply(x[-1], inferTypes, typeCollector, ...)
+  types = lapply(x[-1], .infer_types, tc, ...)
   atom = element_type(types[[1]])
   arg_types = types[-1]
 

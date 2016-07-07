@@ -1,16 +1,20 @@
 # Description:
 #   Tests of inference for if statements.
 
+context("if statements")
+
+
 test_that("simple if statements work", {
   expr = quote(
     if (y == 5) 10.1
   )
 
-  type = inferTypes(expr)
+  type = .infer_types(expr)
   expect_is(type, "ConditionalType")
   branch_types = getBranchTypes(type)
   expect_equal(branch_types, c("RealType", "NullType"))
 })
+
 
 test_that("simple if-else statements work", {
   expression = quote(
@@ -20,10 +24,11 @@ test_that("simple if-else statements work", {
       "goodbye"
   )
 
-  result = inferTypes(expression)
+  result = .infer_types(expression)
   expect_is(result, "CharacterType")
   expect_is(value(result), "UnknownValue")
 })
+
 
 test_that("simple if-else-if statements work", {
   expression = quote(
@@ -35,10 +40,11 @@ test_that("simple if-else-if statements work", {
       -1i
   )
 
-  result = inferTypes(expression)
+  result = .infer_types(expression)
   expect_is(result, "ComplexType")
   expect_is(value(result), "UnknownValue")
 })
+
 
 test_that("if-else statements work", {
   expr = quote(
@@ -48,11 +54,12 @@ test_that("if-else statements work", {
       1L
   )
 
-  type = inferTypes(expr)
+  type = .infer_types(expr)
   expect_is(type, "ConditionalType")
   branch_types = getBranchTypes(type)
   expect_equal(branch_types, c("CharacterType", "IntegerType"))
 })
+
 
 #test_that("if-else statements collapse vector types", {
 #  # TODO: Is this the right behavior?
@@ -63,7 +70,7 @@ test_that("if-else statements work", {
 #      c("cookies", "cake")
 #  )
 #
-#  types = inferTypes(expr)
+#  types = .infer_types(expr)
 #  expect_is(types, "CharacterVectorType")
 #})
 

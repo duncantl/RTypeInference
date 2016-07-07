@@ -5,69 +5,77 @@
 #   * What about non-assignments? ie, the last line / return line.
 #   * Resolve any variable references.
 #   * Figure out the types of returns.
-#   * Should typeCollector always have a default?
 #   * Unify return type.
 #   * Scoping?
-
 
 #' Infer Types
 #'
 #' This function infers the types of an expression.
 #'
-#' @param x unquoted R expression
-#' @param typeCollector TypeCollector object
+#' @param expr unquoted R expression
+#' @param tc TypeCollector object
 #' @param ... additional arguments
 #' @export
-inferTypes =
-function(x, typeCollector = TypeCollector(), ...)
+infer_types = function(expr, tc, ...) {
+  if (missing(tc))
+    tc = TypeCollector()
+
+  .infer_types(expr, tc, ...)
+
+  return(tc)
+}
+
+
+.infer_types =
+function(x, tc = TypeCollector(), ...)
   # Walk the tree and make a symbol table.
 {
-  UseMethod("inferTypes")
+  UseMethod(".infer_types")
 }
 
 
 #' @export
-inferTypes.function =
-function(x, typeCollector = TypeCollector(), ...)
+.infer_types.function =
+function(x, tc = TypeCollector(), ...)
 {    
   # TODO: Type annotations should be handled from a top-level function.
 
   # Check for type annotations in the arguments.
   type_list = list(...)[[".typeInfo"]]
-  typeCollector$mergeVariableTypeList(type_list, force = TRUE)
+  tc$mergeVariableTypeList(type_list, force = TRUE)
 
   # Check for type annotations as an attribute.
   type_list = attr(x, ".typeInfo")
-  typeCollector$mergeVariableTypeList(type_list, force = TRUE)
+  tc$mergeVariableTypeList(type_list, force = TRUE)
 
   # Get type information from the function's default arguments.
-  type_list = lapply(formals(x), inferTypes, typeCollector, ...)
-  typeCollector$mergeVariableTypeList(type_list)
+  type_list = lapply(formals(x), .infer_types, tc, ...)
+  tc$mergeVariableTypeList(type_list)
 
   body = body(x)
 
-  # Rewrite with { and delegate work to inferTypes.{
+  # Rewrite with { and delegate work to .infer_types.{
   # TODO: Move to rewrite package?
   if(class(body) != "{")
     body = substitute({body}, list(body = body))
   
   # Return last value. What we really need to do is work with the CFG, so exit
   # blocks will always have only one return type.
-  return_type = inferTypes(body, typeCollector)
+  return_type = .infer_types(body, tc)
 
   # If the last line wasn't a `return()`, add the return type.
   # TODO: This is a hack; we should find a more elegant solution.
   last_line = body[[length(body)]]
   if (!is.call(last_line) || as.character(last_line[[1]]) != "return")
-    typeCollector$addReturn(return_type)
+    tc$addReturn(return_type)
 
   return(return_type)
 }
 
 
 #' @export
-`inferTypes.<-` =
-function(x, typeCollector = TypeCollector(), ...)
+`.infer_types.<-` =
+function(x, tc = TypeCollector(), ...)
 {
   # When we see an assignment, try to infer the type of the RHS and then add
   # the name on the LHS to the symbol table.
@@ -75,7 +83,7 @@ function(x, typeCollector = TypeCollector(), ...)
 
   # Try to infer type of RHS. This is potentially recursive.
   rhs = x[[3]]
-  type = inferTypes(rhs, typeCollector, ...)
+  type = .infer_types(rhs, tc, ...)
 
   # Update the symbol table.
   lhs = x[[2]]
@@ -84,7 +92,7 @@ function(x, typeCollector = TypeCollector(), ...)
     name = as.character(lhs)
     # TODO: If the variable already has a type, see if it's compatible for
     # casting; throw an error on incompatible types.
-    typeCollector$setVariableType(name, type, force = TRUE)
+    tc$setVariableType(name, type, force = TRUE)
 
   } else if (class(lhs) == "call") {
     # Array or function assignment. For now, do nothing.
@@ -97,28 +105,27 @@ function(x, typeCollector = TypeCollector(), ...)
   #if(is.call(rhs) && as.character(rhs[[1]]) %in% c("=", "<-")) {
       # FIXME: Doesn't yet handle x = y[i] = value
       # use getVarName(x[[3]][[2]]) ?
-  #    var_type = typeCollector$getType(var_type)
+  #    var_type = tc$getType(var_type)
   #} 
 
   #if(is.call(x[[2]])) {
   #    varname = getVarName(x[[2]])
   #    ty = UpdateType(var_type, varname)
-  #    typeCollector$addType(varname, ty)
+  #    tc$addType(varname, ty)
   #} else {
   #    varname = as.character(x[[2]])[1] 
-  #    typeCollector$addType(varname, var_type)
+  #    tc$addType(varname, var_type)
   #}
 
   return(type)
 }
+#' @export
+`.infer_types.=` = `.infer_types.<-`
+
 
 #' @export
-`inferTypes.=` = `inferTypes.<-`
-
-
-#' @export
-inferTypes.call =
-function(x, typeCollector = TypeCollector(), ...)
+.infer_types.call =
+function(x, tc = TypeCollector(), ...)
 {
   call_name = as.character(x[[1]])
 
@@ -127,24 +134,24 @@ function(x, typeCollector = TypeCollector(), ...)
   #   way. Are there any calls that need special treatment besides `return()`
   #   and `.typeInfo()`?
   if(call_name == "return")
-    typeCollector$addReturn(inferTypes(x[[2]], typeCollector, ...))
+    tc$addReturn(.infer_types(x[[2]], tc, ...))
   else if (call_name == ".typeInfo") {
     # Get types from annotation and add to collector.
     type_list = evalTypeInfo(x)
-    typeCollector$mergeVariableTypeList(type_list, force = TRUE)
+    tc$mergeVariableTypeList(type_list, force = TRUE)
     # TODO: Unclear what type we should return for this.
     NullType()
 
   } else if(call_name == "[")
-    inferSubsetType(x, typeCollector, ...)
+    inferSubsetType(x, tc, ...)
   else if(call_name == "[[")
     stop("[[ is not yet supported.")
   else if(call_name == "$")
     stop("$ is not yet supported.")
   else if(call_name %in% MATH_OPS)
-    inferMathOpType(x, typeCollector, ...)
+    inferMathOpType(x, tc, ...)
   else if(call_name %in% LOGIC_OPS)
-    inferLogicOpType(x, typeCollector, ...)
+    inferLogicOpType(x, tc, ...)
 
   else if(call_name %in% names(knownFunctionTypes)) {
     type = knownFunctionTypes[[ call_name ]]
@@ -152,7 +159,7 @@ function(x, typeCollector = TypeCollector(), ...)
     if (is(type, "ConditionalType")) {
       # Infer argument types and pass to handler.
       arguments = pryr::standardise_call(x)[-1]
-      arg_types = lapply(arguments, inferTypes, typeCollector, ...)
+      arg_types = lapply(arguments, .infer_types, tc, ...)
       type = infer(type, arg_types)
     }
 
@@ -163,32 +170,32 @@ function(x, typeCollector = TypeCollector(), ...)
 
 
 #' @export
-inferTypes.name =
-function(x, typeCollector = TypeCollector(), ...)
+.infer_types.name =
+function(x, tc = TypeCollector(), ...)
 {
   # TODO: Constants are already propagated, but we might want to set up a
   # reference for to the variable for non-constants.
 
   # Try to retrieve type.
-  typeCollector$getVariableType(x)
+  tc$getVariableType(x)
 }
 
 
 # Flow Control --------------------------------------------------
 
 #' @export
-inferTypes.if =
-function(x, typeCollector = TypeCollector(), ...)
+.infer_types.if =
+function(x, tc = TypeCollector(), ...)
 {
   # Infer type of each branch.
   # TODO: What if a branch contains multiple instructions?
   # We need (unit) tests to check we have the correct behavior.
-  if_type = inferTypes(x[[3]], typeCollector, ...)
+  if_type = .infer_types(x[[3]], tc, ...)
   
   else_type = 
     # if (<condition>) <body> else
     if (length(x) == 4)
-      inferTypes(x[[4]], typeCollector, ...)
+      .infer_types(x[[4]], tc, ...)
     else
       NullType()
 
@@ -209,31 +216,31 @@ function(x, typeCollector = TypeCollector(), ...)
 
 
 #' @export
-inferTypes.for =
-function(x, typeCollector = TypeCollector(), ...)
+.infer_types.for =
+function(x, tc = TypeCollector(), ...)
 {
   # TODO: Handle variables that are composed from an iterator variable.
 
-  type = inferTypes(x[[3]], typeCollector, ...)
+  type = .infer_types(x[[3]], tc, ...)
   type = add_context(element_type(type), "iterator")
 
-  typeCollector$setVariableType(as.character(x[[2]]), type)
+  tc$setVariableType(as.character(x[[2]]), type)
     
   # Infer type of contents.
-  inferTypes(x[[4]], typeCollector, ...)
+  .infer_types(x[[4]], tc, ...)
 
   return(type)
 }
 
 
 #' @export
-inferTypes.while =
-function(x, typeCollector = TypeCollector(), ...)
+.infer_types.while =
+function(x, tc = TypeCollector(), ...)
 {
   # TODO: Iterator detection for while loops.
   # FIXME: Why does inference on x + 1 with Unknown x return IntegerType?
 
-  atom = inferTypes(x[[3]], typeCollector, ...)
+  atom = .infer_types(x[[3]], tc, ...)
   atom = element_type(atom)
 
   return(atom)
@@ -241,10 +248,10 @@ function(x, typeCollector = TypeCollector(), ...)
 
 
 #' @export
-`inferTypes.{` =
-function(x, typeCollector = TypeCollector(), ...)
+`.infer_types.{` =
+function(x, tc = TypeCollector(), ...)
 {
-  types = lapply(x[-1], inferTypes, typeCollector, ...)
+  types = lapply(x[-1], .infer_types, tc, ...)
   if (length(types) == 0)
     NullType()
   else
@@ -253,19 +260,19 @@ function(x, typeCollector = TypeCollector(), ...)
 
 
 #' @export
-`inferTypes.(` =
-function(x, typeCollector = TypeCollector(), ...)
+`.infer_types.(` =
+function(x, tc = TypeCollector(), ...)
 {
   # Infer type of contents.
-  inferTypes(x[[2]], typeCollector, ...)
+  .infer_types(x[[2]], tc, ...)
 }
 
 
 # Atomic Types --------------------------------------------------
 
 #' @export
-inferTypes.logical =
-function(x, typeCollector = TypeCollector(), ...)
+.infer_types.logical =
+function(x, tc = TypeCollector(), ...)
 {
   type = makeVector(BooleanType(), length(x))
   value(type) = x
@@ -275,8 +282,8 @@ function(x, typeCollector = TypeCollector(), ...)
 
 
 #' @export
-inferTypes.integer =
-function(x, typeCollector = TypeCollector(), ...)
+.infer_types.integer =
+function(x, tc = TypeCollector(), ...)
 {
   type = makeVector(IntegerType(), length(x))
   value(type) = x
@@ -286,13 +293,13 @@ function(x, typeCollector = TypeCollector(), ...)
 
 
 #' @export
-inferTypes.numeric =
-function(x, typeCollector = TypeCollector(), ...)
+.infer_types.numeric =
+function(x, tc = TypeCollector(), ...)
 {
   # TODO: Is it really a good idea to cast double to int?
   is_integer = all(x == floor(x))
   if (is_integer)
-    return(inferTypes.integer(x))
+    return(.infer_types.integer(x))
 
   type = makeVector(RealType(), length(x))
   value(type) = x
@@ -302,8 +309,8 @@ function(x, typeCollector = TypeCollector(), ...)
 
 
 #' @export
-inferTypes.complex =
-function(x, typeCollector = TypeCollector(), ...)
+.infer_types.complex =
+function(x, tc = TypeCollector(), ...)
 {
   type = makeVector(ComplexType(), length(x))
   value(type) = x
@@ -313,8 +320,8 @@ function(x, typeCollector = TypeCollector(), ...)
 
 
 #' @export
-inferTypes.character =
-function(x, typeCollector = TypeCollector(), ...)
+.infer_types.character =
+function(x, tc = TypeCollector(), ...)
 {
   # TODO: Distinguish between characters and strings.
   type = makeVector(CharacterType(), length(x))
@@ -325,8 +332,8 @@ function(x, typeCollector = TypeCollector(), ...)
 
 
 #' @export
-inferTypes.list =
-function(x, typeCollector = TypeCollector(), ...)
+.infer_types.list =
+function(x, tc = TypeCollector(), ...)
 {
   # FIXME:
   stop("Lists are not yet supported!")
@@ -334,8 +341,8 @@ function(x, typeCollector = TypeCollector(), ...)
 
 
 #' @export
-inferTypes.NULL =
-function(x, typeCollector = TypeCollector(), ...)
+.infer_types.NULL =
+function(x, tc = TypeCollector(), ...)
 {
   NullType()
 }

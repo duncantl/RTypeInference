@@ -1,6 +1,9 @@
 # Description:
 #   Tests of inference on example functions (case studies).
 
+context("case studies")
+
+
 test_that("types are inferred for isum()", {
   isum =
   function(x, n)
@@ -14,7 +17,7 @@ test_that("types are inferred for isum()", {
     list(x = ArrayType(RealType(), NA), n = IntegerType())
 
   collector = TypeCollector()
-  result = inferTypes(isum, collector)
+  result = .infer_types(isum, collector)
 
   expect_true(has_context(collector$getVariableType("i"), "iterator"))
   expect_is(collector$getVariableType("i"), "IntegerType")

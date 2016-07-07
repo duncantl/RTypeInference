@@ -1,6 +1,9 @@
 # Description:
 #   Tests of inference for for loops.
 
+context("for loops")
+
+
 test_that("iterator type is inferred for simple for loops", {
   expression = substitute(
     for (i in x) print(i),
@@ -8,11 +11,12 @@ test_that("iterator type is inferred for simple for loops", {
   )
   collector = TypeCollector()
 
-  result = inferTypes(expression, collector)
+  result = .infer_types(expression, collector)
   type = collector$getVariableType("i")
   expect_true(has_context(type, "iterator"))
   expect_is(type, "IntegerType")
 })
+
 
 test_that("types are collected for for loops", {
   expression = substitute(
@@ -23,7 +27,7 @@ test_that("types are collected for for loops", {
   )
   collector = TypeCollector()
 
-  result = inferTypes(expression, collector)
+  result = .infer_types(expression, collector)
   expect_is(collector$getVariableType("x"), "CharacterType")
   expect_is(collector$getVariableType("y"), "IntegerType")
 })

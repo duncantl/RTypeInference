@@ -1,12 +1,16 @@
 # Description:
 #   Tests of inference of { expressions.
 
+context("syntax")
+
+
 test_that("type is inferred for empty {", {
   expression = quote({})
 
-  result = inferTypes(expression)
+  result = .infer_types(expression)
   expect_is(result, "NullType")
 })
+
 
 test_that("type is inferred for {", {
   expression = quote(
@@ -16,9 +20,10 @@ test_that("type is inferred for {", {
     }
   )
 
-  result = inferTypes(expression)
+  result = .infer_types(expression)
   expect_is(result, "CharacterType")
 })
+
 
 test_that("type is collected for {", {
   expression = quote(
@@ -30,7 +35,7 @@ test_that("type is collected for {", {
   )
   collector = TypeCollector()
 
-  inferTypes(expression, collector)
+  .infer_types(expression, collector)
   expect_is(collector$getVariableType("a"), "IntegerType")
   expect_is(collector$getVariableType("b"), "ComplexType")
   expect_is(collector$getVariableType("c"), "IntegerType")

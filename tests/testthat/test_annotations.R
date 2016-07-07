@@ -1,6 +1,9 @@
 # Description:
 #   Tests of type annotation.
 
+context("annotations")
+
+
 test_that("type annotations are collected from .typeInfo calls", {
   expression = quote({
     .typeInfo(
@@ -12,7 +15,7 @@ test_that("type annotations are collected from .typeInfo calls", {
   })
   collector = TypeCollector()
 
-  inferTypes(expression, collector)
+  .infer_types(expression, collector)
 
   expect_is(collector$getVariableType("x"), "IntegerType")
   expect_is(collector$getVariableType("new_x"), "IntegerType")
@@ -27,6 +30,7 @@ test_that("type annotations are collected from .typeInfo calls", {
   expect_is(element_type(y_type), "RealType")
   expect_equal(length(y_type), 3L)
 })
+
 
 test_that("type annotations are collected from .typeInfo attributes", {
   expression = function(x, y) {
@@ -39,7 +43,7 @@ test_that("type annotations are collected from .typeInfo attributes", {
   )
 
   collector = TypeCollector()
-  inferTypes(expression, collector)
+  .infer_types(expression, collector)
 
   expect_is(collector$getVariableType("x"), "IntegerType")
   expect_is(collector$getVariableType("new_x"), "IntegerType")
@@ -55,6 +59,7 @@ test_that("type annotations are collected from .typeInfo attributes", {
   expect_equal(length(y_type), 3L)
 })
 
+
 test_that("type annotations are collected from .typeInfo parameter", {
   expression = function(x, y) {
     new_x = x
@@ -66,7 +71,7 @@ test_that("type annotations are collected from .typeInfo parameter", {
   )
 
   collector = TypeCollector()
-  inferTypes(expression, collector, .typeInfo = type_list)
+  .infer_types(expression, collector, .typeInfo = type_list)
 
   expect_is(collector$getVariableType("x"), "IntegerType")
   expect_is(collector$getVariableType("new_x"), "IntegerType")
