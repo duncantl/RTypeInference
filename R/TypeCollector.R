@@ -1,6 +1,12 @@
 # Description:
 #   Reference class for collecting type information.
 
+#' TypeCollector
+#'
+#' This reference class stores type information gathered by the type inference
+#' algorithm.
+#'
+#' @export TypeCollector
 TypeCollector =
 setRefClass("TypeCollector",
   fields = list(

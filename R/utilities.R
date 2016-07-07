@@ -1,6 +1,7 @@
 # Description:
 #   Utility functions.
 
+#' @export
 .typeInfo =
 function(...) 
   # No-op function for type annotations.

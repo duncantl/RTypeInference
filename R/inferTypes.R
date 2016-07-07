@@ -9,9 +9,15 @@
 #   * Unify return type.
 #   * Scoping?
 
-# inferTypes
-# =========
 
+#' Infer Types
+#'
+#' This function infers the types of an expression.
+#'
+#' @param x unquoted R expression
+#' @param typeCollector TypeCollector object
+#' @param ... additional arguments
+#' @export
 inferTypes =
 function(x, typeCollector = TypeCollector(), ...)
   # Walk the tree and make a symbol table.
@@ -20,6 +26,7 @@ function(x, typeCollector = TypeCollector(), ...)
 }
 
 
+#' @export
 inferTypes.function =
 function(x, typeCollector = TypeCollector(), ...)
 {    
@@ -58,7 +65,8 @@ function(x, typeCollector = TypeCollector(), ...)
 }
 
 
-`inferTypes.<-` = `inferTypes.=` =
+#' @export
+`inferTypes.<-` =
 function(x, typeCollector = TypeCollector(), ...)
 {
   # When we see an assignment, try to infer the type of the RHS and then add
@@ -104,7 +112,11 @@ function(x, typeCollector = TypeCollector(), ...)
   return(type)
 }
 
+#' @export
+`inferTypes.=` = `inferTypes.<-`
 
+
+#' @export
 inferTypes.call =
 function(x, typeCollector = TypeCollector(), ...)
 {
@@ -150,6 +162,7 @@ function(x, typeCollector = TypeCollector(), ...)
 }
 
 
+#' @export
 inferTypes.name =
 function(x, typeCollector = TypeCollector(), ...)
 {
@@ -163,6 +176,7 @@ function(x, typeCollector = TypeCollector(), ...)
 
 # Flow Control --------------------------------------------------
 
+#' @export
 inferTypes.if =
 function(x, typeCollector = TypeCollector(), ...)
 {
@@ -194,6 +208,7 @@ function(x, typeCollector = TypeCollector(), ...)
 }
 
 
+#' @export
 inferTypes.for =
 function(x, typeCollector = TypeCollector(), ...)
 {
@@ -211,6 +226,7 @@ function(x, typeCollector = TypeCollector(), ...)
 }
 
 
+#' @export
 inferTypes.while =
 function(x, typeCollector = TypeCollector(), ...)
 {
@@ -224,6 +240,7 @@ function(x, typeCollector = TypeCollector(), ...)
 }
 
 
+#' @export
 `inferTypes.{` =
 function(x, typeCollector = TypeCollector(), ...)
 {
@@ -235,6 +252,7 @@ function(x, typeCollector = TypeCollector(), ...)
 }
 
 
+#' @export
 `inferTypes.(` =
 function(x, typeCollector = TypeCollector(), ...)
 {
@@ -245,6 +263,7 @@ function(x, typeCollector = TypeCollector(), ...)
 
 # Atomic Types --------------------------------------------------
 
+#' @export
 inferTypes.logical =
 function(x, typeCollector = TypeCollector(), ...)
 {
@@ -255,6 +274,7 @@ function(x, typeCollector = TypeCollector(), ...)
 }
 
 
+#' @export
 inferTypes.integer =
 function(x, typeCollector = TypeCollector(), ...)
 {
@@ -265,6 +285,7 @@ function(x, typeCollector = TypeCollector(), ...)
 }
 
 
+#' @export
 inferTypes.numeric =
 function(x, typeCollector = TypeCollector(), ...)
 {
@@ -280,6 +301,7 @@ function(x, typeCollector = TypeCollector(), ...)
 }
 
 
+#' @export
 inferTypes.complex =
 function(x, typeCollector = TypeCollector(), ...)
 {
@@ -290,6 +312,7 @@ function(x, typeCollector = TypeCollector(), ...)
 }
 
 
+#' @export
 inferTypes.character =
 function(x, typeCollector = TypeCollector(), ...)
 {
@@ -301,6 +324,7 @@ function(x, typeCollector = TypeCollector(), ...)
 }
 
 
+#' @export
 inferTypes.list =
 function(x, typeCollector = TypeCollector(), ...)
 {
@@ -309,6 +333,7 @@ function(x, typeCollector = TypeCollector(), ...)
 }
 
 
+#' @export
 inferTypes.NULL =
 function(x, typeCollector = TypeCollector(), ...)
 {

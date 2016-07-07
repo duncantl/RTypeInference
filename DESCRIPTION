@@ -8,29 +8,22 @@ Authors@R: c(
   person("Duncan", "Temple Lang", role = c("aut"),
     email = "duncan@r-project.org")
   )
-Description:
-  This package infers the types of inputs and outputs for R expresssions. More
-  specifically, the purpose is to derive information about the variables and
-  return values of functions and scripts based on the input types. This effort
-  is complicated because R functions are very flexible in the types they accept
-  and return. The primary application of type information is performance
-  optimization, but other uses are possible.
+Description: This package infers the types of inputs and outputs for R
+    expresssions. More specifically, the purpose is to derive information about
+    the variables and return values of functions and scripts based on the input
+    types. This effort is complicated because R functions are very flexible in the
+    types they accept and return. The primary application of type information is
+    performance optimization, but other uses are possible.
 URL: https://github.com/duncantl/RTypeInference
 License: GPL-2
 Depends:
-  R (>= 3.2.0),
-  typesys
-Imports: 
-  methods,
-  pryr
-Suggests: 
-  testthat,
-  knitr
-Collate: 
-  known_types.R
-  primitiveNames.R
-  inferTypes.R
-  operator_handlers.R
-  TypeCollector.R
-  utilities.R
+    R (>= 3.2.0),
+    typesys
+Imports:
+    methods,
+    pryr
+Suggests:
+    testthat,
+    knitr
 VignetteBuilder: knitr
+RoxygenNote: 5.0.1
