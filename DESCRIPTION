@@ -21,6 +21,7 @@ Depends:
     typesys
 Imports:
     methods,
+    R6,
     pryr
 Suggests:
     testthat,

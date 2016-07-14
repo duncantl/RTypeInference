@@ -6,6 +6,7 @@
 #'
 #' This is a no-op function for annotating functions with types.
 #'
+#' @rdname typeInfo_
 #' @export
 .typeInfo =
 function(...) {}

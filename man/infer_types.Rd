@@ -4,12 +4,12 @@
 \alias{infer_types}
 \title{Infer Types}
 \usage{
-infer_types(expr, tc, ...)
+infer_types(expr, scope = Scope(), ...)
 }
 \arguments{
 \item{expr}{unquoted R expression}
 
-\item{tc}{TypeCollector object}
+\item{scope}{Scope object}
 
 \item{...}{additional arguments}
 }
