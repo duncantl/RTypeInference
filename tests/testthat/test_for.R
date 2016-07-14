@@ -5,29 +5,29 @@ context("for loops")
 
 
 test_that("iterator type is inferred for simple for loops", {
-  expression = substitute(
+  expr = substitute(
     for (i in x) print(i),
     list(x = 1:3)
   )
-  collector = TypeCollector()
 
-  result = .infer_types(expression, collector)
-  type = collector$getVariableType("i")
-  expect_true(has_context(type, "iterator"))
-  expect_is(type, "IntegerType")
+  scope = infer_types(expr)$scope
+
+  i_type = scope$get("i")
+  expect_true(has_context(i_type, "iterator"))
+  expect_is(i_type, "IntegerType")
 })
 
 
 test_that("types are collected for for loops", {
-  expression = substitute(
+  expr = substitute(
     for (i in vec) {
       x = i
       y = 42L
     }, list(vec = c("a", "b", "c"))
   )
-  collector = TypeCollector()
 
-  result = .infer_types(expression, collector)
-  expect_is(collector$getVariableType("x"), "CharacterType")
-  expect_is(collector$getVariableType("y"), "IntegerType")
+  scope = infer_types(expr)$scope
+
+  expect_is(scope$get("x"), "CharacterType")
+  expect_is(scope$get("y"), "IntegerType")
 })

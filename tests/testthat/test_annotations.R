@@ -5,7 +5,7 @@ context("annotations")
 
 
 test_that("type annotations are collected from .typeInfo calls", {
-  expression = quote({
+  expr = quote({
     .typeInfo(
       x = IntegerType(),
       y = ArrayType(RealType(), 3L)
@@ -13,19 +13,18 @@ test_that("type annotations are collected from .typeInfo calls", {
     new_x = x
     new_y = y
   })
-  collector = TypeCollector()
 
-  .infer_types(expression, collector)
+  scope = infer_types(expr)$scope
 
-  expect_is(collector$getVariableType("x"), "IntegerType")
-  expect_is(collector$getVariableType("new_x"), "IntegerType")
+  expect_is(scope$get("x"), "IntegerType")
+  expect_is(scope$get("new_x"), "IntegerType")
 
-  y_type = collector$getVariableType("y")
+  y_type = scope$get("y")
   expect_is(y_type, "ArrayType")
   expect_is(element_type(y_type), "RealType")
   expect_equal(length(y_type), 3L)
 
-  new_y_type = collector$getVariableType("new_y")
+  new_y_type = scope$get("new_y")
   expect_is(new_y_type, "ArrayType")
   expect_is(element_type(y_type), "RealType")
   expect_equal(length(y_type), 3L)
@@ -33,27 +32,27 @@ test_that("type annotations are collected from .typeInfo calls", {
 
 
 test_that("type annotations are collected from .typeInfo attributes", {
-  expression = function(x, y) {
+  expr = function(x, y) {
     new_x = x
     new_y = y
   }
-  attr(expression, ".typeInfo") = list(
+  attr(expr, ".typeInfo") = list(
     x = IntegerType(),
     y = ArrayType(RealType(), 3L)
   )
 
-  collector = TypeCollector()
-  .infer_types(expression, collector)
+  type = infer_types(expr)$type
+  fn_scope = type@scope
 
-  expect_is(collector$getVariableType("x"), "IntegerType")
-  expect_is(collector$getVariableType("new_x"), "IntegerType")
+  expect_is(fn_scope$get("x"), "IntegerType")
+  expect_is(fn_scope$get("new_x"), "IntegerType")
 
-  y_type = collector$getVariableType("y")
+  y_type = fn_scope$get("y")
   expect_is(y_type, "ArrayType")
   expect_is(element_type(y_type), "RealType")
   expect_equal(length(y_type), 3L)
 
-  new_y_type = collector$getVariableType("new_y")
+  new_y_type = fn_scope$get("new_y")
   expect_is(new_y_type, "ArrayType")
   expect_is(element_type(y_type), "RealType")
   expect_equal(length(y_type), 3L)
@@ -61,7 +60,7 @@ test_that("type annotations are collected from .typeInfo attributes", {
 
 
 test_that("type annotations are collected from .typeInfo parameter", {
-  expression = function(x, y) {
+  expr = function(x, y) {
     new_x = x
     new_y = y
   }
@@ -70,18 +69,18 @@ test_that("type annotations are collected from .typeInfo parameter", {
     y = ArrayType(RealType(), 3L)
   )
 
-  collector = TypeCollector()
-  .infer_types(expression, collector, .typeInfo = type_list)
+  type = infer_types(expr, .typeInfo = type_list)$type
+  fn_scope = type@scope
 
-  expect_is(collector$getVariableType("x"), "IntegerType")
-  expect_is(collector$getVariableType("new_x"), "IntegerType")
+  expect_is(fn_scope$get("x"), "IntegerType")
+  expect_is(fn_scope$get("new_x"), "IntegerType")
 
-  y_type = collector$getVariableType("y")
+  y_type = fn_scope$get("y")
   expect_is(y_type, "ArrayType")
   expect_is(element_type(y_type), "RealType")
   expect_equal(length(y_type), 3L)
 
-  new_y_type = collector$getVariableType("new_y")
+  new_y_type = fn_scope$get("new_y")
   expect_is(new_y_type, "ArrayType")
   expect_is(element_type(y_type), "RealType")
   expect_equal(length(y_type), 3L)

@@ -4,6 +4,7 @@
 context("case studies")
 
 
+# FIXME: This should use the user-facing `infer_types` function.
 test_that("types are inferred for isum()", {
   isum =
   function(x, n)
@@ -16,11 +17,11 @@ test_that("types are inferred for isum()", {
   attr(isum, ".typeInfo") =
     list(x = ArrayType(RealType(), NA), n = IntegerType())
 
-  collector = TypeCollector()
-  result = .infer_types(isum, collector)
+  type = infer_types(isum)$type
+  fn_scope = type@scope
 
-  expect_true(has_context(collector$getVariableType("i"), "iterator"))
-  expect_is(collector$getVariableType("i"), "IntegerType")
-  expect_is(collector$getVariableType("total"), "RealType")
-  expect_is(result, "RealType")
+  expect_true(has_context(fn_scope$get("i"), "iterator"))
+  expect_is(fn_scope$get("i"), "IntegerType")
+  expect_is(fn_scope$get("total"), "RealType")
+  expect_is(type@return_type, "RealType")
 })

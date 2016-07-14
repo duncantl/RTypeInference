@@ -9,11 +9,11 @@ test_that("default arguments are used to infer type", {
     z = x
     return(text)
   }
-  collector = TypeCollector()
 
-  result = .infer_types(fun, collector)
-  expect_is(result, "CharacterType")
-  expect_is(collector$getVariableType("x"), "UnknownType")
-  expect_is(collector$getVariableType("y"), "IntegerType")
-  expect_is(collector$getVariableType("z"), "UnknownType")
+  fn = infer_types(fun)$type
+
+  expect_is(fn@return_type, "CharacterType")
+  expect_is(fn@scope$get("x"), "UnknownType")
+  expect_is(fn@scope$get("y"), "IntegerType")
+  expect_is(fn@scope$get("z"), "UnknownType")
 })

@@ -9,7 +9,8 @@ test_that("scalar | works", {
     TRUE | FALSE
   )
 
-  type = .infer_types(expr)
+  type = infer_types(expr)$type
+
   expect_is(type, "BooleanType")
 })
 
@@ -21,7 +22,8 @@ test_that("vector-vector | works", {
     list(x = x)
   )
 
-  type = .infer_types(expr)
+  type = infer_types(expr)$type
+
   expect_is(type, "ArrayType")
   expect_is(element_type(type), "BooleanType")
   expect_equal(length(type), length(x))
@@ -33,13 +35,15 @@ test_that("vector || and && work", {
     c(TRUE, FALSE, TRUE) || c(TRUE, TRUE, TRUE)
   )
 
-  type = .infer_types(expr)
+  type = infer_types(expr)$type
+
   expect_is(type, "BooleanType")
 
   expr = quote(
     c(TRUE, TRUE, FALSE) && c(FALSE, FALSE, FALSE)
   )
 
-  type = .infer_types(expr)
+  type = infer_types(expr)$type
+
   expect_is(type, "BooleanType")
 })

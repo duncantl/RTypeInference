@@ -5,48 +5,51 @@ context("assignment")
 
 
 test_that("type is inferred for literal assignments", {
-  expression = call("=", quote(x), 5L)
+  expr = call("=", as.name("x"), 5L)
 
-  result = .infer_types(expression)
-  expect_is(result, "IntegerType")
+  result = infer_types(expr)
+  expect_is(result$type, "IntegerType")
 
-  expression[[3]] = 3.14i
+  expr[[3]] = 3.14i
   
-  result = .infer_types(expression)
-  expect_is(result, "ComplexType")
+  result = infer_types(expr)
+  expect_is(result$type, "ComplexType")
 })
 
 
 test_that("type is collected for literal assignments", {
-  expression = call("=", quote(x), 5L)
-  collector = TypeCollector()
+  expr = call("=", as.name("x"), 5L)
 
-  .infer_types(expression, collector)
-  expect_is(collector$getVariableType("x"), "IntegerType")
+  scope = infer_types(expr)$scope
+
+  expect_is(scope$get("x"), "IntegerType")
 })
 
 
 test_that("type is inferred for recursive literal assignments", {
-  expression = call("=", quote(x), call("=", quote(y), 5L))
-  collector = TypeCollector()
+  expr = call("=", as.name("x"), call("=", as.name("y"), 5L))
 
-  result = .infer_types(expression, collector)
-  expect_is(result, "IntegerType")
-  expect_is(collector$getVariableType("x"), "IntegerType")
-  expect_is(collector$getVariableType("y"), "IntegerType")
+  result = infer_types(expr)
+
+  expect_is(result$type, "IntegerType")
+  expect_is(result$scope$get("x"), "IntegerType")
+  expect_is(result$scope$get("y"), "IntegerType")
 })
 
 
 test_that("type is infered for known-type variable assignments", {
-  expression = call("=", quote(x), quote(y))
-  collector = TypeCollector()
-  collector$setVariableType("y", RealType())
+  expr = call("=", quote(x), quote(y))
 
-  result = .infer_types(expression, collector)
-  expect_is(result, "RealType")
-  expect_is(collector$getVariableType("x"), "RealType")
+  scope = Scope()
+  scope$set("y", RealType())
+
+  result = infer_types(expr, scope)
+
+  expect_is(result$type, "RealType")
+  expect_is(result$scope$get("x"), "RealType")
 })
 
 
 test_that("type is inferred for array assignments", {
+  # FIXME:
 })

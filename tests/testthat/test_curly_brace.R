@@ -1,42 +1,44 @@
 # Description:
-#   Tests of inference of { expressions.
+#   Tests of inference of { exprs.
 
 context("syntax")
 
 
 test_that("type is inferred for empty {", {
-  expression = quote({})
+  expr = quote({})
 
-  result = .infer_types(expression)
-  expect_is(result, "NullType")
+  type = infer_types(expr)$type
+
+  expect_is(type, "NullType")
 })
 
 
 test_that("type is inferred for {", {
-  expression = quote(
+  expr = quote(
     {
       x = 1.1
       y = "hi"
     }
   )
 
-  result = .infer_types(expression)
-  expect_is(result, "CharacterType")
+  type = infer_types(expr)$type
+
+  expect_is(type, "CharacterType")
 })
 
 
 test_that("type is collected for {", {
-  expression = quote(
+  expr = quote(
     {
       a = 15L
       b = 0+1i
       c = a
     }
   )
-  collector = TypeCollector()
 
-  .infer_types(expression, collector)
-  expect_is(collector$getVariableType("a"), "IntegerType")
-  expect_is(collector$getVariableType("b"), "ComplexType")
-  expect_is(collector$getVariableType("c"), "IntegerType")
+  scope = infer_types(expr)$scope
+
+  expect_is(scope$get("a"), "IntegerType")
+  expect_is(scope$get("b"), "ComplexType")
+  expect_is(scope$get("c"), "IntegerType")
 })

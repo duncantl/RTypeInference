@@ -6,39 +6,40 @@ context("subsets")
 
 test_that("type inferred for 1d literal index subsetting", {
   idx = 1:5
-  expression = call("[", quote(x), idx)
-  collector = TypeCollector()
+  expr = call("[", as.name("x"), idx)
 
-  result = .infer_types(expression, collector)
-  expect_is(result, "ArrayType")
-  expect_is(element_type(result), "UnknownType")
-  expect_equal(length(result), length(idx))
+  type = infer_types(expr)$type
+
+  expect_is(type, "ArrayType")
+  expect_is(element_type(type), "UnknownType")
+  expect_equal(length(type), length(idx))
 })
 
 
 test_that("type inferred for 1d literal logical subsetting", {
   subs = c(FALSE, TRUE, TRUE)
-  expression = call("[", quote(x), subs)
-  collector = TypeCollector()
+  expr = call("[", as.name("x"), subs)
 
-  result = .infer_types(expression, collector)
-  expect_is(result, "ArrayType")
-  expect_is(element_type(result), "UnknownType")
-  expect_equal(length(result), sum(subs))
+  type = infer_types(expr)$type
+
+  expect_is(type, "ArrayType")
+  expect_is(element_type(type), "UnknownType")
+  expect_equal(length(type), sum(subs))
 })
 
 
 test_that("type inferred for 1d variable index subsetting", {
-  expression = call("[", quote(x), quote(idx))
-  collector = TypeCollector()
+  expr = call("[", quote(x), quote(idx))
+  scope = Scope()
 
   len = 5L
-  collector$setVariableType("x", ArrayType(ComplexType(), 10L))
-  collector$setVariableType("idx", ArrayType(IntegerType(), len))
+  scope$set("x", ArrayType(ComplexType(), 10L))
+  scope$set("idx", ArrayType(IntegerType(), len))
 
-  result = .infer_types(expression, collector)
-  expect_is(result, "ArrayType")
-  expect_is(element_type(result), "ComplexType")
-  expect_equal(length(result), len)
+  type = infer_types(expr, scope)$type
+
+  expect_is(type, "ArrayType")
+  expect_is(element_type(type), "ComplexType")
+  expect_equal(length(type), len)
 })
 

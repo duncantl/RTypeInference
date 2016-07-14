@@ -9,7 +9,8 @@ test_that("scalar multiplication works", {
     1L * 2.3
   )
 
-  type = .infer_types(expr)
+  type = infer_types(expr)$type
+
   expect_is(type, "RealType")
 })
 
@@ -19,7 +20,8 @@ test_that("scalar division works", {
     5L / 5L
   )
 
-  type = .infer_types(expr)
+  type = infer_types(expr)$type
+
   expect_is(type, "RealType")
 
   # Mixed types
@@ -27,7 +29,8 @@ test_that("scalar division works", {
     TRUE / 1.4
   )
 
-  type = .infer_types(expr)
+  type = infer_types(expr)$type
+
   expect_is(type, "RealType")
 
   # Complex types
@@ -35,7 +38,8 @@ test_that("scalar division works", {
     1i / 2.5
   )
 
-  type = .infer_types(expr)
+  type = infer_types(expr)$type
+
   expect_is(type, "ComplexType")
 })
 
@@ -45,7 +49,8 @@ test_that("scalar exponentiation works", {
     1L ^ 2L
   )
 
-  type = .infer_types(expr)
+  type = infer_types(expr)$type
+
   expect_is(type, "RealType")
 
   # Complex types
@@ -53,7 +58,8 @@ test_that("scalar exponentiation works", {
     TRUE ^ 1i
   )
 
-  type = .infer_types(expr)
+  type = infer_types(expr)$type
+
   expect_is(type, "ComplexType")
 })
 
@@ -65,7 +71,8 @@ test_that("scalar-vector addition works", {
     list(x = x)
   )
 
-  type = .infer_types(expr)
+  type = infer_types(expr)$type
+
   expect_is(type, "ArrayType")
   expect_is(element_type(type), "RealType")
   expect_equal(length(type), length(x))
@@ -79,7 +86,8 @@ test_that("vector-vector addition works", {
     list(x = x)
   )
 
-  type = .infer_types(expr)
+  type = infer_types(expr)$type
+
   expect_is(type, "ArrayType")
   expect_is(element_type(type), "IntegerType")
   expect_equal(length(type), length(x))
@@ -93,7 +101,8 @@ test_that("recycled vector-vector addition works", {
     list(y = c(1.3, -1.7), x = x)
   )
 
-  type = .infer_types(expr)
+  type = infer_types(expr)$type
+
   expect_is(type, "ArrayType")
   expect_is(element_type(type), "RealType")
   expect_equal(length(type), length(x))
