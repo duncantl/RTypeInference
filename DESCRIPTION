@@ -17,14 +17,25 @@ Description: This package infers the types of inputs and outputs for R
 URL: https://github.com/duncantl/RTypeInference
 License: GPL-2
 Depends:
-    R (>= 3.2.0),
-    typesys
+    R (>= 3.2.0)
 Imports:
+    ast,
     methods,
     R6,
+    typesys,
     pryr
 Suggests:
     testthat,
     knitr
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1
+Collate:
+    'ASTWalkerState.R'
+    'NameGenerator.R'
+    'RTypeInference.R'
+    'infer.R'
+    'infer_state.R'
+    'infer_types.R'
+    'known_types.R'
+    'operator_handlers.R'
+    'utilities.R'
