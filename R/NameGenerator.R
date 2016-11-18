@@ -13,7 +13,7 @@ NameGenerator = R6::R6Class("NameGenerator",
       }
 
       private$counter[x] = counter
-      return (paste0(x, counter))
+      return (paste0(x, "#", counter))
     },
 
     reset = function() {
