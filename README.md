@@ -1,8 +1,55 @@
-RTypeInference
-==============
+# typer
 
-Tools for inferring the types of inputs and outputs for functions and expressions
+An R package for type inference on R code.
 
+## Description
+
+The data types used in a program can reveal whether the program is valid and
+ways the program can be improved. Type information is also helpful for
+translating between languages, since some languages require explicit type
+annotations in the syntax.
+
+R doesn't include type annotations in the language. This is justified because R
+supports interactive workflows, where brevity is an important consideration.
+The R interpreter checks that programs are correctly typed at run-time. In
+other words, the interpreter makes _dynamic_ type checks because type
+information isn't available before run-time. 
+
+This package uses type inference to gather type information for R programs
+before run-time. The inference system is loosely based on Hindley-Milner type
+systems, although the primary goal of the package is to be useful rather than
+provably correct.
+
+The steps taken by the inference algorithm are:
+
+1. A _type variable_ is created for each program variable.
+2. The program's control-flow graph is traversed to generate a system of
+   constraints for each type variable.
+3. The constraint systems are solved to determine a type for each program
+   variable.
+
+The types of the program variables are returned in a dictionary. Since the
+algorithm expects a control-flow graph in single static-assignment form, each
+program variable corresponds to exactly one definition and thus one type at
+run-time.
+
+The greatest obstacle to inference is that R allows variables to take different
+types on branches:
+
+```r
+if (some_condition)
+  x = 10
+else
+  x = "Hello"
+
+print(x)
+```
+
+Variables that may have any of several different types after a control flow
+merge can blow up the number of types possible for other variables.
+
+
+## Old Description
 
 We want to determine the types of the inputs and output of a function.
 For the return type, we can look at the return type of the last
