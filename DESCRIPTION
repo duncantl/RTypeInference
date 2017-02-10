@@ -30,14 +30,12 @@ Suggests:
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1
 Collate:
-    'ASTWalkerState.R'
-    'NameGenerator.R'
     'RTypeInference.R'
     'call_handlers.R'
+    'constraint_set.R'
     'detect_types.R'
-    'infer_state.R'
-    'infer_types.R'
-    'known_types.R'
+    'infer.R'
     'operator_handlers.R'
+    'print.R'
     'resolve_types.R'
     'utilities.R'
