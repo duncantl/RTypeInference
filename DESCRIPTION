@@ -29,13 +29,3 @@ Suggests:
     knitr
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1
-Collate:
-    'RTypeInference.R'
-    'call_handlers.R'
-    'constraint_set.R'
-    'detect_types.R'
-    'infer.R'
-    'operator_handlers.R'
-    'print.R'
-    'resolve_types.R'
-    'utilities.R'

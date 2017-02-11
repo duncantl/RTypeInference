@@ -7,18 +7,18 @@
 #' @export
 resolve_types = function(state) {
   # Apply unification algorithm to the constraint set.
-  cons = state$constraints
+  set = state$constraints
   soln_set = list()
 
-  while (length(cons) > 0) {
-    con = cons[[1]]
-    cons = cons[-1]
+  while (length(set) > 0) {
+    constraint = set[[1]]
+    set = set[-1]
 
     # Compute solution for a constraint.
-    soln = unify(con[[1]], con[[2]], soln_set)
+    soln = unify(constraint[[1]], constrant[[2]], soln_set)
 
     # Apply solution set to remaining constraints.
-    cons = lapply(cons, lapply, subs_soln, soln)
+    cons = lapply(set, lapply, subs_soln, soln)
 
     # Apply solution to solution set.
     soln_set = lapply(soln_set, subs_soln, soln)
@@ -35,25 +35,29 @@ resolve_types = function(state) {
 unify = function(x, y, soln_set) {
   # Unify if both constraints are non-variables; otherwise assign to variable.
 
-  if (is(y, "ASTNode")) {
-    # Look up the call in the call handler table.
-    idx = match(y$name, names(call_handlers))
-    if (!is.na(idx)) {
-      type = call_handlers[[idx]](y, soln_set)
-
-      if (!is.null(type))
-        return (structure(list(type), names = x))
-    }
-
-    # TODO: Try type inference.
-    stop("Cross-call type inference not yet supported.")
-
-  } else if (is(y, "CompositeType")) {
-    # TODO: composite types
-
-  } else if (is(y, "character") || is(y, "AtomicType")) {
+  if (is(x, "character") && is(y, "AtomicType")) {
     return (structure(list(y), names = x))
   }
+
+  #if (is(y, "ASTNode")) {
+  #  # Look up the call in the call handler table.
+  #  idx = match(y$name, names(call_handlers))
+  #  if (!is.na(idx)) {
+  #    type = call_handlers[[idx]](y, soln_set)
+
+  #    if (!is.null(type))
+  #      return (structure(list(type), names = x))
+  #  }
+
+  #  # TODO: Try type inference.
+  #  stop("Cross-call type inference not yet supported.")
+
+  #} else if (is(y, "CompositeType")) {
+  #  # TODO: composite types
+
+  #} else if (is(y, "character") || is(y, "AtomicType")) {
+  #  return (structure(list(y), names = x))
+  #}
 }
 
 

@@ -1,8 +1,6 @@
 
-#' @include NameGenerator.R
-NULL
 
-
+# FIXME:
 #' Type Detection
 #'
 #' This function detects and marks the types of nodes in a tree of ASTNodes
@@ -11,131 +9,60 @@ NULL
 #'
 #' @param node (ASTNode) An abstract syntax tree.
 #' @export
-detect_types = function(node) {
-  state = InferState$new()
-  .detect(node, state)
-  return (state)
-}
-
-
-# Each `.detect` method should do one of two things:
-#
-# 1. Detect the type, assign the type to the node, and return the type.
-# 2. Call `.detect` to descend in the tree.
-#
-.detect = function(node, state) {
-  UseMethod(".detect")
+detect_types = function(node, set = ConstraintSet$new()) {
+  .detect_types(node, set)
+  return (set)
 }
 
 
 #' @export
-.detect.If = function(node, state) {
-  .detect(node$predicate, state)
-  # FIXME: Return an IfType, should be similar to existing inference code.
-  .detect(node$true, state)
-  .detect(node$false, state)
-
-  # Start by just returning a RuntimeType.
+.detect_types = function(node, set) {
+  UseMethod(".detect_types")
 }
 
-
 #' @export
-.detect.For = function(node, state) {
-  # detect type of iterator.
-  type = .detect(node$iter, state)
+.detect_types.Assign = function(node, set) {
+  type = .detect_types(node$read)
 
-  # FIXME: What if the iterator is a heterogeneous list?
-  ivar = node$ivar
-  ivar$type = state$assign_type(ivar$name)
-  state$add_constraint(ivar$type, type)
+  set$append(node$write$name, type)
 
-  .detect(node$body, state)
-}
-
-
-#' @export
-.detect.While = function(node, state) {
-  # FIXME: Consider a loop where type changes on each iteration.
-  .detect(node$predicate, state)
-  .detect(node$body, state)
-}
-
-
-#' @export
-.detect.Assign = function(node, state) {
-  # NOTE: RHS must come first!
-  type = .detect(node$read, state)
-
-  write = node$write
-  write$type = state$assign_type(write$name)
-  
-  state$add_constraint(write$type, type)
   return (type)
 }
 
-
 #' @export
-.detect.Call = function(node, state) {
-  lapply(node$args, .detect, state)
-
-  # Immediately infer types for simple calls with literal arguments.
-  if ( all(sapply(node$args, is, "Literal")) ) {
-    R_TYPES = c("character", "complex", "numeric", "integer", "logical")
-    if (node$name %in% R_TYPES) {
-      atom = switch(node$name,
-        "character" = typesys::CharacterType()
-        , "complex" = typesys::ComplexType()
-        , "numeric" = typesys::RealType()
-        , "integer" = typesys::IntegerType()
-        , "logical" = typesys::BooleanType()
-      )
-    
-      return (typesys::ArrayType(atom, args[[1]]))
-    }
-  }
-
-  # Otherwise, defer inference to the resolution step.
-  return (node)
+.detect_types.Phi = function(node, set) {
+  rhs = do.call(typesys::Union, as.list(node$read))
+  set$append(node$write, rhs)
 }
 
-
 #' @export
-.detect.Return = function(node, state) {
-  # FIXME: How should this work with IfType?
-  type = .detect(node$args[[0]], state)
-  
-  state$add_constraint("$return", type)
-  return (type)
+.detect_types.Call = function(node, set) {
+  args = lapply(node$args, .detect_types, set)
+  # FIXME: Nested calls might be a problem here. Need to generate a temporary
+  # value for each call.
+
+  # FIXME: Infer return type immediately if types are known for all arguments.
+  # ...
+
+  # FIXME: anonymous functions
+  # Defer inference to the resolution step.
+  do.call(typesys::Call, append(node$func, args))
 }
 
-
 #' @export
-.detect.Bracket = function(node, state) {
-  len = length(node$body)
-  if (len == 0)
-    return (typesys::NullType())
-
-  types = lapply(node$body, .detect, state)
-  return (types[[len]])
+.detect_types.Symbol = function(node, set) {
+  node$name
 }
 
-# Finished
-# --------
-
 #' @export
-.detect.Symbol = function(node, state) {
-  node$type = state$get_type(node$name)
+.detect_types.Null = function(node, set) {
+  typesys::NullType()
 }
 
-
-# Literals
-# --------
 #' @export
-.detect.Null      = function(node, state) node$type = typesys::NullType()
-
-#' @export
-.detect.Logical   = function(node, state) {
+.detect_types.Logical = function(node, set) {
   type = typesys::BooleanType()
+  # FIXME:
   len = length(node$value)
   if (len != 1)
     type = typesys::ArrayType(type, len)
@@ -144,7 +71,7 @@ detect_types = function(node) {
 }
 
 #' @export
-.detect.Integer   = function(node, state) {
+.detect_types.Integer = function(node, set) {
   type = typesys::IntegerType()
   len = length(node$value)
   if (len != 1)
@@ -154,7 +81,7 @@ detect_types = function(node) {
 }
 
 #' @export
-.detect.Numeric   = function(node, state) {
+.detect_types.Numeric = function(node, set) {
   type = typesys::RealType()
   len = length(node$value)
   if (len != 1)
@@ -164,7 +91,7 @@ detect_types = function(node) {
 }
 
 #' @export
-.detect.Complex   = function(node, state) {
+.detect_types.Complex = function(node, set) {
   type = typesys::ComplexType()
   len = length(node$value)
   if (len != 1)
@@ -174,7 +101,7 @@ detect_types = function(node) {
 }
 
 #' @export
-.detect.Character = function(node, state) {
+.detect_types.Character = function(node, set) {
   type = typesys::CharacterType()
   len = length(node$value)
   if (len != 1)
@@ -184,7 +111,7 @@ detect_types = function(node) {
 }
 
 #' @export
-.detect.default = function(node, state) {
+.detect_types.default = function(node, set) {
   msg = sprintf("Cannot detect type for node class '%s'.", class(node)[1])
   stop(msg)
 }

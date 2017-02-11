@@ -1,7 +1,6 @@
 # Description:
-#   Top-level documentation and imports for the package.
-#
-# TODO: Add package documentation here.
+# 
+# Top-level documentation and imports for the package.
 
 #' @import ast
 #' @import methods

@@ -1,5 +1,27 @@
 
-# TODO:
+# TODO
+
+Defer inference as long as possible. Use an UnresolvedCall class to represent
+calls that need detection. 
+
+* [ ] Package-level documentation.
+* [ ] Examples for type detection.
+* [ ] Write up strategy used with examples.
+* [x] Detect types for literals and symbols.
+* [ ] Detect types for control flow.
+    + [ ] If statements generate IfType when type depends input type.
+    + [ ] Loops might change type of variable many times.
+* [ ] Detect types for calls.
+    + [ ] Get called functions and apply inference.
+    + [ ] RuntimeType when type depends on input values
+    + [ ] Special handling for index operations.
+* [x] Frontend for solving constraint systems.
+* [ ] Show more constraint info when InferState is printed.
+* [ ] Use annotations from Jan & team (2DRW & other examples - ambiguity).
+  * [ ] Static checking example.
+
+<!-- Old Stuff
+## Old Stuff
 
 * Tests for larger bodies of code (not just snippets).
 * Support for `[`.
@@ -21,3 +43,4 @@
 * Detect iterator patterns in while loops.
 * Consolidate code for handling math operations with RLLVMCompile.
 * Mark aggregate (sum, min, max, range, sd, mean) results
+-->
