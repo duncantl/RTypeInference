@@ -8,9 +8,9 @@ ConstraintSet = R6::R6Class("ConstraintSet",
       self$constraints = list()
     },
 
-    append = function(left, right) {
+    append = function(lhs, rhs) {
       len = length(self$constraints)
-      self$constraints[[len + 1]] = list(left, right)
+      self$constraints[[len + 1]] = Constraint(lhs, rhs)
       invisible (self)
     }
 
@@ -49,33 +49,19 @@ ConstraintSet = R6::R6Class("ConstraintSet",
 )
 
 #' @export
-#print.InferState = function(x, indent = 2, ...) {
-#  # Print header.
-#  cat(sprintf("<%s>\n", class(x)[1]))
-#  
-#  # Print fields.
-#  fields = ls(x)
-#  fields = fields[!fields %in% c("clone", "initialize", "constraints")]
-#  fields = paste("$", fields, sep = "", collapse = " ")
-#  fields = strwrap(fields, indent = indent, exdent = indent)
-#  cat(fields, sep = "\n")
-#
-#  # Print constraints.
-#  cat(sprintf("\n%*s$constraints\n", indent, ""))
-#  x$print_constraints(2 * indent)
-#
-#  invisible (NULL)
-#}
+Constraint = function(lhs, rhs) {
+  structure(list(lhs, rhs), class = "Constraint")
+}
+
+#' @export
+SolutionSet = function(name, value) {
+  structure(value, names = name, class = "SolutionSet")
+}
 
 
 #' @export
 Unresolved = function(node) {
-  structure(
-    list(
-      node = node
-    ),
-    class = "Unresolved"
-  )
+  structure(list(node = node), class = "Unresolved")
 }
 
 
