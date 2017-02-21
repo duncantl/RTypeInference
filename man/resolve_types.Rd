@@ -4,7 +4,7 @@
 \alias{resolve_types}
 \title{Type Resolution}
 \usage{
-resolve_types(state)
+resolve_types(set)
 }
 \arguments{
 \item{state}{(InferState)}
