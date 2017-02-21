@@ -1,28 +1,37 @@
+# Description:
+#   Functions to generate type constraints from a control-flow graph.
 
-
-# FIXME:
-#' Type Detection
+#' Compute Type Constraints from a Control-flow Graph
 #'
-#' This function detects and marks the types of nodes in a tree of ASTNodes
-#' in-place. The return value includes a list of constraint tuples meant to be
-#' solved via unification as part of the type inference process.
 #'
-#' @param node (ASTNode) An abstract syntax tree.
 #' @export
-detect_types = function(node, set = ConstraintSet$new()) {
-  .detect_types(node, set)
+constrain = function(cfg
+  , id = 1L
+  , dom_t = dom_tree(cfg)
+  , set = ConstraintSet$new()
+) {
+  # Iterate over Phi nodes.
+  lapply(cfg[[id]]$phi, constrain_ast, set)
+
+  # Iterate over body, generating type constraints.
+  lapply(cfg[[id]]$body, constrain_ast, set)
+
+  # Descend to next blocks.
+  children = setdiff(which(dom_t == id), id)
+  lapply(children, function(i) constrain(cfg, i, dom_t, set))
+
   return (set)
 }
 
 
 #' @export
-.detect_types = function(node, set) {
-  UseMethod(".detect_types")
+constrain_ast = function(node, set) {
+  UseMethod("constrain_ast")
 }
 
 #' @export
-.detect_types.Assign = function(node, set) {
-  type = .detect_types(node$read)
+constrain_ast.Assign = function(node, set) {
+  type = constrain_ast(node$read)
 
   set$append(node$write$name, type)
 
@@ -30,14 +39,14 @@ detect_types = function(node, set = ConstraintSet$new()) {
 }
 
 #' @export
-.detect_types.Phi = function(node, set) {
+constrain_ast.Phi = function(node, set) {
   rhs = do.call(typesys::Union, as.list(node$read))
   set$append(node$write, rhs)
 }
 
 #' @export
-.detect_types.Call = function(node, set) {
-  args = lapply(node$args, .detect_types, set)
+constrain_ast.Call = function(node, set) {
+  args = lapply(node$args, constrain_ast, set)
   # FIXME: Nested calls might be a problem here. Need to generate a temporary
   # value for each call.
 
@@ -50,17 +59,17 @@ detect_types = function(node, set = ConstraintSet$new()) {
 }
 
 #' @export
-.detect_types.Symbol = function(node, set) {
+constrain_ast.Symbol = function(node, set) {
   node$name
 }
 
 #' @export
-.detect_types.Null = function(node, set) {
+constrain_ast.Null = function(node, set) {
   typesys::NullType()
 }
 
 #' @export
-.detect_types.Logical = function(node, set) {
+constrain_ast.Logical = function(node, set) {
   type = typesys::BooleanType()
   # FIXME:
   len = length(node$value)
@@ -71,7 +80,7 @@ detect_types = function(node, set = ConstraintSet$new()) {
 }
 
 #' @export
-.detect_types.Integer = function(node, set) {
+constrain_ast.Integer = function(node, set) {
   type = typesys::IntegerType()
   len = length(node$value)
   if (len != 1)
@@ -81,7 +90,7 @@ detect_types = function(node, set = ConstraintSet$new()) {
 }
 
 #' @export
-.detect_types.Numeric = function(node, set) {
+constrain_ast.Numeric = function(node, set) {
   type = typesys::RealType()
   len = length(node$value)
   if (len != 1)
@@ -91,7 +100,7 @@ detect_types = function(node, set = ConstraintSet$new()) {
 }
 
 #' @export
-.detect_types.Complex = function(node, set) {
+constrain_ast.Complex = function(node, set) {
   type = typesys::ComplexType()
   len = length(node$value)
   if (len != 1)
@@ -101,7 +110,7 @@ detect_types = function(node, set = ConstraintSet$new()) {
 }
 
 #' @export
-.detect_types.Character = function(node, set) {
+constrain_ast.Character = function(node, set) {
   type = typesys::CharacterType()
   len = length(node$value)
   if (len != 1)
@@ -111,7 +120,7 @@ detect_types = function(node, set = ConstraintSet$new()) {
 }
 
 #' @export
-.detect_types.default = function(node, set) {
-  msg = sprintf("Cannot detect type for node class '%s'.", class(node)[1])
+constrain_ast.default = function(node, set) {
+  msg = sprintf("No type constraint defined for '%s'.", class(node)[1])
   stop(msg)
 }

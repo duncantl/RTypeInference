@@ -1,11 +1,12 @@
+# Description:
+#
 
-
-#' Type Resolution
+#' Solve a Set of Type Constraints
 #'
-#' @param state (InferState)
+#' @param set (ConstraintSet) A set of type constraints.
 #'
 #' @export
-resolve_types = function(set) {
+solve.ConstraintSet = function(set) {
   # Apply unification algorithm to the constraint set.
   constraints = set$constraints
   solutions = list()
@@ -37,6 +38,7 @@ unify = function(x, y) {
   UseMethod("unify")
 }
 
+#' @export
 unify.character = function(x, y) {
   if (is(y, "Type")) {
     solution = structure(list(y), names = x)
@@ -121,35 +123,6 @@ expand_args = function(args) {
 
   return (results)
 }
-
-
-#unify = function(x, y, soln_set) {
-#  # Unify if both constraints are non-variables; otherwise assign to variable.
-#
-#  if (is(x, "character") && is(y, "AtomicType")) {
-#    return (structure(list(y), names = x))
-#  }
-#
-#  #if (is(y, "ASTNode")) {
-#  #  # Look up the call in the call handler table.
-#  #  idx = match(y$name, names(call_handlers))
-#  #  if (!is.na(idx)) {
-#  #    type = call_handlers[[idx]](y, soln_set)
-#
-#  #    if (!is.null(type))
-#  #      return (structure(list(type), names = x))
-#  #  }
-#
-#  #  # TODO: Try type inference.
-#  #  stop("Cross-call type inference not yet supported.")
-#
-#  #} else if (is(y, "CompositeType")) {
-#  #  # TODO: composite types
-#
-#  #} else if (is(y, "character") || is(y, "AtomicType")) {
-#  #  return (structure(list(y), names = x))
-#  #}
-#}
 
 
 #' Apply a Solution
