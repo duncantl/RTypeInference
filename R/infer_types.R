@@ -6,8 +6,7 @@
 #'
 #' @export
 infer_types = function(code) {
-  cfg = ast::to_cfg(ast::to_ast(code))
-  cfg = ast::ssa(cfg)
+  cfg = ast::to_cfg(ast::to_ast(code), in_place = TRUE)
 
   constraints = constrain(cfg)
   types = solve(constraints)

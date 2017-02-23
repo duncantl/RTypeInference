@@ -30,7 +30,7 @@ solve.ConstraintSet = function(set) {
     solutions = modifyList(solutions, soln)
   }
 
-  list (constraints = constraints, solutions = solutions)
+  return (solutions)
 }
 
 
