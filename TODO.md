@@ -12,6 +12,8 @@ calls that need detection.
 * [ ] Use annotations from Jan & team (2DRW & other examples - ambiguity)
   * [ ] Static checking example
 
+* [ ] Provide parameter for list of call handler overrides
+
 <!-- Old Stuff
 ## Old Stuff
 

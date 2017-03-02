@@ -31,7 +31,7 @@ constrain_ast = function(node, set) {
 
 #' @export
 constrain_ast.Assign = function(node, set) {
-  type = constrain_ast(node$read)
+  type = constrain_ast(node$read, set)
 
   set$append(node$write$name, type)
 
