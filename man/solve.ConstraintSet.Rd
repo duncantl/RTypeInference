@@ -4,10 +4,10 @@
 \alias{solve.ConstraintSet}
 \title{Solve a Set of Type Constraints}
 \usage{
-\method{solve}{ConstraintSet}(set)
+\method{solve}{ConstraintSet}(a, b, ...)
 }
 \arguments{
-\item{set}{(ConstraintSet) A set of type constraints.}
+\item{a}{(ConstraintSet) A set of type constraints.}
 }
 \description{
 Solve a Set of Type Constraints

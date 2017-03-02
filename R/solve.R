@@ -3,12 +3,12 @@
 
 #' Solve a Set of Type Constraints
 #'
-#' @param set (ConstraintSet) A set of type constraints.
+#' @param a (ConstraintSet) A set of type constraints.
 #'
 #' @export
-solve.ConstraintSet = function(set) {
+solve.ConstraintSet = function(a, b, ...) {
   # Apply unification algorithm to the constraint set.
-  constraints = set$constraints
+  constraints = a$constraints
   solutions = list()
 
   while (length(constraints) > 0) {
