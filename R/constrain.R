@@ -59,6 +59,12 @@ constrain_ast.Call = function(node, set) {
 }
 
 #' @export
+constrain_ast.Replacement = function(node, set) {
+  warning("Constraints are not generated for replacements.")
+  #browser()
+}
+
+#' @export
 constrain_ast.Symbol = function(node, set) {
   node$name
 }

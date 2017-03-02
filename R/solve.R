@@ -64,8 +64,7 @@ infer_call = function(call) {
   idx = match(call@func, names(CALL_HANDLERS))
   if (is.na(idx)) {
     # FIXME: Try inference if no handler is available.
-    browser()
-    stop(sprintf("No handler defined for %s.", call@func))
+    stop(sprintf("No handler defined for function '%s'.", call@func))
 
   } else {
     handler = CALL_HANDLERS[[idx]]
