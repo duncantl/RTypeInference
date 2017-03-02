@@ -7,7 +7,7 @@
 #' @export
 constrain = function(cfg
   , id = 1L
-  , dom_t = dom_tree(cfg)
+  , dom_t = ast::dom_tree(cfg)
   , set = ConstraintSet$new()
 ) {
   # Iterate over Phi nodes.

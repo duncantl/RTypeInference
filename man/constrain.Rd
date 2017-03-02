@@ -4,7 +4,8 @@
 \alias{constrain}
 \title{Compute Type Constraints from a Control-flow Graph}
 \usage{
-constrain(cfg, id = 1L, dom_t = dom_tree(cfg), set = ConstraintSet$new())
+constrain(cfg, id = 1L, dom_t = ast::dom_tree(cfg),
+  set = ConstraintSet$new())
 }
 \description{
 Compute Type Constraints from a Control-flow Graph

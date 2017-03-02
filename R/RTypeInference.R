@@ -2,9 +2,6 @@
 # 
 # Top-level documentation and imports for the package.
 
-#' @import ast
-#' @import methods
-#' @import R6
-#' @import typesys
-#' @importFrom utils tail
+#' @importFrom methods is
+#' @importFrom utils modifyList
 NULL
