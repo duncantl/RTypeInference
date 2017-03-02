@@ -117,7 +117,7 @@ constrain_ast.Complex = function(node, set) {
 
 #' @export
 constrain_ast.Character = function(node, set) {
-  type = typesys::CharacterType()
+  type = typesys::StringType()
   len = length(node$value)
   if (len != 1)
     type = typesys::ArrayType(type, len)
