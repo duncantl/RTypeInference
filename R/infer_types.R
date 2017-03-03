@@ -6,10 +6,20 @@
 #'
 #' @export
 infer_types = function(code) {
-  cfg = ast::to_cfg(ast::to_ast(code), in_place = TRUE)
+  UseMethod("infer_types")
+}
 
-  constraints = constrain(cfg)
+#' @export
+infer_types.CFGraph = function(code) {
+  constraints = constrain(code)
   types = solve(constraints)
 
   return (types)
+}
+
+#' @export
+infer_types.default = function(code) {
+  cfg = ast::to_cfg(ast::to_ast(code), in_place = TRUE)
+
+  infer_types(cfg)
 }
