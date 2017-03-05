@@ -1,6 +1,20 @@
 # Description:
 #   Utility functions.
 
+#' Get Return Type from Solution Set
+#'
+#' This function gets the return type from the solved types for a function.
+#'
+#' @param (SolutionSet) Complete type information for a function.
+#'
+#' @export
+return_type = function(solutions) {
+  is_return = startsWith(names(solutions), "._return_")
+  type = do.call(typesys::Union, solutions[is_return])
+
+  return (type)
+}
+
 
 #' Type Annotation
 #'

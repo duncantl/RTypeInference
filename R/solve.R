@@ -9,7 +9,7 @@
 solve.ConstraintSet = function(a, b, ...) {
   # Apply unification algorithm to the constraint set.
   constraints = a$constraints
-  solutions = list()
+  solutions = SolutionSet()
 
   while (length(constraints) > 0) {
     cons = constraints[[1]]
@@ -41,11 +41,11 @@ unify = function(x, y) {
 #' @export
 unify.character = function(x, y) {
   if (is(y, "typesys::Type")) {
-    solution = structure(list(y), names = x)
+    solution = SolutionSet(x, y)
 
   } else if (is(y, "typesys::Call")) {
     type = infer_call(y)
-    solution = structure(list(type), names = x)
+    solution = SolutionSet(x, type)
 
   } else {
     # FIXME: some elements might be non-types
@@ -136,7 +136,11 @@ apply_solution = function(x, soln) {
 
 #' @export
 apply_solution.Constraint = function(x, soln) {
-  lapply(x, apply_solution, soln)
+  as_constraint(NextMethod())
+}
+
+apply_solution.SolutionSet = function(x, soln) {
+  as_solution_set(NextMethod())
 }
 
 #' @export

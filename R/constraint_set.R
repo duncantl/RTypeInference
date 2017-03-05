@@ -50,18 +50,35 @@ ConstraintSet = R6::R6Class("ConstraintSet",
 
 #' @export
 Constraint = function(lhs, rhs) {
-  structure(list(lhs, rhs), class = "Constraint")
+  as_constraint(list(lhs, rhs))
 }
+
+as_constraint = function(x) {
+  structure(x, class = c("Constraint", "list"))
+}
+
 
 #' @export
 SolutionSet = function(name, value) {
-  structure(value, names = name, class = "SolutionSet")
+  if (missing(name) || missing(value)) {
+    value = list()
+  } else {
+    value = list(value)
+    names(value) = name
+  }
+
+  as_solution_set(value)
+}
+
+
+as_solution_set = function(x) {
+  structure(x, class = c("SolutionSet", "list"))
 }
 
 
 #' @export
 Unresolved = function(node) {
-  structure(list(node = node), class = "Unresolved")
+  structure(list(node = node), class = c("Unresolved", "list"))
 }
 
 
