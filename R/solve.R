@@ -40,10 +40,10 @@ unify = function(x, y) {
 
 #' @export
 unify.character = function(x, y) {
-  if (is(y, "Type")) {
+  if (is(y, "typesys::Type")) {
     solution = structure(list(y), names = x)
 
-  } else if (is(y, "Call")) {
+  } else if (is(y, "typesys::Call")) {
     type = infer_call(y)
     solution = structure(list(type), names = x)
 
@@ -71,7 +71,7 @@ infer_call = function(call) {
 
     # Resolve any inner calls.
     args = lapply(call@args, function(arg) {
-      if (is(arg, "Call"))
+      if (is(arg, "typesys::Call"))
         infer_call(arg)
       else
         arg
@@ -100,7 +100,7 @@ infer_call = function(call) {
 expand_args = function(args) {
   # Set up vector of lengths.
   seqs = lapply(args, function(arg) {
-    if (is(arg, "Union"))
+    if (is(arg, "typesys::Union"))
       seq_len(length(arg))
     else
       1L
@@ -109,7 +109,7 @@ expand_args = function(args) {
 
   results = apply(combos, 2, function(combo) {
     Map(function(arg, i) {
-      if (is(arg, "Union"))
+      if (is(arg, "typesys::Union"))
         arg[[i]]
       else
         arg
@@ -154,14 +154,14 @@ apply_solution.character = function(x, soln) {
 }
 
 #' @export
-apply_solution.Call = function(x, soln) {
+`apply_solution.typesys::Call` = function(x, soln) {
   # FIXME: Move to class methods.
   x@args = apply_solution(x@args, soln)
   return (x)
 }
 
 #' @export
-apply_solution.Union = function(x, soln) {
+`apply_solution.typesys::Union` = function(x, soln) {
   # FIXME: Move to class methods.
   x@types = apply_solution(x@types, soln)
   x = typesys::simplify(x)
@@ -169,6 +169,6 @@ apply_solution.Union = function(x, soln) {
 }
 
 #' @export
-apply_solution.Type = function(x, soln) {
+`apply_solution.typesys::Type` = function(x, soln) {
   return (x)
 }

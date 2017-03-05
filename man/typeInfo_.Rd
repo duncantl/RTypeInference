@@ -9,4 +9,3 @@
 \description{
 This is a no-op function for annotating functions with types.
 }
-

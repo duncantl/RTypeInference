@@ -10,4 +10,3 @@ constrain(cfg, id = 1L, dom_t = ast::dom_tree(cfg),
 \description{
 Compute Type Constraints from a Control-flow Graph
 }
-

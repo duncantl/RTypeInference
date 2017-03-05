@@ -14,4 +14,3 @@ apply_solution(x, soln)
 \description{
 This function substitutes a solution into a constraint set or solution set.
 }
-

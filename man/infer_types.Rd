@@ -9,4 +9,3 @@ infer_types(code)
 \description{
 Infer Types for a Function
 }
-

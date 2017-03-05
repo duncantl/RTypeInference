@@ -4,4 +4,5 @@
 
 #' @importFrom methods is
 #' @importFrom utils modifyList
+#' @importMethodsFrom typesys format element_type
 NULL

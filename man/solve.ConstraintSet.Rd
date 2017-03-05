@@ -12,4 +12,3 @@
 \description{
 Solve a Set of Type Constraints
 }
-

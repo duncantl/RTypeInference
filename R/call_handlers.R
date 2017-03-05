@@ -5,13 +5,13 @@ CALL_HANDLERS = list(
     y = args[[2]]
 
     type =
-      if (is(x, "ComplexType") || is(y, "ComplexType"))
+      if (is(x, "typesys::ComplexType") || is(y, "typesys::ComplexType"))
         typesys::ComplexType()
-      else if (is(x, "RealType") || is(y, "RealType"))
+      else if (is(x, "typesys::RealType") || is(y, "typesys::RealType"))
         typesys::RealType()
-      else if (is(x, "IntegerType") || is(y, "IntegerType"))
+      else if (is(x, "typesys::IntegerType") || is(y, "typesys::IntegerType"))
         typesys::IntegerType()
-      else if (is(x, "BooleanType") || is(y, "BooleanType"))
+      else if (is(x, "typesys::BooleanType") || is(y, "typesys::BooleanType"))
         typesys::IntegerType()
       else
         stop("Invalid types for `+`.")
@@ -25,9 +25,9 @@ CALL_HANDLERS = list(
     to = args[[2]]
 
     type =
-      if (is(from, "RealType") || is(to, "RealType"))
+      if (is(from, "typesys::RealType") || is(to, "typesys::RealType"))
         typesys::RealType()
-      else if (is(from, "IntegerType"))
+      else if (is(from, "typesys::IntegerType"))
         typesys::IntegerType()
       else
         stop("Invalid types for `:`.")
