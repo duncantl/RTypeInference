@@ -1,24 +1,11 @@
 
 CALL_HANDLERS = list(
-  "+" = function(args) {
-    x = args[[1]]
-    y = args[[2]]
-
-    type =
-      if (is(x, "typesys::ComplexType") || is(y, "typesys::ComplexType"))
-        typesys::ComplexType()
-      else if (is(x, "typesys::RealType") || is(y, "typesys::RealType"))
-        typesys::RealType()
-      else if (is(x, "typesys::IntegerType") || is(y, "typesys::IntegerType"))
-        typesys::IntegerType()
-      else if (is(x, "typesys::BooleanType") || is(y, "typesys::BooleanType"))
-        typesys::IntegerType()
-      else
-        stop("Invalid types for `+`.")
-
-    # TODO: vectors
-    return (type)
-  }
+  "+" = function(args) upcast_math(args, "+")
+  , "-" = function(args) upcast_math(args, "-")
+  , "*" = function(args) upcast_math(args, "*")
+  , "/" = function(args) upcast_math(args, "/")
+  , "^" = function(args) upcast_math(args, "^")
+  , "%%" = function(args) upcast_math(args, "%%")
 
   , ":" = function(args) {
     from = args[[1]]

@@ -1,38 +1,42 @@
 # Description:
 #   Functions for handling operators.
 
-MATH_OPS = c("+", "-", "*", "/", "^")
-LOGIC_OPS = c("<", ">", "<=", ">=", "==", "!=", "|", "||", "&", "&&")
+#MATH_OPS = c("+", "-", "*", "/", "^")
+#LOGIC_OPS = c("<", ">", "<=", ">=", "==", "!=", "|", "||", "&", "&&")
 
-
-inferMathOpType =
-function(x, tc, ...)
-{
+#' Upcast Types for Math Operator
+#'
+#' This function determines the output type of a unary or binary math operator
+#' when given the input types.
+#'
+#' @param types (list) The input types.
+#' @param op (character) The name of the math operator.
+#'
+#' @export
+upcast_math = function(types, op) {
   # complex > numeric > integer > logical
-  # Division and exponentiation alway produce numeric or complex.
-  # Get operator name and argument types.
-  op_name = as.character(x[[1]])
+  # Operators `/` and `^` always produce numeric or complex.
+  if (length(types) == 1) {
+    if (op %in% c("+", "-"))
+      return (types[[1]])
+    else
+      stop(sprintf("Operator '%s' is not unary.", op))
+  }
 
-  args = lapply(x[-1], .infer_types, tc, ...)
+  # TODO: This is not correct for vectors.
+  type =
+    if (any_is(types, "typesys::ComplexType"))
+      typesys::ComplexType()
+    else if (any_is(types, "typesys::RealType") || op %in% c("/", "^"))
+      typesys::RealType()
+    else if (any_is(types, "typesys::IntegerType"))
+      typesys::IntegerType()
+    else if (any_is(types, "typesys::BooleanType"))
+      typesys::IntegerType()
+    else
+      stop(sprintf("Invalid types for operator '%s'.", op))
 
-  length = max(vapply(args, length, 0L))
-
-  args = lapply(args, element_type)
-
-  atom =
-  if (any_is(args, "ComplexType"))
-    ComplexType()
-  else if (any_is(args, "RealType") || op_name %in% c("/", "^"))
-    RealType()
-  else if(any_is(args, "IntegerType"))
-    IntegerType()
-  else if(any_is(args, "BooleanType"))
-    # Note: logicals are implicitly casted to integers.
-    IntegerType()
-  else
-    stop(sprintf("Invalid type passed to operation `%s`.", op_name))
-
-  makeVector(atom, length)
+  return (type)
 }
 
 

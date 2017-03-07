@@ -8,11 +8,14 @@ calls that need detection.
   + [ ] Update vignettes for new interface
 
 * [ ] Add/update tests for new interface
+  + [ ] Test math handlers on vectors
 
 * [ ] Use annotations from Jan & team (2DRW & other examples - ambiguity)
   * [ ] Static checking example
 
 * [ ] Provide parameter for list of call handler overrides
+
+* [ ] Constraint generation for `Brace`
 
 <!-- Old Stuff
 ## Old Stuff

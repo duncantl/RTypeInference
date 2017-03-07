@@ -47,10 +47,10 @@ function(atom, dimension)
 
 
 any_is =
-function(objects, class2)
+function(objects, class_name)
   # Test inheritance for multiple objects.
 {
-  any(vapply(objects, is, TRUE, class2))
+  any(vapply(objects, is, TRUE, class_name))
 }
 
 
