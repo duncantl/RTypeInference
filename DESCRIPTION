@@ -1,6 +1,6 @@
 Package: RTypeInference
 Title: Infer Types of Inputs and Outputs for R Expressions
-Version: 0.4.0.9000
+Version: 0.4.0.9001
 Date: 2016-06-12
 Authors@R: c(
   person("Nick", "Ulle", role = c("aut", "cre"),

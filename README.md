@@ -1,4 +1,4 @@
-# typer
+# RTypeInference
 
 An R package for type inference on R code.
 
