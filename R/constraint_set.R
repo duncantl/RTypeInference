@@ -49,6 +49,11 @@ ConstraintSet = R6::R6Class("ConstraintSet",
 )
 
 #' @export
+`[[.ConstraintSet` = function(x, i) {
+  return (x$constraints[[i]])
+}
+
+#' @export
 Constraint = function(lhs, rhs) {
   as_constraint(list(lhs, rhs))
 }
