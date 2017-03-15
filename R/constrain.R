@@ -57,8 +57,10 @@ constrain_ast.Parameter = function(node, set) {
 
 #' @export
 constrain_ast.Phi = function(node, set) {
-  rhs = do.call(typesys::Union, as.list(node$read))
-  set$append(node$write, rhs)
+  # FIXME: Check type of the read; it could be a non-Symbol.
+  reads = lapply(node$read, function(read) read$name)
+  rhs = do.call(typesys::Union, reads)
+  set$append(node$write$name, rhs)
 }
 
 #' @export
@@ -72,7 +74,7 @@ constrain_ast.Call = function(node, set) {
 
   # FIXME: anonymous functions
   # Defer inference to the resolution step.
-  do.call(typesys::Call, append(node$func, args))
+  do.call(typesys::Call, append(node$fn$name, args))
 }
 
 #' @export
