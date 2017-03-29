@@ -7,7 +7,7 @@ test_that("constraints generated from default arguments", {
     return (n)
   }
 
-  cfg = ast::to_cfg(ast::to_ast(code))
+  cfg = rstatic::to_cfg(rstatic::to_ast(code))
   result = constrain(cfg)
 
   # -----
@@ -20,7 +20,7 @@ test_that("no error when default arguments are unspecified", {
     return (x)
   }
 
-  cfg = ast::to_cfg(ast::to_ast(code))
+  cfg = rstatic::to_cfg(rstatic::to_ast(code))
   result = constrain(cfg)
 
   # -----

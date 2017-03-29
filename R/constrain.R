@@ -7,7 +7,7 @@
 #' @export
 constrain = function(cfg
   , b = 1L
-  , dom_t = ast::dom_tree(cfg)
+  , dom_t = rstatic::dom_tree(cfg)
   , set = ConstraintSet$new()
 ) {
   block = cfg[[b]]

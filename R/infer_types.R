@@ -19,7 +19,7 @@ infer_types.CFGraph = function(code) {
 
 #' @export
 infer_types.default = function(code) {
-  cfg = ast::to_cfg(ast::to_ast(code), in_place = TRUE)
+  cfg = rstatic::to_cfg(rstatic::to_ast(code), in_place = TRUE)
 
   infer_types(cfg)
 }
