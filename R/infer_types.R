@@ -10,7 +10,7 @@ infer_types = function(code) {
 }
 
 #' @export
-infer_types.CFGraph = function(code) {
+infer_types.ControlFlowGraph = function(code) {
   constraints = constrain(code)
   types = solve(constraints)
 
