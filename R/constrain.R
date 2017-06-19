@@ -6,13 +6,18 @@
 #'
 #' @export
 constrain = function(cfg
-  , b = cfg$get_index(cfg$entry)
+  , b
   , dom_t = rstatic::dom_tree(cfg)
   , set = ConstraintSet$new()
 ) {
-  # TODO: Generate constraints for parameters in caller, before recursion.
-  if (b == cfg$entry && !is.null(cfg$params))
-    lapply(cfg$params, constrain_ast, set)
+
+  if (missing(b)) {
+    b = cfg$get_index(cfg$entry)
+
+    # TODO: Generate constraints for parameters in caller, before recursion.
+    if (!is.null(cfg$params))
+      lapply(cfg$params, constrain_ast, set)
+  }
 
   block = cfg[[b]]
 
