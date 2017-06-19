@@ -43,6 +43,12 @@ CALL_HANDLERS = list(
 
     return (type)
   }
+
+  , "list" = function(args) {
+    type = typesys::ListType(args)
+
+    return (type)
+  }
 )
 
 
