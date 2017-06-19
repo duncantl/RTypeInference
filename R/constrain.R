@@ -6,14 +6,15 @@
 #'
 #' @export
 constrain = function(cfg
-  , b = 1L
+  , b = cfg$entry
   , dom_t = rstatic::dom_tree(cfg)
   , set = ConstraintSet$new()
 ) {
-  block = cfg[[b]]
+  # TODO: Generate constraints for parameters in caller, before recursion.
+  if (b == cfg$entry && !is.null(cfg$params))
+    lapply(cfg$params, constrain_ast, set)
 
-  if (is(block, "FnEntryBlock"))
-    lapply(block$params, constrain_ast, set)
+  block = cfg[[b]]
 
   # Iterate over Phi nodes.
   lapply(block$phi, constrain_ast, set)
