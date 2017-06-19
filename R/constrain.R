@@ -6,7 +6,7 @@
 #'
 #' @export
 constrain = function(cfg
-  , b = cfg$entry
+  , b = cfg$get_index(cfg$entry)
   , dom_t = rstatic::dom_tree(cfg)
   , set = ConstraintSet$new()
 ) {
