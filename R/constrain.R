@@ -117,6 +117,8 @@ constrain_ast.Integer = function(node, set) {
   if (len != 1)
     type = typesys::ArrayType(type, len)
 
+  type@value = node
+
   return (type)
 }
 

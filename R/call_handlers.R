@@ -29,7 +29,12 @@ CALL_HANDLERS = list(
   }
 
   , "numeric" = function(args) {
-    type = typesys::ArrayType(typesys::RealType(), NA)
+    type = typesys::ArrayType(typesys::RealType())
+
+    len = args[[1]]@value
+    if (is(len, "typesys::SymbolValue")) {
+      type@dimension = list(len)
+    }
 
     return (type)
   }

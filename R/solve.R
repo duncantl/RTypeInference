@@ -154,7 +154,10 @@ apply_solution.character = function(x, soln) {
   if (is.na(idx))
     return (x)
 
-  return (soln[[idx]])
+  type = soln[[idx]]
+  type@value = typesys::SymbolValue(x)
+
+  return (type)
 }
 
 #' @export
@@ -169,6 +172,7 @@ apply_solution.character = function(x, soln) {
   # FIXME: Move to class methods.
   x@types = apply_solution(x@types, soln)
   x = typesys::simplify(x)
+
   return (x)
 }
 
