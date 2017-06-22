@@ -5,20 +5,29 @@
 #' Infer Types for a Function
 #'
 #' @export
-infer_types = function(code) {
+infer_types = function(code, init = list(), ...) {
   UseMethod("infer_types")
 }
 
 #' @export
-infer_types.ControlFlowGraph = function(code) {
-  constraints = constrain(code)
+infer_types.ControlFlowGraph = function(code, init = list(), set = ConstraintSet$new(), ...) {
+    
+  if(length(init) && !is(init, "ConstraintSet")) {
+       #XXX This should be in the initialization method for set.
+     mapply(function(type, name)
+             set$append(name, type),  # Need to convert the types from user-convenient types to those we expect (in typesys?)
+            init, names(init))
+  }
+  
+  constraints = constrain(code, set = set)
+  
   types = solve(constraints)
 
   return (types)
 }
 
 #' @export
-infer_types.default = function(code) {
+infer_types.default = function(code, init = list(), ...) {
   cfg = rstatic::to_cfg(rstatic::to_ast(code), in_place = TRUE)
 
   infer_types(cfg)
