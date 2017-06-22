@@ -1,6 +1,10 @@
 
 # TODO
 
+* Allow the user to specify types for specific variables. Need to work around the SSA.
+* Control whether the results are for use in R and hence SEXPs or part of a larger computation. This
+  can get done when computing the types and so in infer_types().
+
 Defer inference as long as possible. Use an UnresolvedCall class to represent
 calls that need detection. 
 
