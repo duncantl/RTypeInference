@@ -15,8 +15,10 @@ constrain = function(cfg
     b = cfg$get_index(cfg$entry)
 
     # TODO: Generate constraints for parameters in caller, before recursion.
-    if (!is.null(cfg$params))
-      lapply(cfg$params, constrain_ast, set)
+    if (!is.null(cfg$params)) {
+      given = (names(cfg$params) %in% sapply(set$constraints, `[[`, 1))
+      lapply(cfg$params[!given], constrain_ast, set)
+    }
   }
 
   block = cfg[[b]]
