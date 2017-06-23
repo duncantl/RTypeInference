@@ -5,7 +5,9 @@
 #' Infer Types for a Function
 #'
 #' @export
+
 infer_types = function(code, init = list(), scalar = FALSE, ...) {
+infer_types = function(code, init = list(), ...) {
   UseMethod("infer_types")
 }
 
@@ -19,7 +21,6 @@ function(code, init = list(), scalar = FALSE, set = ConstraintSet$new(),
        #XXX This should be in the initialization method for set.
      if(length(names(init)) == 0) 
          names(init) = names(cfg$params)[seq(along = init)]
-
      mapply(function(type, name)
              set$append(name, type),  # Need to convert the types from user-convenient types to those we expect (in typesys?)
             init, paste0(names(init), "_1"))

@@ -42,6 +42,9 @@
 * [Low] solve() fails if there are two identical constraints in the ConstraintSet. See
   tests/dupConstraints.R if we don't have the code in ConstrainSet$append() checking for identical.
 
+* Allow the user to specify types for specific variables. Need to work around the SSA.
+
+
 Defer inference as long as possible. Use an UnresolvedCall class to represent
 calls that need detection. 
 
