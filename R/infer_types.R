@@ -16,7 +16,7 @@ infer_types.ControlFlowGraph = function(code, init = list(), set = ConstraintSet
        #XXX This should be in the initialization method for set.
      mapply(function(type, name)
              set$append(name, type),  # Need to convert the types from user-convenient types to those we expect (in typesys?)
-            init, names(init))
+            init, paste0(names(init), "_1"))
   }
   
   constraints = constrain(code, set = set)
