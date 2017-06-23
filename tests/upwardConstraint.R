@@ -12,7 +12,11 @@ g =
 function(n)
    x = numeric(n)
 # or
-# 1:n
+h =
+function(n)
+{
+    1:n
+}
 # implies that n is an integer and so we should add that constraint.
         
 library(rstatic)

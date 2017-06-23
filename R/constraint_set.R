@@ -9,8 +9,13 @@ ConstraintSet = R6::R6Class("ConstraintSet",
     },
 
     append = function(lhs, rhs) {
+      con = Constraint(lhs, rhs)
+        # avoiding adding duplicate constraints. This messes solve() up. We may want to fix that
+        # but probably good to avoid redundant constraints.
+      if(any(sapply(self$constraints, identical, con)))
+         return(self)
       len = length(self$constraints)
-      self$constraints[[len + 1]] = Constraint(lhs, rhs)
+      self$constraints[[len + 1]] = con
       invisible (self)
     }
 
