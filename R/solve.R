@@ -38,6 +38,17 @@ unify = function(x, y) {
   UseMethod("unify")
 }
 
+if(FALSE) {
+    # Need to figure out where the name in the SolutionSet should be here.
+unify.default =
+function(x, y)
+{
+  if(is(x, "typesys::Type") && is(y, "typesys::Type") && identical(x, y)) {
+        # make a SolutionSet
+  }
+}
+}
+
 #' @export
 unify.character = function(x, y) {
   if (is(y, "typesys::Type")) {
@@ -47,7 +58,7 @@ unify.character = function(x, y) {
     type = infer_call(y)
     solution = SolutionSet(x, type)
 
-  } else {
+ } else {
     # FIXME: some elements might be non-types
     msg = sprintf("Could not resolve %s <=> %s.", format(x), format(y))
     stop(msg)
