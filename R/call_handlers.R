@@ -7,6 +7,8 @@ CALL_HANDLERS = list(
   , "^" = function(args) upcast_math(args, "^")
   , "%%" = function(args) upcast_math(args, "%%")
 
+  , "as.integer" = function(args) typesys::IntegerType
+    
   , ":" = function(args) {
     from = args[[1]]
     to = args[[2]]
@@ -56,6 +58,7 @@ CALL_HANDLERS = list(
   }
 
   , "exp" = function(args) {
+      browser()
     return (typesys::RealType())
   }
 )
