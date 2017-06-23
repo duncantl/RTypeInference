@@ -9,6 +9,32 @@ infer_types = function(code, init = list(), scalar = FALSE, ...) {
   UseMethod("infer_types")
 }
 
+infer_types.function =
+function(code, init = list(), scalar = FALSE, set = ConstraintSet$new(),
+          ConstrainHandlers = getConstrainHandlers(),  ...)
+{
+   infer_types(rstatic::to_cfg(code), init, scalar, set, ConstrainHandlers, ...)
+}
+
+infer_types.call =
+function(code, init = list(), scalar = FALSE, set = ConstraintSet$new(),
+          ConstrainHandlers = getConstrainHandlers(),  ...)
+{
+   f = function() x
+   body(f) = code
+   infer_types(f, init, scalar, set, ConstrainHandlers, ...)
+}
+
+`infer_types.{` =
+function(code, init = list(), scalar = FALSE, set = ConstraintSet$new(),
+          ConstrainHandlers = getConstrainHandlers(),  ...)
+{
+   f = function() {}
+   body(f) = code
+   infer_types(f, init, scalar, set, ConstrainHandlers, ...)
+}
+
+
 #' @export
 infer_types.ControlFlowGraph =
 function(code, init = list(), scalar = FALSE, set = ConstraintSet$new(),
