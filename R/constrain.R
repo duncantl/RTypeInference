@@ -59,7 +59,7 @@ constrain_ast.Parameter = function(node, set) {
   type = constrain_ast(node$default, set)
 
   set$append(node$name, type)
-
+  
   return(type)
 }
 
@@ -80,6 +80,13 @@ constrain_ast.Call = function(node, set) {
   # FIXME: Infer return type immediately if types are known for all arguments.
   # ...
 
+    # XXX This is temporarily here.  We'll add customization handlers for this.
+  fn = node$fn$name
+  if((fn %in% c("numeric", "integer", "logical", "character")) &&
+       is(node$args[[1]], "Symbol") ) {
+      set$append(node$args[[1]]$name, typesys::IntegerType())
+  }  
+  
   # FIXME: anonymous functions
   # Defer inference to the resolution step.
   do.call(typesys::Call, append(node$fn$name, args))
