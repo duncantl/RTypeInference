@@ -165,6 +165,14 @@ constrain_ast.Character = function(node, set, scalar = FALSE, ...) {
   return (type)
 }
 
+constrain_ast.Brace =
+function(node, set, scalar = FALSE, ...) {
+    #XXX - not just first element - or will there only ever be one
+  if(length(node$body) > 1)
+     warning("constrain_ast.Brace - ignoring other elements of body")    
+  constrain_ast(node$body[[1]], set, scalar, ...)
+}
+    
 #' @export
 constrain_ast.default = function(node, set, scalar = FALSE, ...) {
   msg = sprintf("No type constraint defined for '%s'.", class(node)[1])
