@@ -5,6 +5,10 @@
 * Control whether the results are for use in R and hence SEXPs or part of a larger computation. This
   can get done when computing the types and so in infer_types().
 
+* solve() fails if there are two identical constraints in the ConstraintSet. See
+  tests/dupConstraints.R if we don't have the code in ConstrainSet$append() checking for identical.
+   
+
 Defer inference as long as possible. Use an UnresolvedCall class to represent
 calls that need detection. 
 
