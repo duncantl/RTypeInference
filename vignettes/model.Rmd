@@ -1,0 +1,108 @@
+---
+title: "RTypeInference Model"
+author: "Nick Ulle"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, echo=FALSE, results="hide"}
+library(RTypeInference)
+```
+
+## `infer_types()`
+
+To get the types for the variables in an R program, we use the `infer_types()`
+function. The input is the control flow graph for the R program, in SSA form.
+Computing the CFG is handled by the __rstatic__ package, and the details are
+discussed in that package's documentation. Here we will take those details for
+granted.
+
+The idea of type inference is to generate a system of constraints on the types
+used in the program, and then solve the system to get the types. The
+`infer_types()` function performs both of these steps, but they can also be
+carried out separately with `constrain()` and `solve()`, respectively.
+
+Each constraint comes from a different piece of evidence in the code about the
+types. For instance, an assignment `x = "hi"` signals that the variable `x` is
+a string. Many expressions allow us to narrow down the set of valid types for a
+variable, but don't specify the exact type. When we see `x + y`, we know that
+unless `+` has been redefined by the user, `x` and `y` must both be numbers.
+However, we cannot tell from this expression alone whether they are logical
+values, integers, floating point numbers, or complex numbers.
+
+R allows variables to be redefined with a different type at any point in a
+program, so most variables are associated with a sequence of types rather than
+a single type. Knowing the sequence of types for a variable is only useful if
+we also know where in the program each type occurs.
+
+To deal with this problem, constraints always refer to single static assignment
+(SSA) names rather than variable names. In SSA form, each (re)definition of a
+variable is given a unique name. Because of this, each SSA name can be
+unambiguously associated with a single type in a variable's sequence of types.
+
+SSA names are not the only strategy for keeping track of constraints and types.
+We could think of types as being associated with specific expressions within a
+program rather than variables. This is a conceptually different approach to the
+problem. In this approach, type inference must find a type for every expression
+in the program. This is not any more difficult, but does require additional
+bookkeeping with associated memory costs.
+
+In order to generate constraints, `constrain()` traverses the program's CFG and
+calls the S3 generic `constrain_ast()` on each expression. For now, we can
+customize how constraints are generated for arbitrary expressions by redefining
+the `constrain_ast()` methods as needed.
+
+<!-- FIXME: Need a better example! -->
+Consider a function that finds the area of an annulus when given the inner and
+outer radius
+
+```{r}
+circle_area = function(r_inner, r_outer) {
+  outer = pi * r_outer^2
+  inner = pi * r_inner^2
+
+  return (outer - inner)
+}
+```
+
+We can compute the constraints for this with
+
+```{r}
+cfg = rstatic::to_cfg(circle_area)
+
+cons = constrain(cfg)
+```
+
+Constraints are collected in a `ConstraintSet`, which has reference semantics
+to simplify writing recursive `constrain_ast()` methods. The order of the
+constraints within the set does not matter. This is important because it allows
+us to set constraints based on how a variable is used after the point where
+that variable was defined.
+
+In the example, we can see that the right-hand side of each constraint is
+printed like a function call. For now, types are not computed for calls during
+constraint generation; the computation is deferred until the system of
+constraints is solved.
+
+By using `constrain()` and `solve()` separately, we can add to and modify the
+constraints before solving. Constraints can be accessed by index with `[[`
+(although they cannot yet be assigned with `[[`). The method 
+
+---
+
+The returned `SolutionSet` lists the inferred type of each SSA name defined in
+the function.
+
+
+<!-- FIXME: OTHER STUFF
+The `add` function is _polymorphic_: the arguments are not constrained to any
+particular type. In other words, `add(3, 4)`, where both arguments are
+integers, will work just as well as `add(3.1, 5+1i)`, where the arguments are a
+real and a complex number.
+-->
+
+
