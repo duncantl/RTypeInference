@@ -5,13 +5,15 @@
 #' Infer Types for a Function
 #'
 #' @export
-infer_types = function(code, init = list(), ...) {
+infer_types = function(code, init = list(), scalar = FALSE, ...) {
   UseMethod("infer_types")
 }
 
 #' @export
-infer_types.ControlFlowGraph = function(code, init = list(), set = ConstraintSet$new(), ...) {
-    
+infer_types.ControlFlowGraph =
+function(code, init = list(), scalar = FALSE, set = ConstraintSet$new(),
+          ConstrainHandlers = getConstrainHandlers(),  ...)
+{
   if(length(init) && !is(init, "ConstraintSet")) {
        #XXX This should be in the initialization method for set.
      mapply(function(type, name)
@@ -19,7 +21,7 @@ infer_types.ControlFlowGraph = function(code, init = list(), set = ConstraintSet
             init, paste0(names(init), "_1"))
   }
   
-  constraints = constrain(code, set = set)
+  constraints = constrain(code, set = set, scalar = scalar)
   
   types = solve(constraints)
 
