@@ -9,6 +9,7 @@ constrain = function(cfg
   , b
   , dom_t = rstatic::dom_tree(cfg)
   , set = ConstraintSet$new()
+  , scalar = FALSE
 ) {
 
   if (missing(b)) {
@@ -17,33 +18,34 @@ constrain = function(cfg
     # TODO: Generate constraints for parameters in caller, before recursion.
     if (!is.null(cfg$params)) {
       given = (paste0(names(cfg$params), "_1") %in% sapply(set$constraints, `[[`, 1))
-      lapply(cfg$params[!given], constrain_ast, set)
+      lapply(cfg$params[!given], constrain_ast, set, scalar = scalar)
     }
   }
 
   block = cfg[[b]]
 
   # Iterate over Phi nodes.
-  lapply(block$phi, constrain_ast, set)
+  # Duncan - what are the Phi nodes here?
+  lapply(block$phi, constrain_ast, set, scalar = scalar)
 
   # Iterate over body, generating type constraints.
-  lapply(block$body, constrain_ast, set)
+  lapply(block$body, constrain_ast, set, scalar = scalar)
 
   # Descend to next blocks.
   children = setdiff(which(dom_t == b), b)
-  lapply(children, function(i) constrain(cfg, i, dom_t, set))
+  lapply(children, function(i) constrain(cfg, i, dom_t, set, scalar = scalar))
 
   return (set)
 }
 
 
 #' @export
-constrain_ast = function(node, set) {
+constrain_ast = function(node, set, scalar = FALSE, ...) {
   UseMethod("constrain_ast")
 }
 
 #' @export
-constrain_ast.Assign = function(node, set) {
+constrain_ast.Assign = function(node, set, scalar = FALSE, ...) {
   type = constrain_ast(node$read, set)
 
   set$append(node$write$name, type)
@@ -52,7 +54,7 @@ constrain_ast.Assign = function(node, set) {
 }
 
 #' @export
-constrain_ast.Parameter = function(node, set) {
+constrain_ast.Parameter = function(node, set, scalar = FALSE, ...) {
   if (is.null(node$default))
     return (NULL)
 
@@ -64,7 +66,7 @@ constrain_ast.Parameter = function(node, set) {
 }
 
 #' @export
-constrain_ast.Phi = function(node, set) {
+constrain_ast.Phi = function(node, set, scalar = FALSE, ...) {
   # FIXME: Check type of the read; it could be a non-Symbol.
   reads = lapply(node$read, function(read) read$name)
   rhs = do.call(typesys::Union, reads)
@@ -72,7 +74,7 @@ constrain_ast.Phi = function(node, set) {
 }
 
 #' @export
-constrain_ast.Call = function(node, set) {
+constrain_ast.Call = function(node, set, scalar = FALSE, ...) {
   args = lapply(node$args, constrain_ast, set)
   # FIXME: Nested calls might be a problem here. Need to generate a temporary
   # value for each call.
@@ -95,23 +97,23 @@ constrain_ast.Call = function(node, set) {
 }
 
 #' @export
-constrain_ast.Replacement = function(node, set) {
+constrain_ast.Replacement = function(node, set, scalar = FALSE, ...) {
   warning("Constraints are not generated for replacements.")
   #browser()
 }
 
 #' @export
-constrain_ast.Symbol = function(node, set) {
+constrain_ast.Symbol = function(node, set, scalar = FALSE, ...) {
   node$name
 }
 
 #' @export
-constrain_ast.Null = function(node, set) {
+constrain_ast.Null = function(node, set, scalar = FALSE, ...) {
   typesys::NullType()
 }
 
 #' @export
-constrain_ast.Logical = function(node, set) {
+constrain_ast.Logical = function(node, set, scalar = FALSE, ...) {
   type = typesys::BooleanType()
   # FIXME:
   len = length(node$value)
@@ -122,7 +124,7 @@ constrain_ast.Logical = function(node, set) {
 }
 
 #' @export
-constrain_ast.Integer = function(node, set) {
+constrain_ast.Integer = function(node, set, scalar = FALSE, ...) {
   type = typesys::IntegerType()
   len = length(node$value)
   if (len != 1)
@@ -134,7 +136,7 @@ constrain_ast.Integer = function(node, set) {
 }
 
 #' @export
-constrain_ast.Numeric = function(node, set) {
+constrain_ast.Numeric = function(node, set, scalar = FALSE, ...) {
   type = typesys::RealType()
   len = length(node$value)
   if (len != 1)
@@ -144,7 +146,7 @@ constrain_ast.Numeric = function(node, set) {
 }
 
 #' @export
-constrain_ast.Complex = function(node, set) {
+constrain_ast.Complex = function(node, set, scalar = FALSE, ...) {
   type = typesys::ComplexType()
   len = length(node$value)
   if (len != 1)
@@ -154,7 +156,7 @@ constrain_ast.Complex = function(node, set) {
 }
 
 #' @export
-constrain_ast.Character = function(node, set) {
+constrain_ast.Character = function(node, set, scalar = FALSE, ...) {
   type = typesys::StringType()
   len = length(node$value)
   if (len != 1)
@@ -164,7 +166,7 @@ constrain_ast.Character = function(node, set) {
 }
 
 #' @export
-constrain_ast.default = function(node, set) {
+constrain_ast.default = function(node, set, scalar = FALSE, ...) {
   msg = sprintf("No type constraint defined for '%s'.", class(node)[1])
   stop(msg)
 }
