@@ -54,6 +54,10 @@ CALL_HANDLERS = list(
 
     return (type)
   }
+
+  , "exp" = function(args) {
+    return (typesys::RealType())
+  }
 )
 
 
