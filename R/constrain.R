@@ -16,7 +16,7 @@ constrain = function(cfg
 
     # TODO: Generate constraints for parameters in caller, before recursion.
     if (!is.null(cfg$params)) {
-      given = (names(cfg$params) %in% sapply(set$constraints, `[[`, 1))
+      given = (paste0(names(cfg$params), "_1") %in% sapply(set$constraints, `[[`, 1))
       lapply(cfg$params[!given], constrain_ast, set)
     }
   }
@@ -84,6 +84,8 @@ constrain_ast.Call = function(node, set) {
   fn = node$fn$name
   if((fn %in% c("numeric", "integer", "logical", "character")) &&
        is(node$args[[1]], "Symbol") ) {
+       # Need to match the argument by name for other functions, eg. runif(n, 1, 2)
+       # but  runif(1, 2, n = n1)
       set$append(node$args[[1]]$name, typesys::IntegerType())
   }  
   
