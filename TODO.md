@@ -2,6 +2,8 @@
 
 <!-- [R2llvm](/Users/duncan/NickUThesis/RTypeInference/TODO.md) -->
 
+* [half-done] For the init parameter of infer_types() match by position if no names given.  match.call()
+
 * dexp.R example in corsair/tests/dexp.R  - why aren't we getting a return_type().
 
 * Add call handlers for constrain() so can handle injecting constraints for calls to functions such as numeric(n), 
