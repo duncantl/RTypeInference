@@ -8,22 +8,22 @@
 #' @export
 solve.ConstraintSet = function(a, b, ...) {
   # Apply unification algorithm to the constraint set.
-  constraints = a$constraints
+#  constraints = a$constraints
   solutions = SolutionSet()
 
-  while (length(constraints) > 0) {
-    cons = constraints[[1]]
-    constraints = constraints[-1]
+  while (length(a$constraints) > 0) {
+    cons = a$constraints[[1]]
+    a$constraints = a$constraints[-1]
 
     # Unify cons; cons is returned when unification fails.
-    soln = unify(cons[[1]], cons[[2]])
+    soln = unify(cons[[1]], cons[[2]], a)
     if (inherits(soln, "Constraint")) {
       # FIXME: Keep track of which constraints couldn't be unified.
       next
     }
 
     # Substitute soln into the constraints and solutions.
-    constraints = apply_solution(constraints, soln)
+    a$constraints = apply_solution(a$constraints, soln)
     solutions = apply_solution(solutions, soln)
 
     # Add the constraint to the solution set.
@@ -34,28 +34,36 @@ solve.ConstraintSet = function(a, b, ...) {
 }
 
 
-unify = function(x, y) {
-  UseMethod("unify")
-}
+setGeneric("unify", 
+             function(x, y, constraints = NULL)
+                standardGeneric("unify"))
 
-if(FALSE) {
+
     # Need to figure out where the name in the SolutionSet should be here.
+setMethod("unify", c("typesys::Type", "typesys::Type"),
+          function(x, y, constraints = NULL) {
+              if(identical(x, y)) 
+                 return( as_solution_set(list()) )
+              })
+
 unify.default =
-function(x, y)
+function(x, y, constraints = NULL)
 {
   if(is(x, "typesys::Type") && is(y, "typesys::Type") && identical(x, y)) {
         # make a SolutionSet
+      return(as_solution_set(list()))
   }
-}
+  stop("unify() doesn't currently handle these types of inputs")
 }
 
 #' @export
-unify.character = function(x, y) {
+setMethod("unify", c("character", "ANY"), 
+function(x, y, constraints = NULL) {
   if (is(y, "typesys::Type")) {
     solution = SolutionSet(x, y)
 
   } else if (is(y, "typesys::Call")) {
-    type = infer_call(y)
+    type = infer_call(y, constraints)
     solution = SolutionSet(x, type)
 
  } else {
@@ -65,25 +73,30 @@ unify.character = function(x, y) {
   }
 
   return (solution)
-}
+})
 
 
 # Infer Types for a Call
 #
-infer_call = function(call) {
+infer_call = function(call, constraints) {
   # Look up call handler.
   idx = match(call@func, names(CALL_HANDLERS))
   if (is.na(idx)) {
-    # FIXME: Try inference if no handler is available.
-    stop(sprintf("No handler defined for function '%s'.", call@func))
-
+    # Try inference if no handler is available.
+#XXXX !!!
+    fun = get(call@func, globalenv()) # XXX from anywhere!
+    if(call@func != "g")
+       return(NULL)
+    types = infer_types(fun) # , init = call@args)
+    browser()
+    return(return_type(types))
   } else {
     handler = CALL_HANDLERS[[idx]]
 
     # Resolve any inner calls.
     args = lapply(call@args, function(arg) {
       if (is(arg, "typesys::Call"))
-        infer_call(arg)
+        infer_call(arg, constraints)
       else
         arg
     })
@@ -96,7 +109,7 @@ infer_call = function(call) {
     }
 
     # Call the handler with the args.
-    u = lapply(args_list, handler)
+    u = lapply(args_list, handler, constraints)
     type = do.call(typesys::Union, u)
   }
 

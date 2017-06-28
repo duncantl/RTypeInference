@@ -1,20 +1,57 @@
+mkNumberType =
+function(args, rtype = "numeric")
+{
+   type = typesys::ArrayType(typesys::RealType())
+
+   len = args[[1]]@value
+
+   if(is(len, "typesys::SymbolValue") || is(len, "typesys::NumberType")) 
+     type@dimension = list(len)
+
+   type
+}
+
+#XXX Complete
+RTypeMap = list( logical = typesys::BooleanType,
+                 integer = typesys::IntegerType,
+                 numeric = typesys::RealType) 
+mapRTypeToTypesys =
+function(rtype, map = RTypeMap)
+{
+  map[[rtype]]()
+}
+
+
 
 CALL_HANDLERS = list(
-  "+" = function(args) upcast_math(args, "+")
-  , "-" = function(args) upcast_math(args, "-")
-  , "*" = function(args) upcast_math(args, "*")
-  , "/" = function(args) upcast_math(args, "/")
-  , "^" = function(args) upcast_math(args, "^")
-  , "%%" = function(args) upcast_math(args, "%%")
+  "+" = function(args, constraints = NULL) upcast_math(args, "+")
+  , "-" = function(args, constraints = NULL) upcast_math(args, "-")
+  , "*" = function(args, constraints = NULL) upcast_math(args, "*")
+  , "/" = function(args, constraints = NULL) upcast_math(args, "/")
+  , "^" = function(args, constraints = NULL) upcast_math(args, "^")
+  , "%%" = function(args, constraints = NULL) upcast_math(args, "%%")
 
-  , "as.integer" = function(args) typesys::IntegerType
+  , ">" = function(args, constraints = NULL) typesys::BooleanType()
+  , "<" = function(args, constraints = NULL) typesys::BooleanType()
+  , ">=" = function(args, constraints = NULL) typesys::BooleanType()
+  , "<=" = function(args, constraints = NULL) typesys::BooleanType()
+  , "==" = function(args, constraints = NULL) typesys::BooleanType()
+  , "!=" = function(args, constraints = NULL) typesys::BooleanType()
+  , "!" = function(args, constraints = NULL) typesys::BooleanType()
     
-  , ":" = function(args) {
+  , "&&" = function(args, constraints = NULL) typesys::BooleanType()
+  , "||" = function(args, constraints = NULL) typesys::BooleanType()                    
+
+  , "as.integer" = function(args, constraints = NULL) typesys::IntegerType()
+    
+  , "runif" = function(args, constraints = NULL) typesys::RealType()
+    
+  , ":" = function(args, constraints = NULL) {
     from = args[[1]]
     to = args[[2]]
 
     type =
-      if (is(from, "typesys::RealType") || is(to, "typesys::RealType"))
+      if (is(from, "typesys::RealType")) # || is(to, "typesys::RealType"))
         typesys::RealType()
       else if (is(from, "typesys::IntegerType"))
         typesys::IntegerType()
@@ -24,44 +61,50 @@ CALL_HANDLERS = list(
     return (typesys::ArrayType(type, NA))
   }
 
-  , "[[" = function(args) {
+  , "[[" = function(args, constraints = NULL) {
     x = args[[1]]
-
+if(length(args) > 2) warning("need to handle nested list access for [[")
     return (typesys::element_type(x))
   }
+  , "[" = function(args, constraints = NULL) {
+    x = args[[1]]
 
-  , "numeric" = function(args) {
-    type = typesys::ArrayType(typesys::RealType())
+if(length(args) > 2) warning("need to handle multi-dimensional access for [")    
 
-    len = args[[1]]@value
-    if (is(len, "typesys::SymbolValue")) {
-      type@dimension = list(len)
-    }
+    return (typesys::element_type(x))
+  }    
 
-    return (type)
-  }
+  , "numeric" =  mkNumberType
+  , "integer" = function(args, constraints = NULL) mkNumberType(args, "integer")
+  , "logical" = function(args, constraints = NULL) mkNumberType(args, "logical")    
 
-  , "length" = function(args) {
+
+  , "length" = function(args, constraints = NULL) {
     return (typesys::IntegerType())
   }
 
-  , "which" = function(args) {
+  , "which" = function(args, constraints = NULL) {
     type = typesys::ArrayType(typesys::IntegerType(), NA)
 
     return (type)
   }
 
-  , "list" = function(args) {
+  , "list" = function(args, constraints = NULL) {
     type = typesys::ListType(args)
 
     return (type)
   }
 
-  , "exp" = function(args) {
+  , "exp" = function(args, constraints = NULL) {
       browser()
     return (typesys::RealType())
   }
 )
+
+
+
+
+
 
 
 # Old Definitions from Previous RTypeInference Version
@@ -71,7 +114,7 @@ CALL_HANDLERS = list(
 #"abs" = ConditionalType(
 #  # complex|numeric -> numeric
 #  # integer -> integer
-#  function(args) {
+#  function(args, constraints = NULL) {
 #    # Here x should be an vector, not a list.
 #    atom = element_type(args$x)
 
@@ -89,26 +132,26 @@ CALL_HANDLERS = list(
 
 ## Value-dependent return type.
 #"rnorm" = ConditionalType(
-#  function(args) {
+#  function(args, constraints = NULL) {
 #    makeVector(RealType(), value(args$n, NA))
 #  }),
 #"numeric" = ConditionalType(
-#  function(args) {
+#  function(args, constraints = NULL) {
 #    makeVector(RealType(), value(args$length, NA))
 #  }),
 
 #"matrix" = ConditionalType(
-#  function(args) {
+#  function(args, constraints = NULL) {
 #    # TODO:
 #    #   * The default arguments should really be pulled using `formals()`.
 #    #   * Propagate value if literal?
 #    atom = element_type(args$data)
 
 #    nrow =
-#      if ("nrow" %in% names(args)) value(args$nrow)
+#      if ("nrow" %in% names(args, constraints = NULL)) value(args$nrow)
 #      else 1L
 #    ncol =
-#      if ("ncol" %in% names(args)) value(args$ncol)
+#      if ("ncol" %in% names(args, constraints = NULL)) value(args$ncol)
 #      else 1L
 #    dimension = c(nrow, ncol)
 
@@ -120,7 +163,7 @@ CALL_HANDLERS = list(
 #":" = ConditionalType(
 #  # `:()` downcasts to integer whenever possible, and works on vector
 #  # arguments by taking the first elements.
-#  function(args) {
+#  function(args, constraints = NULL) {
 #    # FIXME: This function can also return RealType.
 #    x = args[[1]]
 #    y = args[[2]]
@@ -129,8 +172,8 @@ CALL_HANDLERS = list(
 #    makeVector(IntegerType(), length)
 #  }),
 #"c" = ConditionalType(
-#  function(args) {
+#  function(args, constraints = NULL) {
 #    # TODO: Propagate value if all args are literal?
 #    length = sum(sapply(args, length))
-#    makeVector(upcast(args), length)
+#    makeVector(upcast(args, constraints = NULL), length)
 #  })
