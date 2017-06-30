@@ -105,8 +105,12 @@ constrain_ast.Call = function(node, set, scalar = FALSE, ...) {
 
 #' @export
 constrain_ast.Replacement = function(node, set, scalar = FALSE, ...) {
-  warning("Constraints are not generated for replacements.")
-  #browser()
+  # FIXME: This should also check the return type of the replacement function.
+  type = node$read$args[[1]]$name
+
+  set$append(node$write$name, type)
+
+  type
 }
 
 #' @export
