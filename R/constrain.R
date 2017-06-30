@@ -16,8 +16,9 @@ constrain = function(cfg
     b = cfg$get_index(cfg$entry)
 
     # TODO: Generate constraints for parameters in caller, before recursion.
-    if (!is.null(cfg$params)) {
-      given = (paste0(names(cfg$params), "_1") %in% sapply(set$constraints, `[[`, 1))
+    if (length(cfg$params) > 0) {
+                                        # "_1"
+      given = (paste0(names(cfg$params), "") %in% sapply(set$constraints, `[[`, 1))
       lapply(cfg$params[!given], constrain_ast, set, scalar = scalar)
     }
   }
@@ -84,12 +85,18 @@ constrain_ast.Call = function(node, set, scalar = FALSE, ...) {
 
     # XXX This is temporarily here.  We'll add customization handlers for this.
   fn = node$fn$name
-  if((fn %in% c("numeric", "integer", "logical", "character")) &&
+                               #XXX remove "g" - just testing.
+  if((fn %in% c("numeric", "integer", "logical", "character", "runif", "rexp", "g")) &&
        is(node$args[[1]], "Symbol") ) {
        # Need to match the argument by name for other functions, eg. runif(n, 1, 2)
        # but  runif(1, 2, n = n1)
       set$append(node$args[[1]]$name, typesys::IntegerType())
-  }  
+  } else if(fn %in% c(":")) {
+      sapply(node$args[1:2],
+              function(x)
+               if(is(x,"Symbol"))
+                 set$append(x$name, typesys::IntegerType()))
+  }
   
   # FIXME: anonymous functions
   # Defer inference to the resolution step.
