@@ -10,9 +10,12 @@ ConstraintSet = R6::R6Class("ConstraintSet",
 
     append = function(lhs, rhs) {
       con = Constraint(lhs, rhs)
+
         # avoiding adding duplicate constraints. This messes solve() up. We may want to fix that
         # but probably good to avoid redundant constraints.
-      if(any(sapply(self$constraints, identical, con)))
+           #XXX not using identical as one might have a known value and the other unknown. (see assignSEXP2.R in R2llvm/tests)
+           # If this constraint has more information (e.g. a value), we may want to replace the existing "identical" one with this.
+      if(any(sapply(self$constraints, sameConstraint, con)))
          return(self)
       len = length(self$constraints)
       self$constraints[[len + 1]] = con
@@ -52,6 +55,12 @@ ConstraintSet = R6::R6Class("ConstraintSet",
     #}
   )
 )
+
+sameConstraint =
+function(a, b)
+{
+   identical(a[[1]], b[[1]]) && class(a[[2]]) == class(b[[2]])
+}
 
 #' @export
 `[[.ConstraintSet` = function(x, i) {
