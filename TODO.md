@@ -1,10 +1,32 @@
 # TODO
 
-<!-- [R2llvm](/Users/duncan/NickUThesis/RTypeInference/TODO.md) -->
+* f = function(x) x[1L] where x is ArrayType(RealType())
+
+* Handle global variables such function() 1 + pi
+
+* Deal with literals that are nominally numeric, but really integers, e.g. 1:10 - both 1 and 10 are
+  integers here.
+  
+* type of i in for(i in 1:n) is currently a RealType. But the 1 is  clearly an integer here. So do
+  the right thing.  And identify as a counter.
+
+
+* When passing a real (literal or not) to numeric(), we already know that numeric() expects an IntegerType.
+  
+* [check - see sameConstraint() called in ConstraintSet$append]
+  n = 2L; x = numeric(n) creates two constraints for n_1 and they are almost identical, but not
+  quite.  And then we get the call to unify() two IntegerType objects.
+  Why are there 2 constraints generated?  The second comes from the call to numeric()
+  
+* x = numeric(2) gives an ArrayType with the length unknown. Why isn't the length propogated.
+  RTypeInference::infer_types(function() numeric(2))
+   
+* When the type of i in a for loop is real, we should get IntegerType + i gives RealType not a
+  Union. See tests/for.R in the case i has RealType (until we fix that).
 
 * [half-done] For the init parameter of infer_types() match by position if no names given.  match.call()
 
-* dexp.R example in corsair/tests/dexp.R  - why aren't we getting a return_type().
+* dexp.R example in corsair/tests/dexp.R  - why aren't we getting a return_type().  No return() probabl?
 
 * Add call handlers for constrain() so can handle injecting constraints for calls to functions such as numeric(n), 
   runif(n) which would add constraints on n. 
@@ -60,6 +82,13 @@ calls that need detection.
 * [ ] Provide parameter for list of call handler overrides
 
 * [ ] Constraint generation for `Brace`
+
+
+
+
+# Done
+
+*  integer:real gives "integer", not real/numeric.
 
 <!-- Old Stuff
 ## Old Stuff
