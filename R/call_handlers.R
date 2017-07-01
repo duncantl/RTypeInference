@@ -45,6 +45,9 @@ CALL_HANDLERS = list(
   , "as.integer" = function(args, constraints = NULL) typesys::IntegerType()
     
   , "runif" = function(args, constraints = NULL) typesys::RealType()
+  , "Rf_runif" = function(args, constraints = NULL) typesys::RealType()
+  , "Rf_allocVector" = function(args, constraints = NULL) typesys::SEXPType()
+  , "mkList" = function(args, constraints = NULL) typesys::LISTSEXPType()            
     
   , ":" = function(args, constraints = NULL) {
     from = args[[1]]
