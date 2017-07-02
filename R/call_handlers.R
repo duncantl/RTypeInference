@@ -1,7 +1,7 @@
 mkNumberType =
 function(args, rtype = "numeric")
 {
-   type = typesys::ArrayType(typesys::RealType())
+   type = typesys::ArrayType(mapRTypeToTypesys(rtype))
 
    len = args[[1]]@value
 
