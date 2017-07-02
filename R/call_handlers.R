@@ -77,7 +77,7 @@ if(length(args) > 2) warning("need to handle multi-dimensional access for [")
     return (typesys::element_type(x))
   }    
 
-  , "numeric" =  mkNumberType
+  , "numeric" = function(args, constraints = NULL) mkNumberType(args, "numeric")
   , "integer" = function(args, constraints = NULL) mkNumberType(args, "integer")
   , "logical" = function(args, constraints = NULL) mkNumberType(args, "logical")    
 
