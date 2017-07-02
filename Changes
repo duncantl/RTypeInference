@@ -1,3 +1,8 @@
 
 + Added the ConstraintSet as an argument to each call handler function invokved via infer_call()
+
++ Added constraintHandlers and solveHandlers to infer_types.
+  There are two functions to get the default list of each handlers.
+  This allows callers to add and override handlers by name.
+
 + 

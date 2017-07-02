@@ -10,6 +10,7 @@ constrain = function(cfg
   , dom_t = rstatic::dom_tree(cfg)
   , set = ConstraintSet$new()
   , scalar = FALSE
+  , handlers = getConstraintHandlers()
 ) {
 
   if (missing(b)) {
@@ -27,26 +28,26 @@ constrain = function(cfg
 
   # Iterate over Phi nodes.
   # Duncan - what are the Phi nodes here?
-  lapply(block$phi, constrain_ast, set, scalar = scalar)
+  lapply(block$phi, constrain_ast, set, scalar = scalar, handlers = handlers)
 
   # Iterate over body, generating type constraints.
   lapply(block$body, constrain_ast, set, scalar = scalar)
 
   # Descend to next blocks.
   children = setdiff(which(dom_t == b), b)
-  lapply(children, function(i) constrain(cfg, i, dom_t, set, scalar = scalar))
+  lapply(children, function(i) constrain(cfg, i, dom_t, set, scalar = scalar, handlers = handlers))
 
   return (set)
 }
 
 
 #' @export
-constrain_ast = function(node, set, scalar = FALSE, ...) {
+constrain_ast = function(node, set, scalar = FALSE, handlers = getConstraintHandlers(), ...) {
   UseMethod("constrain_ast")
 }
 
 #' @export
-constrain_ast.Assign = function(node, set, scalar = FALSE, ...) {
+constrain_ast.Assign = function(node, set, scalar = FALSE, handlers = getConstraintHandlers(), ...) {
   type = constrain_ast(node$read, set)
 
   set$append(node$write$name, type)
@@ -55,11 +56,11 @@ constrain_ast.Assign = function(node, set, scalar = FALSE, ...) {
 }
 
 #' @export
-constrain_ast.Parameter = function(node, set, scalar = FALSE, ...) {
+constrain_ast.Parameter = function(node, set, scalar = FALSE, handlers = getConstraintHandlers(), ...) {
   if (is.null(node$default))
     return (NULL)
 
-  type = constrain_ast(node$default, set)
+  type = constrain_ast(node$default, set, scalar, handlers, ...)
 
   set$append(node$name, type)
   
@@ -67,7 +68,7 @@ constrain_ast.Parameter = function(node, set, scalar = FALSE, ...) {
 }
 
 #' @export
-constrain_ast.Phi = function(node, set, scalar = FALSE, ...) {
+constrain_ast.Phi = function(node, set, scalar = FALSE, handlers = getConstraintHandlers(), ...) {
   # FIXME: Check type of the read; it could be a non-Symbol.
   reads = lapply(node$read, function(read) read$name)
   rhs = do.call(typesys::Union, reads)
@@ -75,8 +76,8 @@ constrain_ast.Phi = function(node, set, scalar = FALSE, ...) {
 }
 
 #' @export
-constrain_ast.Call = function(node, set, scalar = FALSE, ...) {
-  args = lapply(node$args, constrain_ast, set)
+constrain_ast.Call = function(node, set, scalar = FALSE, handlers = getConstraintHandlers(), ...) {
+  args = lapply(node$args, constrain_ast, set, scalar, handlers)
   # FIXME: Nested calls might be a problem here. Need to generate a temporary
   # value for each call.
 
@@ -85,26 +86,20 @@ constrain_ast.Call = function(node, set, scalar = FALSE, ...) {
 
     # XXX This is temporarily here.  We'll add customization handlers for this.
   fn = node$fn$name
-                               #XXX remove "g" - just testing.
-  if((fn %in% c("numeric", "integer", "logical", "character", "runif", "rexp", "g")) &&
-       is(node$args[[1]], "Symbol") ) {
-       # Need to match the argument by name for other functions, eg. runif(n, 1, 2)
-       # but  runif(1, 2, n = n1)
-      set$append(node$args[[1]]$name, typesys::IntegerType())
-  } else if(fn %in% c(":")) {
-      sapply(node$args[1:2],
-              function(x)
-               if(is(x,"Symbol"))
-                 set$append(x$name, typesys::IntegerType()))
-  }
-  
+  idx = match(fn, names(handlers))
+  if(!is.na(idx))
+     handlers[[idx]](node, set, scalar, handlers)
+  else if(any(w <- ("" == names(handlers)))) 
+     handlers[[which(w)[1]]](node, set, scalar, handlers)
+
+      
   # FIXME: anonymous functions
   # Defer inference to the resolution step.
   do.call(typesys::Call, append(node$fn$name, args))
 }
 
 #' @export
-constrain_ast.Replacement = function(node, set, scalar = FALSE, ...) {
+constrain_ast.Replacement = function(node, set, scalar = FALSE, handlers = getConstraintHandlers(), ...) {
   # FIXME: This should also check the return type of the replacement function.
   type = node$read$args[[1]]$name
 
@@ -114,17 +109,17 @@ constrain_ast.Replacement = function(node, set, scalar = FALSE, ...) {
 }
 
 #' @export
-constrain_ast.Symbol = function(node, set, scalar = FALSE, ...) {
+constrain_ast.Symbol = function(node, set, scalar = FALSE, handlers = getConstraintHandlers(), ...) {
   node$name
 }
 
 #' @export
-constrain_ast.Null = function(node, set, scalar = FALSE, ...) {
+constrain_ast.Null = function(node, set, scalar = FALSE, handlers = getConstraintHandlers(), ...) {
   typesys::NullType()
 }
 
 #' @export
-constrain_ast.Logical = function(node, set, scalar = FALSE, ...) {
+constrain_ast.Logical = function(node, set, scalar = FALSE, handlers = getConstraintHandlers(), ...) {
   type = typesys::BooleanType()
   # FIXME:
   len = length(node$value)
@@ -135,7 +130,7 @@ constrain_ast.Logical = function(node, set, scalar = FALSE, ...) {
 }
 
 #' @export
-constrain_ast.Integer = function(node, set, scalar = FALSE, ...) {
+constrain_ast.Integer = function(node, set, scalar = FALSE, handlers = getConstraintHandlers(), ...) {
   type = typesys::IntegerType()
   len = length(node$value)
   if (len != 1)
@@ -147,7 +142,7 @@ constrain_ast.Integer = function(node, set, scalar = FALSE, ...) {
 }
 
 #' @export
-constrain_ast.Numeric = function(node, set, scalar = FALSE, ...) {
+constrain_ast.Numeric = function(node, set, scalar = FALSE, handlers = getConstraintHandlers(), ...) {
   type = typesys::RealType()
   len = length(node$value)
   if (len != 1)
@@ -157,7 +152,7 @@ constrain_ast.Numeric = function(node, set, scalar = FALSE, ...) {
 }
 
 #' @export
-constrain_ast.Complex = function(node, set, scalar = FALSE, ...) {
+constrain_ast.Complex = function(node, set, scalar = FALSE, handlers = getConstraintHandlers(), ...) {
   type = typesys::ComplexType()
   len = length(node$value)
   if (len != 1)
@@ -167,7 +162,7 @@ constrain_ast.Complex = function(node, set, scalar = FALSE, ...) {
 }
 
 #' @export
-constrain_ast.Character = function(node, set, scalar = FALSE, ...) {
+constrain_ast.Character = function(node, set, scalar = FALSE, handlers = getConstraintHandlers(), ...) {
   type = typesys::StringType()
   len = length(node$value)
   if (len != 1)
@@ -177,11 +172,11 @@ constrain_ast.Character = function(node, set, scalar = FALSE, ...) {
 }
 
 constrain_ast.Brace =
-function(node, set, scalar = FALSE, ...) {
+function(node, set, scalar = FALSE, handlers = getConstraintHandlers(), ...) {
     #XXX - not just first element - or will there only ever be one
   if(length(node$body) > 1)
      warning("constrain_ast.Brace - ignoring other elements of body")    
-  constrain_ast(node$body[[1]], set, scalar, ...)
+  constrain_ast(node$body[[1]], set, scalar, handlers, ...)
 }
     
 #' @export

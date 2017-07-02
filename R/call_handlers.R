@@ -105,6 +105,14 @@ if(length(args) > 2) warning("need to handle multi-dimensional access for [")
 )
 
 
+getSolveHandlers =
+function(..., .default = CALL_HANDLERS)
+{
+   o = list(...)
+   .default[names(o)] = o
+   .default
+}
+    
 
 
 

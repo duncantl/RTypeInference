@@ -78,20 +78,20 @@ function(x, y, constraints = NULL) {
 
 # Infer Types for a Call
 #
-infer_call = function(call, constraints) {
+infer_call = function(call, constraints, solveHandlers = getSolveHandlers()) {
   # Look up call handler.
-  idx = match(call@func, names(CALL_HANDLERS))
+  idx = match(call@func, names(solveHandlers))
   if (is.na(idx)) {
     # Try inference if no handler is available.
 #XXXX !!!
     fun = get(call@func, globalenv()) # XXX from anywhere!
     if(call@func != "g")
        return(NULL)
-    types = infer_types(fun) # , init = call@args)
+    types = infer_types(fun, solveHandlers = solveHandlers) # , init = call@args)
     browser()
     return(return_type(types))
   } else {
-    handler = CALL_HANDLERS[[idx]]
+    handler = solveHandlers[[idx]]
 
     # Resolve any inner calls.
     args = lapply(call@args, function(arg) {
