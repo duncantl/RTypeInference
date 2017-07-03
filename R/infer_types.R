@@ -35,7 +35,7 @@ function(code, init = list(), scalar = FALSE,
   
   constraints = constrain(code, set = set, scalar = scalar, handlers = constraintHandlers)
   
-  types = solve(constraints, solveHandlers)
+  types = solve(constraints, solveHandlers, ...)
 
   return (types)
 }

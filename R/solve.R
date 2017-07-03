@@ -16,7 +16,7 @@ solve.ConstraintSet = function(a, b, ...) {
     a$constraints = a$constraints[-1]
 
     # Unify cons; cons is returned when unification fails.
-    soln = unify(cons[[1]], cons[[2]], a)
+    soln = unify(cons[[1]], cons[[2]], a, ...)
     if (inherits(soln, "Constraint")) {
       # FIXME: Keep track of which constraints couldn't be unified.
       next
@@ -35,19 +35,19 @@ solve.ConstraintSet = function(a, b, ...) {
 
 
 setGeneric("unify", 
-             function(x, y, constraints = NULL)
+             function(x, y, constraints = NULL, error = TRUE)
                 standardGeneric("unify"))
 
 
     # Need to figure out where the name in the SolutionSet should be here.
 setMethod("unify", c("typesys::Type", "typesys::Type"),
-          function(x, y, constraints = NULL) {
+          function(x, y, constraints = NULL, error = TRUE) {
               if(identical(x, y)) 
                  return( as_solution_set(list()) )
               })
 
 unify.default =
-function(x, y, constraints = NULL)
+function(x, y, constraints = NULL, error = TRUE)
 {
   if(is(x, "typesys::Type") && is(y, "typesys::Type") && identical(x, y)) {
         # make a SolutionSet
@@ -58,7 +58,7 @@ function(x, y, constraints = NULL)
 
 #' @export
 setMethod("unify", c("character", "ANY"), 
-function(x, y, constraints = NULL) {
+function(x, y, constraints = NULL, error = TRUE) {
   if (is(y, "typesys::Type")) {
     solution = SolutionSet(x, y)
 
@@ -69,7 +69,9 @@ function(x, y, constraints = NULL) {
  } else {
     # FIXME: some elements might be non-types
     msg = sprintf("Could not resolve %s <=> %s.", format(x), format(y))
-    stop(msg)
+    if(error) stop(msg)
+    else
+       solution = SolutionSet()
   }
 
   return (solution)
