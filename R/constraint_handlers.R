@@ -13,10 +13,11 @@ function(node, set, scalar, handler)
 ConstraintHandlers =
 list(
     catchAllConstrain
-  , ":" = function(node, set, scalar, handler)
+  , ":" = function(node, set, scalar, handler) {
              sapply(node$args[1:2], function(x)
                                       if(is(x,"Symbol"))
                                          set$append(x$name, typesys::IntegerType()))
+          }
 
     )    
 
