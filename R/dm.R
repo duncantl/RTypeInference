@@ -66,7 +66,7 @@ inferDM.Function = function(node, a, counter) {
   # NOTE: This creates a new scope. So we need to be careful about handling the
   # assumption set. How can we keep the function's assumption set without
   # breaking the outer assumption set?
-  innerScope = Assumption()
+  innerScope = typesys::TypeEnvironment()
 
   # Assign new type variables to the parameters.
   for (i in seq_along(node$params)) {
