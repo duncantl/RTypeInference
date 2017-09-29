@@ -4,6 +4,22 @@
 .format_tag = function(x) sprintf("<%s>", class(x)[1])
 
 #' @export
+format.Assumption = function(x, ...) {
+  x = x$values
+
+  if (length(x) == 0)
+    return("Assumption (0 elements)\n")
+
+  vals = vapply(x, format, "")
+  a = paste0(sprintf("%s: %s", names(x), vals), collapse = "\n")
+
+  sprintf("Assumption (%i elements)\n%s\n", length(x), a)
+}
+
+#' @export
+print.Assumption = .print
+
+#' @export
 format.ConstraintSet = function(x, ...) {
   tag = .format_tag(x)
 

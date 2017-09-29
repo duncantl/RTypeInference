@@ -4,7 +4,9 @@
 \alias{infer_types}
 \title{Infer Types for a Function}
 \usage{
-infer_types(code)
+infer_types(code, init = list(), scalar = FALSE,
+  constraintHandlers = getConstraintHandlers(),
+  solveHandlers = getSolveHandlers(), ...)
 }
 \description{
 Infer Types for a Function
