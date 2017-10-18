@@ -1,48 +1,85 @@
 
 
-inferDM = function(node, a, counter) {
+inferDM = function(node, env, counter) {
   UseMethod("inferDM")
 }
 
-inferDM.ControlFlowGraph = function(node, a, counter = rstatic::Counter$new()) {
+# FIXME: !!! Now the top level in rstatic is just a Function.
+inferDM.Function = function(node,
+  env = typesys::TypeEnvironment(),
+  counter = rstatic::Counter$new()
+) {
+  # FIXME:
+  # Only use env if this function is called from the top level. Otherwise, a
+  # new scope needs to be created.
+
+  # NOTE: This creates a new scope. So we need to be careful about handling the
+  # assumption set. How can we keep the function's assumption set without
+  # breaking the outer assumption set?
+  fn_env = typesys::TypeEnvironment()
+
+  # Assign new type variables to the parameters.
+  for (i in seq_along(node$params)) {
+    param = node$params[[i]]
+    var_name = sprintf("%s.%i", counter$increment(param$name))
+    fn_env[[param$name]] = typesys::TypeVar(name)
+  }
+  param_env = fn_env
+
+  # Compute the return type.
+  # NOTE: Should this use a new counter?
   # FIXME: Traverse the graph in the right order.
-  for (i in seq_along(node)) {
-    a = inferDM(node[[i]], a, counter)
+  for (i in seq_along(node$cfg)) {
+    block = node$cfg[[i]]
+
+    for (j in seq_along(block$body)) {
+      result = inferDM(block$body[[j]], fn_env, counter)
+      fn_env = result$env
+    }
   }
 
-  a
+  # Make this a function type.
+  #innerScope = typesys::applySubstitution(innerScope, result$sub)
+  result$type = typesys::FunctionType(param_env@env, result$type)
+
+  # FIXME: What's the correct scope here? Outer?
+  result
 }
 
-inferDM.BasicBlock = function(node, a, counter) {
-  for (i in seq_along(node$body)) {
-    result = inferDM(node$body[[i]], a, counter)
-    a = result$a
-  }
 
-  a
-}
-
-inferDM.Symbol = function(node, a, counter) {
+inferDM.Symbol = function(node,
+  env = typesys::TypeEnvironment(),
+  counter = rstatic::Counter$new()
+) {
   # Check Symbol is in assumptions.
-  if ( !(node$name %in% names(a)) )
+  if ( !(node$name %in% names(env)) )
     stop(sprintf("`%s` is used before it is defined.", node$name))
   
   # Replace quantified type vars with new unquantified type vars.
-  type = instantiate(a[[node$name]], counter)
+  type = instantiate(env[[node$name]], counter)
   
-  list(type = type, sub = typesys::Substitution(), a = a)
+  list(type = type, sub = typesys::Substitution(), env = env)
 }
 
-inferDM.Call = function(node, a, counter) {
-  result = inferDM(node$fn, a, counter)
+inferDM.Call = function(node,
+  env = typesys::TypeEnvironment(),
+  counter = rstatic::Counter$new()
+) {
+  result = inferDM(node$fn, env, counter)
   sub = result[["sub"]]
   fn_type = result[["type"]]
 
   # Compute type for each argument.
   arg_types = list()
   for (i in seq_along(node$args)) {
-    # Temporarily apply the substitution to the assumptions.
-    result = inferDM(node$args[[i]], typesys::applySubstitution(a, sub))
+    # FIXME: The arguments could modify the type environment, if we allow for
+    # things like
+    #
+    #     sum(x <- 3, 4)
+    #
+    # Temporarily apply the substitution to the type environment.
+    temp_env = typesys::applySubstitution(env, sub)
+    result = inferDM(node$args[[i]], temp_env)
 
     arg_types[[length(arg_types) + 1]] = result$type
     sub = typesys::compose(sub, result$sub)
@@ -57,39 +94,16 @@ inferDM.Call = function(node, a, counter) {
   ret_type = typesys::applySubstitution(ret_type, unifier)
   sub = typesys::compose(sub, unifier)
 
-  list(type = ret_type, sub = sub, a = a)
-}
-
-inferDM.Function = function(node, a, counter) {
-  # FIXME:
-
-  # NOTE: This creates a new scope. So we need to be careful about handling the
-  # assumption set. How can we keep the function's assumption set without
-  # breaking the outer assumption set?
-  innerScope = typesys::TypeEnvironment()
-
-  # Assign new type variables to the parameters.
-  for (i in seq_along(node$params)) {
-    param = node$params[[i]]
-    var_name = sprintf("%s.%i", counter$increment(param$name))
-    innerScope[[param$name]] = typesys::TypeVar(name)
-  }
-
-  # Compute the return type.
-  # FIXME: Need to actually convert the body to a control flow graph.
-  result = inferDM(node$body, innerScope)
-
-  # Make this a function type.
-  #innerScope = typesys::applySubstitution(innerScope, result$sub)
-  result$type = typesys::FunctionType(innerScope$values, result$type)
-
-  result
+  list(type = ret_type, sub = sub, env = env)
 }
 
 # Basically a let-expression
-inferDM.Assign = function(node, a, counter) {
+inferDM.Assign = function(node,
+  env = typesys::TypeEnvironment(),
+  counter = rstatic::Counter$new()
+) {
   # Compute type for RHS.
-  result = inferDM(node$read, a, counter)
+  result = inferDM(node$read, env, counter)
 
   # FIXME: Quantify type variables that aren't in a.
   # result$type = quantify(result$type, result$a)
@@ -98,7 +112,7 @@ inferDM.Assign = function(node, a, counter) {
   # remainder of the scope, so just modify the assumption set and let the top
   # level inference handle the rest.
   name = node$write$name
-  result$a[[name]] = result$type
+  result$env[[name]] = result$type
 
   result
 }
@@ -108,20 +122,32 @@ inferDM.Assign = function(node, a, counter) {
 
 # inferDM.Null
 
-inferDM.Logical = function(node, a, counter) {
-  list(type = typesys::BooleanType(), sub = typesys::Substitution(), a = a)
+inferDM.Logical = function(node,
+  env = typesys::TypeEnvironment(),
+  counter = rstatic::Counter$new()
+) {
+  list(type = typesys::BooleanType(), sub = typesys::Substitution(), env = env)
 }
 
 
-inferDM.Integer = function(node, a, counter) {
-  list(type = typesys::IntegerType(), sub = typesys::Substitution(), a = a)
+inferDM.Integer = function(node,
+  env = typesys::TypeEnvironment(),
+  counter = rstatic::Counter$new()
+) {
+  list(type = typesys::IntegerType(), sub = typesys::Substitution(), env = env)
 }
 
 
-inferDM.Numeric = function(node, a, counter) {
-  list(type = typesys::RealType(), sub = typesys::Substitution(), a = a)
+inferDM.Numeric = function(node,
+  env = typesys::TypeEnvironment(),
+  counter = rstatic::Counter$new()
+) {
+  list(type = typesys::RealType(), sub = typesys::Substitution(), env = env)
 }
 
-inferDM.Character = function(node, a, counter) {
-  list(type = typesys::StringType(), sub = typesys::Substitution(), a = a)
+inferDM.Character = function(node,
+  env = typesys::TypeEnvironment(),
+  counter = rstatic::Counter$new()
+) {
+  list(type = typesys::StringType(), sub = typesys::Substitution(), env = env)
 }
