@@ -18,7 +18,7 @@ setMethod("instantiate", "typesys::TypeVar", `instantiate.typesys::TypeVar`)
 
 `instantiate.typesys::FunctionType` = function(x, counter) {
   x@args = lapply(x@args, instantiate)
-  x@returnVal = instantiate(x@returnVal)
+  x@return_type = instantiate(x@return_type)
 
   x
 }

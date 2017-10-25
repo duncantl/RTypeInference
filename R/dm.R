@@ -31,14 +31,16 @@ inferDM.Function = function(node,
   # Assign new type variables to the parameters.
   for (i in seq_along(node$params)) {
     param = node$params[[i]]
-    var_name = sprintf("%s.%i", counter$increment(param$name))
-    env[[param$name]] = typesys::TypeVar(name)
+    name = param$name
+    var_name = sprintf("%s.%i", name, counter$increment(name))
+    env[[name]] = typesys::TypeVar(var_name)
+    env$active[[param$basename]] = name
   }
   # FIXME:
   param_types = env$env
 
   # Compute the return type.
-  dom_t = rstatic::domTree(node$cfg)
+  dom_t = rstatic::dominator_tree(node$cfg)
   result = inferBlock(node$cfg$entry, node$cfg, dom_t, env, counter)
 
   # Make this a function type.
