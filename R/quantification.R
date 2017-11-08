@@ -1,33 +1,23 @@
+quantify = function(type, env) {
+  # Quantify type variables that aren't in the type environment.
+  candidates = typesys::collect_type_vars(type)
+  type@quantified = setdiff(candidates, env$bound_type_vars)
+
+  type
+}
+
 
 instantiate = function(x, counter) {
-  UseMethod("instantiate")
+  new_vars = lapply(x@quantified, function(q) {
+    name = sprintf("t%i", counter$increment("t"))
+    typesys::TypeVar(name)
+  })
+  names(new_vars) = x@quantified
+
+  x@quantified = character(0)
+
+  # Now just substitute.
+  sub = typesys::Substitution(new_vars)
+  typesys::applySubstitution(x, sub)
 }
 
-setGeneric("instantiate", valueClass = "typesys::Type")
-
-
-`instantiate.typesys::TypeVar` = function(x, counter) {
-  if (x@quantified)
-    TypeVar(sprintf("%s.%i", x@name, counter$increment(x@name)))
-  else
-    x
-}
-
-setMethod("instantiate", "typesys::TypeVar", `instantiate.typesys::TypeVar`)
-
-
-`instantiate.typesys::FunctionType` = function(x, counter) {
-  x@args = lapply(x@args, instantiate)
-  x@return_type = instantiate(x@return_type)
-
-  x
-}
-
-setMethod("instantiate", "typesys::FunctionType",
-  `instantiate.typesys::FunctionType`)
-
-
-`instantiate.typesys::AtomicType` = function(x, counter) x
-
-setMethod("instantiate", "typesys::AtomicType",
-  `instantiate.typesys::AtomicType`)

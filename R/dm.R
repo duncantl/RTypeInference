@@ -10,29 +10,32 @@ inferDM.Function = function(node,
   counter = rstatic::Counter$new(),
   top
 ) {
+  # FIXME: This is really hacky. We need a better way to mark the top level
+  # globals as being active.
   if (top) {
-    # NOTE: Alternatively, we could provide a way to see children of a type
-    # environment or change how type environments are passed around. As it is,
-    # a separate parameter for the top level feels hacky.
-    #
-    # Top level, so use this TypeEnvironment. Otherwise, create a new
-    # TypeEnvironment for the definition.
-
-    # NOTE: This would be good place to install defaults for the global
-    # environment.
-
-  } else {
-    # NOTE: How can we keep the function's TypeEnvironment without breaking the
-    # outer TypeEnvironment?
-    old_env = env
-    env = typesys::TypeEnvironment$new(parent = env)
+    env$active = names(env$env)
+    names(env$active) = names(env$env)
   }
+  # NOTE: Alternatively, we could provide a way to see children of a type
+  # environment or change how type environments are passed around. As it is,
+  # a separate parameter for the top level feels hacky.
+  #
+  # Top level, so use this TypeEnvironment. Otherwise, create a new
+  # TypeEnvironment for the definition.
+
+  # NOTE: This would be good place to install defaults for the global
+  # environment.
+
+  # NOTE: How can we keep the function's TypeEnvironment without breaking the
+  # outer TypeEnvironment?
+  old_env = env
+  env = typesys::TypeEnvironment$new(parent = env)
 
   # Assign new type variables to the parameters.
   for (i in seq_along(node$params)) {
     param = node$params[[i]]
     name = param$name
-    var_name = sprintf("%s.%i", name, counter$increment(name))
+    var_name = sprintf("t%i", counter$increment("t"))
     env[[name]] = typesys::TypeVar(var_name)
     env$active[[param$basename]] = name
   }
@@ -95,7 +98,10 @@ inferDM.Symbol = function(node,
 
   # Replace quantified type vars with new unquantified type vars.
   active = e$active[[node$basename]]
-  type = instantiate(e[[active]], counter)
+  type = e[[active]]
+  if (length(type@quantified) > 0) {
+    type = instantiate(type, counter)
+  }
   
   list(type = type, sub = typesys::Substitution(), env = env)
 }
@@ -118,7 +124,7 @@ inferDM.Call = function(node,
     #     sum(x <- 3, 4)
     #
     # Temporarily apply the substitution to the type environment.
-    temp_env = typesys::applySubstitution(env, sub)
+    temp_env = typesys::applySubstitution(env$clone(), sub)
     result = inferDM(node$args[[i]], temp_env, top)
 
     arg_types[[length(arg_types) + 1]] = result$type
@@ -126,7 +132,7 @@ inferDM.Call = function(node,
   }
 
   # Unify the function type with the argument types.
-  var_name = sprintf("fn.%i", counter$increment("fn"))
+  var_name = sprintf("fn%i", counter$increment("fn"))
   ret_type = typesys::TypeVar(var_name)
   other_fn_type = typesys::FunctionType(arg_types, ret_type)
   unifier = typesys::unify(fn_type, other_fn_type)
@@ -146,8 +152,7 @@ inferDM.Assign = function(node,
   # Compute type for RHS.
   result = inferDM(node$read, env, counter, top)
 
-  # FIXME: Quantify type variables that aren't in a.
-  # result$type = quantify(result$type, result$a)
+  result$type = quantify(result$type, env)
   
   # Static single assignments are like let-expressions that hold for the
   # remainder of the scope, so just modify the assumption set and let the top
