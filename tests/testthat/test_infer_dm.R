@@ -4,7 +4,7 @@ context("infer_dm")
 test_that("Variable assigned literal", {
   node = rstatic::quote_cfg(x <- 5L)
 
-  result = inferDM(node, top = TRUE)
+  result = infer_dm(node, top = TRUE)
 
   # -----
   expect_equal(length(result$env), 2)
@@ -17,7 +17,7 @@ test_that("Variable assigned variable", {
     y = x
   })
 
-  result = inferDM(node, top = TRUE)
+  result = infer_dm(node, top = TRUE)
 
   # -----
   expect_equal(length(result$env), 3)
@@ -38,7 +38,7 @@ test_that("Variable assigned call", {
       typesys::TypeVar("a"))
     )
 
-  result = inferDM(node, env, top = TRUE)
+  result = infer_dm(node, env, top = TRUE)
 
   # -----
   expect_equal(length(result$env), 3)
@@ -53,7 +53,7 @@ test_that("Variable assigned monomorphic function", {
     f
   })
   
-  result = inferDM(node, top = TRUE)
+  result = infer_dm(node, top = TRUE)
 
   # -----
   expect_equal(length(result$env), 2)
@@ -72,7 +72,7 @@ test_that("Variable assigned polymorphic function", {
     f
   })
 
-  result = inferDM(node, top = TRUE)
+  result = infer_dm(node, top = TRUE)
 
   # -----
   expect_equal(length(result$env), 2)
@@ -92,7 +92,7 @@ test_that("Polymorphic function can be instantiated", {
     y = f(3.1)
   })
 
-  result = inferDM(node, top = TRUE)
+  result = infer_dm(node, top = TRUE)
 
   # -----
   expect_equal(length(result$env), 4)
@@ -117,7 +117,7 @@ test_that("Polymorphic function can be instantiated", {
 #    # returns Integer
 #  })
 #
-#  inferDM(node, top = TRUE)
+#  infer_dm(node, top = TRUE)
 #})
 #
 #test_that("polymorphism2", {
@@ -129,7 +129,7 @@ test_that("Polymorphic function can be instantiated", {
 #    # returns Integer
 #  })
 #
-#  inferDM(node, top = TRUE)
+#  infer_dm(node, top = TRUE)
 #})
 #
 #test_that("optional arguments", {
@@ -140,5 +140,5 @@ test_that("Polymorphic function can be instantiated", {
 #    f(1)
 #  })
 #
-#  result = inferDM(node, top = T)
+#  result = infer_dm(node, top = T)
 #}

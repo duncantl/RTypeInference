@@ -1,3 +1,5 @@
+# FIXME: We might need this later.
+
 mkNumberType =
 function(args, rtype = "numeric")
 {
@@ -22,6 +24,29 @@ function(rtype, map = RTypeMap)
 }
 
 
+# FIXME:
+#CALL_HANDLERS = list(
+#  "+" = typesys::FunctionType(list(typesys::TypeVar("a"), typesys::TypeVar("b")),
+#    typesys::TypeVar("a"))
+#
+#  "+" = typesys::FunctionType(a + b ~ a)
+#
+#
+#  , ">" = typesys::FunctionType(a + b ~ Boolean)
+#  , "<" = typesys::FunctionType(a + b ~ Boolean)
+#  , ">=" = typesys::FunctionType(a + b ~ Boolean)
+#  , "<=" = typesys::FunctionType(a + b ~ Boolean)
+#  , "==" = typesys::FunctionType(a + b ~ Boolean)
+#  , "!=" = typesys::FunctionType(a + b ~ Boolean)
+#
+#  , "!" = typesys::FunctionType(Boolean ~ Boolean)
+#  , "&&" = typesys::FunctionType(Boolean + Boolean ~ Boolean)
+#  , "||" = typesys::FunctionType(Boolean + Boolean ~ Boolean)
+#
+#  , "as.integer" = typesys::FunctionType(Boolean + ... ~ Integer)
+#
+#  , "runif" = typesys::FunctionType(Integer + Real + Real ~ Real)
+#)
 
 CALL_HANDLERS = list(
   "+" = function(args, constraints = NULL) upcast_math(args, "+")

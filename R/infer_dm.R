@@ -1,11 +1,9 @@
-
-
-inferDM = function(node, env, counter, active, top) {
-  UseMethod("inferDM")
+infer_dm = function(node, env, counter, active, top) {
+  UseMethod("infer_dm")
 }
 
 # FIXME:
-inferDM.Function = function(node,
+infer_dm.Function = function(node,
   env = typesys::TypeEnvironment$new(),
   counter = rstatic::Counter$new(),
   top
@@ -61,7 +59,7 @@ inferDM.Function = function(node,
 inferBlock = function(b, cfg, dom_t, env, counter) {
   block = cfg[[b]]
 
-  result = lapply(block$body, inferDM, env, counter, top = FALSE)
+  result = lapply(block$body, infer_dm, env, counter, top = FALSE)
 
   # Now visit descendants.
   # Reset active variables for each child by copying the current active
@@ -80,7 +78,7 @@ inferBlock = function(b, cfg, dom_t, env, counter) {
 }
 
 
-inferDM.Symbol = function(node,
+infer_dm.Symbol = function(node,
   env = typesys::TypeEnvironment$new(),
   counter = rstatic::Counter$new(),
   top
@@ -106,12 +104,12 @@ inferDM.Symbol = function(node,
   list(type = type, sub = typesys::Substitution(), env = env)
 }
 
-inferDM.Call = function(node,
+infer_dm.Call = function(node,
   env = typesys::TypeEnvironment$new(),
   counter = rstatic::Counter$new(),
   top
 ) {
-  result = inferDM(node$fn, env, counter, top)
+  result = infer_dm(node$fn, env, counter, top)
   sub = result[["sub"]]
   fn_type = result[["type"]]
 
@@ -125,7 +123,7 @@ inferDM.Call = function(node,
     #
     # Temporarily apply the substitution to the type environment.
     temp_env = typesys::applySubstitution(env$clone(), sub)
-    result = inferDM(node$args[[i]], temp_env, top)
+    result = infer_dm(node$args[[i]], temp_env, top)
 
     arg_types[[length(arg_types) + 1]] = result$type
     sub = typesys::compose(sub, result$sub)
@@ -144,13 +142,13 @@ inferDM.Call = function(node,
 }
 
 # Basically a let-expression
-inferDM.Assign = function(node,
+infer_dm.Assign = function(node,
   env = typesys::TypeEnvironment$new(),
   counter = rstatic::Counter$new(),
   top
 ) {
   # Compute type for RHS.
-  result = inferDM(node$read, env, counter, top)
+  result = infer_dm(node$read, env, counter, top)
 
   result$type = quantify(result$type, env)
   
@@ -169,9 +167,9 @@ inferDM.Assign = function(node,
 
 # Literals ----------------------------------------
 
-# inferDM.Null
+# infer_dm.Null
 
-inferDM.Logical = function(node,
+infer_dm.Logical = function(node,
   env = typesys::TypeEnvironment$new(),
   counter = rstatic::Counter$new(),
   top
@@ -180,7 +178,7 @@ inferDM.Logical = function(node,
 }
 
 
-inferDM.Integer = function(node,
+infer_dm.Integer = function(node,
   env = typesys::TypeEnvironment(),
   counter = rstatic::Counter$new(),
   top
@@ -189,7 +187,7 @@ inferDM.Integer = function(node,
 }
 
 
-inferDM.Numeric = function(node,
+infer_dm.Numeric = function(node,
   env = typesys::TypeEnvironment(),
   counter = rstatic::Counter$new(),
   top
@@ -197,7 +195,7 @@ inferDM.Numeric = function(node,
   list(type = typesys::RealType(), sub = typesys::Substitution(), env = env)
 }
 
-inferDM.Character = function(node,
+infer_dm.Character = function(node,
   env = typesys::TypeEnvironment(),
   counter = rstatic::Counter$new(),
   top
