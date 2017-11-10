@@ -108,6 +108,25 @@ test_that("Polymorphic function can be instantiated", {
   expect_is(result$env[["y_1"]], "typesys::RealType")
 })
 
+
+test_that("Parameter type inferred", {
+  node = rstatic::quote_cfg(
+    function(x, y) f(x)
+  )
+
+  env = typesys::TypeEnvironment$new(
+    "f" = Integer ~ Boolean
+  )
+
+  result = infer_dm(node, env, top = TRUE)
+
+  # -----
+  type = result$type
+  expect_is(type@args[["x_1"]], "typesys::IntegerType")
+  expect_is(type@args[["y_1"]], "typesys::TypeVar")
+  expect_is(type@return_type, "typesys::BooleanType")
+})
+
 #test_that("polymorphism", {
 #  node = rstatic::quote_cfg({
 #    # identity: a ~ a

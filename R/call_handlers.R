@@ -1,5 +1,29 @@
 # FIXME: We might need this later.
 
+FN_TYPES = list(
+  # TODO: How do we handle unary operators?
+    "+" = c(a, b) ~ Join(a, b, Integer)
+  , "-" = c(a, b) ~ Join(a, b, Integer)
+  , "*" = c(a, b) ~ Join(a, b, Integer)
+  , "/" = c(a, b) ~ Join(a, b, Real)
+  , "^" = c(a, b) ~ Join(a, b, Real)
+
+  , ">"  = c(a, b) ~ Boolean # logical(0) in some cases
+  , "<"  = c(a, b) ~ Boolean
+  , ">=" = c(a, b) ~ Boolean
+  , "<=" = c(a, b) ~ Boolean
+  , "==" = c(a, b) ~ Boolean
+  , "!=" = c(a, b) ~ Boolean
+  , "!"  = a ~ Boolean # Allows integer/real/complex input
+
+  , "&&" = c(a, b) ~ Boolean
+  , "||" = c(a, b) ~ Boolean
+
+  # TODO: How can we describe optional types?
+  # TODO: How can we use constants? `runif(1, ...)` always returns a scalar.
+  #, "runif" = c(n, min, max) ~ Vec(Real)
+)
+
 mkNumberType =
 function(args, rtype = "numeric")
 {

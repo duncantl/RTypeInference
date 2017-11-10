@@ -30,23 +30,24 @@ infer_dm.Function = function(node,
   env = typesys::TypeEnvironment$new(parent = env)
 
   # Assign new type variables to the parameters.
-  for (i in seq_along(node$params)) {
-    param = node$params[[i]]
+  params = vapply(node$params, function(param) {
     name = param$name
     var_name = sprintf("t%i", counter$increment("t"))
-    env[[name]] = typesys::TypeVar(var_name)
+    type = typesys::TypeVar(var_name)
+
+    env[[name]] = type
     env$active[[param$basename]] = name
-  }
-  # FIXME:
-  param_types = env$env
+
+    name
+  }, NA_character_)
 
   # Compute the return type.
   dom_t = rstatic::dominator_tree(node$cfg)
   result = inferBlock(node$cfg$entry, node$cfg, dom_t, env, counter)
 
   # Make this a function type.
-  #innerScope = typesys::applySubstitution(innerScope, result$sub)
-  result$type = typesys::FunctionType(param_types, result$type)
+  env = typesys::applySubstitution(env, result$sub)
+  result$type = typesys::FunctionType(env[params], result$type)
 
   # Return outer scope.
   if (!top)
