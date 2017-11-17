@@ -88,31 +88,27 @@ infer_dm.Call = function(node,
   counter = rstatic::Counter$new(),
   top
 ) {
+  # Get the function's type at definition from the environment.
   result = infer_dm(node$fn, env, counter, top)
   sub = result[["sub"]]
-  fn_type = result[["type"]]
+  def_type = result[["type"]]
 
-  # Compute type for each argument.
-  arg_types = list()
-  for (i in seq_along(node$args)) {
-    # FIXME: The arguments could modify the type environment, if we allow for
-    # things like
-    #
-    #     sum(x <- 3, 4)
-    #
-    # Temporarily apply the substitution to the type environment.
-    temp_env = typesys::do_substitution(env$clone(), sub)
-    result = infer_dm(node$args[[i]], temp_env, counter, top)
+  # Construct the function's type at this call.
+  arg_types = lapply(node$args, function(arg) {
+    result = infer_dm(arg, env, counter, top)
+    sub <<- typesys::compose(sub, result$sub)
 
-    arg_types[[length(arg_types) + 1]] = result$type
-    sub = typesys::compose(sub, result$sub)
-  }
-
-  # Unify the function type with the argument types.
+    result$type
+  })
   var_name = sprintf("fn%i", counter$increment("fn"))
   ret_type = typesys::TypeVar(var_name)
-  other_fn_type = typesys::FunctionType(arg_types, ret_type)
-  unifier = typesys::unify(fn_type, other_fn_type)
+  call_type = typesys::FunctionType(arg_types, ret_type)
+
+  # Make sure all args have current type variables.
+  call_type = typesys::do_substitution(call_type, sub)
+
+  # Unify the function type with the argument types.
+  unifier = typesys::unify(def_type, call_type)
 
   ret_type = typesys::do_substitution(ret_type, unifier)
   env = typesys::do_substitution(env, unifier)
