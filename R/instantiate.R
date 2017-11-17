@@ -1,12 +1,3 @@
-quantify = function(type, env) {
-  # Quantify type variables that aren't in the type environment.
-  candidates = typesys::collect_type_vars(type)
-  type@quantified = setdiff(candidates, env$bound_type_vars)
-
-  type
-}
-
-
 instantiate = function(x, counter) {
   new_vars = lapply(x@quantified, function(q) {
     name = sprintf("t%i", counter$increment("t"))
@@ -18,6 +9,6 @@ instantiate = function(x, counter) {
 
   # Now just substitute.
   sub = typesys::Substitution(new_vars)
-  typesys::applySubstitution(x, sub)
+  typesys::do_substitution(x, sub)
 }
 

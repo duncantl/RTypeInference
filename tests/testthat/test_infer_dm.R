@@ -32,13 +32,12 @@ test_that("Variable assigned call", {
     y = x + 1L
   })
 
-  env = typesys::TypeEnvironment$new(
-    "+" = typesys::FunctionType(
-      list(typesys::TypeVar("a"), typesys::TypeVar("b")),
-      typesys::TypeVar("a"))
-    )
+  tenv = typesys::TypeEnvironment$new(
+    "+" = c(a, b) ~ Join(a, b, Integer),
+    quantify = TRUE
+  )
 
-  result = infer_dm(node, env, top = TRUE)
+  result = infer_dm(node, tenv, top = TRUE)
 
   # -----
   expect_equal(length(result$env), 3)
@@ -109,16 +108,16 @@ test_that("Polymorphic function can be instantiated", {
 })
 
 
-test_that("Parameter type inferred", {
+test_that("Parameter inference", {
   node = rstatic::quote_cfg(
     function(x, y) f(x)
   )
 
-  env = typesys::TypeEnvironment$new(
+  tenv = typesys::TypeEnvironment$new(
     "f" = Integer ~ Boolean
   )
 
-  result = infer_dm(node, env, top = TRUE)
+  result = infer_dm(node, tenv, top = TRUE)
 
   # -----
   type = result$type
@@ -127,30 +126,30 @@ test_that("Parameter type inferred", {
   expect_is(type@return_type, "typesys::BooleanType")
 })
 
-#test_that("polymorphism", {
-#  node = rstatic::quote_cfg({
-#    # identity: a ~ a
-#    f = function(x) x
-#    # identity: Integer ~ Integer
-#    f(1L)
-#    # returns Integer
-#  })
-#
-#  infer_dm(node, top = TRUE)
-#})
-#
-#test_that("polymorphism2", {
-#  node = rstatic::quote_cfg({
-#    # identity: a ~ a
-#    f = function(x, y) x
-#    # identity: Integer ~ Integer
-#    f(1L, 2L)
-#    # returns Integer
-#  })
-#
-#  infer_dm(node, top = TRUE)
-#})
-#
+
+test_that("Complicated parameter inference", {
+  node = rstatic::quote_cfg(
+    function(x) {
+      y = f(x)
+      g(y)
+    }
+  )
+
+  tenv = typesys::TypeEnvironment$new(
+    "f" = a ~ a,
+    "g" = Integer ~ Boolean,
+    quantify = TRUE
+  )
+
+  result = infer_dm(node, tenv, top = TRUE)
+
+  # -----
+  type = result$type
+  expect_is(type@args[["x_1"]], "typesys::IntegerType")
+  expect_is(type@return_type, "typesys::BooleanType")
+})
+
+
 #test_that("optional arguments", {
 #  node = rstatic::quote_cfg({
 #    # f: (x: a, y: b) ~ a
