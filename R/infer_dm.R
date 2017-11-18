@@ -23,8 +23,9 @@ infer_dm.Function = function(node,
   }, NA_character_)
 
   # Compute the return type.
-  dom_t = rstatic::dominator_tree(node$cfg)
-  result = inferBlock(node$cfg$entry, node$cfg, dom_t, env, counter)
+  # NOTE: Assume that the blocks are already sorted.
+  for (block in node$cfg$blocks)
+    result = inferBlock(block, env, counter)
 
   # Make this a function type.
   env = typesys::do_substitution(env, result$sub)
@@ -41,20 +42,46 @@ infer_dm.Function = function(node,
 }
 
 # This function traverses the control flow graph.
-inferBlock = function(b, cfg, dom_t, env, counter) {
-  block = cfg[[b]]
+# FIXME: This should be `infer_dm.Brace()`
+inferBlock = function(block, env, counter) {
+  lapply(block$phi, infer_dm, env, counter, top = FALSE)
 
   result = lapply(block$body, infer_dm, env, counter, top = FALSE)
 
-  # Now visit descendants.
-  children = setdiff(which(dom_t == b), b)
-  if (length(children) > 0)
-    result = lapply(children, function(child) {
-      inferBlock(child, cfg, dom_t, env, counter)
-    })
-
   # Return result of last block.
   result[[length(result)]]
+}
+
+
+infer_dm.Phi = function(node,
+  env = typesys::TypeEnvironment$new(),
+  counter = rstatic::Counter$new(),
+  top
+) {
+  # NOTE: We could potentially treat Phi like any other call.
+  sub = typesys::Substitution()
+
+  # Get the types for the incoming values.
+  arg_types = lapply(node$read, function(arg) {
+    result = infer_dm(arg, env, counter, top)
+    sub <<- typesys::compose(sub, result$sub)
+
+    result$type
+  })
+
+  # Unify the types.
+  # FIXME: Right now this is just a check that the types are equal, but we may
+  # want to do something other than emit an error if they are not.
+  Reduce(typesys::unify, arg_types)
+
+  # Set the type of the write variable to the unified type.
+  # This part is the same as `infer_dm.Assign()`
+  result = list(type = NULL, sub = sub, env = env)
+  result$type = typesys::quantify(arg_types[[1]], env)
+  name = node$write$name
+  result$env[[name]] = result$type
+
+  result
 }
 
 
@@ -136,6 +163,18 @@ infer_dm.Assign = function(node,
 
   result
 }
+
+# Control flow ----------------------------------------
+infer_dm.If = function(node,
+  env = typesys::TypeEnvironment$new(),
+  counter = rstatic::Counter$new(),
+  top
+) {
+  list(type = NULL, sub = typesys::Substitution(), env = env)
+}
+
+infer_dm.For = infer_dm.If
+infer_dm.While = infer_dm.If
 
 
 # Literals ----------------------------------------

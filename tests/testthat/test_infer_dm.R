@@ -150,6 +150,42 @@ test_that("Complicated parameter inference", {
 })
 
 
+test_that("Branch assignment with equal types", {
+  node = rstatic::quote_cfg(
+    function() {
+      x = "hi"
+      if (TRUE)
+        x = 4
+      else
+        x = 5
+      y = x
+    }
+  )
+
+  result = infer_dm(node, top = TRUE)
+
+  # -----
+  expect_is(result$type@return_type, "typesys::RealType")
+})
+
+
+test_that("Branch assignment with different types", {
+  node = rstatic::quote_cfg(
+    function() {
+      x = "hi"
+      if (TRUE)
+        x = 4
+      else
+        x = "hi"
+      y = x
+    }
+  )
+
+  # -----
+  expect_error(infer_dm(node, top = TRUE), "Cannot unify[.]")
+})
+
+
 #test_that("optional arguments", {
 #  node = rstatic::quote_cfg({
 #    # f: (x: a, y: b) ~ a
