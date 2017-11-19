@@ -1,179 +1,144 @@
-infer_dm = function(node, env, counter, top) {
+#' Infer Types for a Function
+#'
+#' This function infers the types for a function.
+#'
+#' @param node (Function) The function to infer types for.
+#' @param tenv (TypeEnvironment) The global type environment.
+#' @param counter (Counter) A counter for naming type variables.
+#'
+#' @export
+infer_dm = function(node, env, counter) {
   UseMethod("infer_dm")
 }
 
-# FIXME:
+
+#' @export
 infer_dm.Function = function(node,
   env = typesys::TypeEnvironment$new(),
-  counter = rstatic::Counter$new(),
-  top
+  counter = rstatic::Counter$new()
 ) {
-  old_env = env
-  env = typesys::TypeEnvironment$new(parent = old_env)
+  # Create a new type environment for this function.
+  env = typesys::TypeEnvironment$new(parent = env)
 
   # Assign new type variables to the parameters.
   params = vapply(node$params, function(param) {
-    name = param$name
     var_name = sprintf("t%i", counter$increment("t"))
     type = typesys::TypeVar(var_name)
 
+    name = param$name
     env[[name]] = type
 
     name
   }, NA_character_)
 
-  # Compute the return type.
-  # NOTE: Assume that the blocks are already sorted.
-  for (block in node$cfg$blocks)
-    result = inferBlock(block, env, counter)
+  # Visit the blocks (under the assumption that they are already sorted).
+  for (block in node$cfg$blocks) {
+    lapply(block$phi, infer_dm, env, counter)
 
-  # Make this a function type.
-  env = typesys::do_substitution(env, result$sub)
-  result$type = typesys::FunctionType(env[params], result$type)
+    line_types = lapply(block$body, infer_dm, env, counter)
 
-  # Return outer scope.
-  # NOTE: Using `top` to flag the top level is hacky. We could instead provide
-  # a way to see children of a type environment or change how type environments
-  # are passed around.
-  if (!top)
-    result$env = old_env
-
-  result
-}
-
-# This function traverses the control flow graph.
-# FIXME: This should be `infer_dm.Brace()`
-inferBlock = function(block, env, counter) {
-  lapply(block$phi, infer_dm, env, counter, top = FALSE)
-
-  result = lapply(block$body, infer_dm, env, counter, top = FALSE)
-
-  # Return result of last block.
-  result[[length(result)]]
-}
-
-
-infer_dm.Phi = function(node,
-  env = typesys::TypeEnvironment$new(),
-  counter = rstatic::Counter$new(),
-  top
-) {
-  # NOTE: We could potentially treat Phi like any other call.
-  sub = typesys::Substitution()
-
-  # Get the types for the incoming values.
-  arg_types = lapply(node$read, function(arg) {
-    result = infer_dm(arg, env, counter, top)
-    sub <<- typesys::compose(sub, result$sub)
-
-    result$type
-  })
-
-  # Unify the types.
-  # FIXME: Right now this is just a check that the types are equal, but we may
-  # want to do something other than emit an error if they are not.
-  Reduce(typesys::unify, arg_types)
-
-  # Set the type of the write variable to the unified type.
-  # This part is the same as `infer_dm.Assign()`
-  result = list(type = NULL, sub = sub, env = env)
-  result$type = typesys::quantify(arg_types[[1]], env)
-  name = node$write$name
-  result$env[[name]] = result$type
-
-  result
-}
-
-
-infer_dm.Symbol = function(node,
-  env = typesys::TypeEnvironment$new(),
-  counter = rstatic::Counter$new(),
-  top
-) {
-  # Walk up the type environments looking for the symbol.
-  # FIXME: Need to use the active name in the environment.
-  e = env
-
-  while ( !(node$name %in% names(e)) ) {
-    if (is.null(e$parent))
-      stop(sprintf("`%s` is used before it is defined.", node$name))
-
-    e = e$parent
+    # Return result of last block.
+    ret_type = line_types[[length(line_types)]]
   }
 
-  # Replace quantified type vars with new unquantified type vars.
-  type = e[[node$name]]
-  if (length(type@quantified) > 0) {
-    type = instantiate(type, counter)
-  }
-  
-  list(type = type, sub = typesys::Substitution(), env = env)
+  # Make this a function type and attach the environment.
+  type = typesys::FunctionType(env[params], ret_type)
+  type@type_environment = env
+
+  type
 }
 
+
+#' @export
 infer_dm.Call = function(node,
   env = typesys::TypeEnvironment$new(),
-  counter = rstatic::Counter$new(),
-  top
+  counter = rstatic::Counter$new()
 ) {
   # Get the function's type at definition from the environment.
-  result = infer_dm(node$fn, env, counter, top)
-  sub = result[["sub"]]
-  def_type = result[["type"]]
+  def_type = infer_dm(node$fn, env, counter)
 
   # Construct the function's type at this call.
-  arg_types = lapply(node$args, function(arg) {
-    result = infer_dm(arg, env, counter, top)
-    sub <<- typesys::compose(sub, result$sub)
+  arg_types = lapply(node$args, infer_dm, env, counter)
 
-    result$type
-  })
   var_name = sprintf("fn%i", counter$increment("fn"))
   ret_type = typesys::TypeVar(var_name)
   call_type = typesys::FunctionType(arg_types, ret_type)
 
-  # Make sure all args have current type variables.
-  call_type = typesys::do_substitution(call_type, sub)
-
   # Unify the function type with the argument types.
   unifier = typesys::unify(def_type, call_type)
+  typesys::do_substitution(env, unifier)
 
-  ret_type = typesys::do_substitution(ret_type, unifier)
-  env = typesys::do_substitution(env, unifier)
-  sub = typesys::compose(sub, unifier)
-
-  list(type = ret_type, sub = sub, env = env)
+  typesys::do_substitution(ret_type, unifier)
 }
 
-# Basically a let-expression
+
+#' @export
+infer_dm.Symbol = function(node,
+  env = typesys::TypeEnvironment$new(),
+  counter = rstatic::Counter$new()
+) {
+  # Walk up the type environments looking for the symbol.
+  while ( !(node$name %in% names(env)) ) {
+    if (is.null(env$parent))
+      stop(sprintf("`%s` is used before it is defined.", node$name))
+
+    env = env$parent
+  }
+
+  # Replace quantified type vars with new unquantified type vars.
+  type = env[[node$name]]
+  if (length(type@quantified) > 0)
+    type = instantiate(type, counter)
+  
+  type
+}
+
+
+#' @export
 infer_dm.Assign = function(node,
   env = typesys::TypeEnvironment$new(),
-  counter = rstatic::Counter$new(),
-  top
+  counter = rstatic::Counter$new()
 ) {
-  # Compute type for RHS.
-  result = infer_dm(node$read, env, counter, top)
-
-  result$type = typesys::quantify(result$type, env)
+  type = infer_dm(node$read, env, counter)
+  type = typesys::quantify(type, env)
   
   # Static single assignments are like let-expressions that hold for the
-  # remainder of the scope, so just modify the assumption set and let the top
-  # level inference handle the rest.
-  name = node$write$name
-  result$env[[name]] = result$type
-
-  result
+  # remainder of the scope. So add this to the type environment.
+  env[[node$write$name]] = type
 }
+
+
+#' @export
+infer_dm.Phi = function(node,
+  env = typesys::TypeEnvironment$new(),
+  counter = rstatic::Counter$new()
+) {
+  # Unify the incoming types.
+  #
+  # FIXME: Right now this is just a check that the types are equal, but we may
+  # want to do something other than emit an error if they are not.
+  arg_types = lapply(node$read, infer_dm, env, counter)
+  Reduce(typesys::unify, arg_types)
+  type = typesys::quantify(arg_types[[1]], env)
+
+  env[[node$write$name]] = type
+}
+
 
 # Control flow ----------------------------------------
+
+#' @export
 infer_dm.If = function(node,
   env = typesys::TypeEnvironment$new(),
-  counter = rstatic::Counter$new(),
-  top
+  counter = rstatic::Counter$new()
 ) {
-  list(type = NULL, sub = typesys::Substitution(), env = env)
+  NULL
 }
 
+#' @export
 infer_dm.For = infer_dm.If
+
+#' @export
 infer_dm.While = infer_dm.If
 
 
@@ -181,36 +146,36 @@ infer_dm.While = infer_dm.If
 
 # infer_dm.Null
 
+#' @export
 infer_dm.Logical = function(node,
   env = typesys::TypeEnvironment$new(),
-  counter = rstatic::Counter$new(),
-  top
+  counter = rstatic::Counter$new()
 ) {
-  list(type = typesys::BooleanType(), sub = typesys::Substitution(), env = env)
+  typesys::BooleanType()
 }
 
 
+#' @export
 infer_dm.Integer = function(node,
   env = typesys::TypeEnvironment(),
-  counter = rstatic::Counter$new(),
-  top
+  counter = rstatic::Counter$new()
 ) {
-  list(type = typesys::IntegerType(), sub = typesys::Substitution(), env = env)
+  typesys::IntegerType()
 }
 
 
+#' @export
 infer_dm.Numeric = function(node,
   env = typesys::TypeEnvironment(),
-  counter = rstatic::Counter$new(),
-  top
+  counter = rstatic::Counter$new()
 ) {
-  list(type = typesys::RealType(), sub = typesys::Substitution(), env = env)
+  typesys::RealType()
 }
 
+#' @export
 infer_dm.Character = function(node,
   env = typesys::TypeEnvironment(),
-  counter = rstatic::Counter$new(),
-  top
+  counter = rstatic::Counter$new()
 ) {
-  list(type = typesys::StringType(), sub = typesys::Substitution(), env = env)
+  typesys::StringType()
 }

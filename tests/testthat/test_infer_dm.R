@@ -1,15 +1,18 @@
-
 context("infer_dm")
+
 
 test_that("Variable assigned literal", {
   node = rstatic::quote_cfg(x <- 5L)
 
-  result = infer_dm(node, top = TRUE)
+  result = infer_dm(node)
 
   # -----
-  expect_equal(length(result$env), 2)
-  expect_is(result$env[["x_1"]], "typesys::IntegerType")
+  expect_is(result, "typesys::FunctionType")
+  tenv = result@type_environment
+  expect_equal(length(tenv), 2)
+  expect_is(tenv[["x_1"]], "typesys::IntegerType")
 })
+
 
 test_that("Variable assigned variable", {
   node = rstatic::quote_cfg({
@@ -17,12 +20,13 @@ test_that("Variable assigned variable", {
     y = x
   })
 
-  result = infer_dm(node, top = TRUE)
+  result = infer_dm(node)
 
   # -----
-  expect_equal(length(result$env), 3)
-  expect_is(result$env[["x_1"]], "typesys::IntegerType")
-  expect_is(result$env[["y_1"]], "typesys::IntegerType")
+  tenv = result@type_environment
+  expect_equal(length(tenv), 3)
+  expect_is(tenv[["x_1"]], "typesys::IntegerType")
+  expect_is(tenv[["y_1"]], "typesys::IntegerType")
 })
 
 
@@ -32,17 +36,18 @@ test_that("Variable assigned call", {
     y = x + 1L
   })
 
-  tenv = typesys::TypeEnvironment$new(
+  global_tenv = typesys::TypeEnvironment$new(
     "+" = c(a, b) ~ Join(a, b, Integer),
     quantify = TRUE
   )
 
-  result = infer_dm(node, tenv, top = TRUE)
+  result = infer_dm(node, global_tenv)
 
   # -----
-  expect_equal(length(result$env), 3)
-  expect_is(result$env[["x_1"]], "typesys::IntegerType")
-  expect_is(result$env[["y_1"]], "typesys::IntegerType")
+  tenv = result@type_environment
+  expect_equal(length(tenv), 3)
+  expect_is(tenv[["x_1"]], "typesys::IntegerType")
+  expect_is(tenv[["y_1"]], "typesys::IntegerType")
 })
 
 
@@ -52,11 +57,13 @@ test_that("Variable assigned monomorphic function", {
     f
   })
   
-  result = infer_dm(node, top = TRUE)
+  result = infer_dm(node)
 
   # -----
-  expect_equal(length(result$env), 2)
-  f_type = result$env[["f_1"]]
+  tenv = result@type_environment
+
+  expect_equal(length(tenv), 2)
+  f_type = tenv[["f_1"]]
   expect_is(f_type, "typesys::FunctionType")
   # NOTE: Should the args be an empty list or an empty RecordType?
   expect_is(f_type@args, "list")
@@ -71,11 +78,12 @@ test_that("Variable assigned polymorphic function", {
     f
   })
 
-  result = infer_dm(node, top = TRUE)
+  result = infer_dm(node)
 
   # -----
-  expect_equal(length(result$env), 2)
-  f_type = result$env[["f_1"]]
+  tenv = result@type_environment
+  expect_equal(length(tenv), 2)
+  f_type = tenv[["f_1"]]
   expect_is(f_type, "typesys::FunctionType")
   expect_equal(length(f_type@args), 1)
   # TODO: Equality for types.
@@ -91,20 +99,21 @@ test_that("Polymorphic function can be instantiated", {
     y = f(3.1)
   })
 
-  result = infer_dm(node, top = TRUE)
+  result = infer_dm(node)
 
   # -----
-  expect_equal(length(result$env), 4)
+  tenv = result@type_environment
+  expect_equal(length(tenv), 4)
 
-  f_type = result$env[["f_1"]]
+  f_type = tenv[["f_1"]]
   expect_is(f_type, "typesys::FunctionType")
   expect_equal(length(f_type@args), 1)
   # TODO: Equality for types.
   # expect_equal(f_type@args[[1]], f_type@return_type)
   expect_is(f_type@return_type, "typesys::TypeVar")
 
-  expect_is(result$env[["x_1"]], "typesys::IntegerType")
-  expect_is(result$env[["y_1"]], "typesys::RealType")
+  expect_is(tenv[["x_1"]], "typesys::IntegerType")
+  expect_is(tenv[["y_1"]], "typesys::RealType")
 })
 
 
@@ -113,17 +122,16 @@ test_that("Parameter inference", {
     function(x, y) f(x)
   )
 
-  tenv = typesys::TypeEnvironment$new(
+  global_tenv = typesys::TypeEnvironment$new(
     "f" = Integer ~ Boolean
   )
 
-  result = infer_dm(node, tenv, top = TRUE)
+  result = infer_dm(node, global_tenv)
 
   # -----
-  type = result$type
-  expect_is(type@args[["x_1"]], "typesys::IntegerType")
-  expect_is(type@args[["y_1"]], "typesys::TypeVar")
-  expect_is(type@return_type, "typesys::BooleanType")
+  expect_is(result@args[["x_1"]], "typesys::IntegerType")
+  expect_is(result@args[["y_1"]], "typesys::TypeVar")
+  expect_is(result@return_type, "typesys::BooleanType")
 })
 
 
@@ -135,18 +143,17 @@ test_that("Complicated parameter inference", {
     }
   )
 
-  tenv = typesys::TypeEnvironment$new(
+  global_tenv = typesys::TypeEnvironment$new(
     "f" = a ~ a,
     "g" = Integer ~ Boolean,
     quantify = TRUE
   )
 
-  result = infer_dm(node, tenv, top = TRUE)
+  result = infer_dm(node, global_tenv)
 
   # -----
-  type = result$type
-  expect_is(type@args[["x_1"]], "typesys::IntegerType")
-  expect_is(type@return_type, "typesys::BooleanType")
+  expect_is(result@args[["x_1"]], "typesys::IntegerType")
+  expect_is(result@return_type, "typesys::BooleanType")
 })
 
 
@@ -162,10 +169,10 @@ test_that("Branch assignment with equal types", {
     }
   )
 
-  result = infer_dm(node, top = TRUE)
+  result = infer_dm(node)
 
   # -----
-  expect_is(result$type@return_type, "typesys::RealType")
+  expect_is(result@return_type, "typesys::RealType")
 })
 
 
@@ -182,7 +189,7 @@ test_that("Branch assignment with different types", {
   )
 
   # -----
-  expect_error(infer_dm(node, top = TRUE), "Cannot unify[.]")
+  expect_error(infer_dm(node), "Cannot unify[.]")
 })
 
 
