@@ -1,77 +1,51 @@
 # RTypeInference
 
-An R package for type inference on R code.
+__RTypeInference__ provides functions to infer the types of variables in R
+code.
 
-## Description
+A "type" is a set of values that have common representation (in memory) and
+behavior.
 
-The data types used in a program can reveal whether the program is valid and
-ways the program can be improved. Type information is also helpful for
-translating between languages, since some languages require explicit type
-annotations in the syntax.
+Types are useful for error detection. For instance, dividing one
+string by another, `"hi" / "bye"` does not make sense because division is
+not defined for strings. This is an example of a type error. Catching type
+errors is so important that many languages require programmers to specify a
+type whenever they define a variable. Type errors can be detected before the
+code runs if all the types are known.
 
-R doesn't include type annotations in the language. This is justified because R
-supports interactive workflows, where brevity is an important consideration.
-The R interpreter checks that programs are correctly typed at run-time. In
-other words, the interpreter makes _dynamic_ type checks because type
-information isn't available before run-time. 
+In contrast, R does not require programmers to specify a type when they define
+a variable. Instead, R detects type errors at run-time as they occur. The
+drawback is that some type errors may go unnoticed until long after code is put
+into use.
 
-This package uses type inference to gather type information for R programs
-before run-time. The inference system is loosely based on Hindley-Milner type
-systems, although the primary goal of the package is to be useful rather than
-provably correct.
+Types are also useful for optimization and documentation of code.
 
-The steps taken by the inference algorithm are:
+This package can determine the types of many variables in R code even when the
+types are not specified. The idea is to take advantage of knowledge we have
+about functions that are built into the language. For example, we know that the
+`length()` function always returns an integer, so if we see a definition `y =
+length(x)` then we know `y` must be an integer (regardless of the value of
+`x`).
 
-1. A _type variable_ is created for each program variable.
-2. The program's control-flow graph is traversed to generate a system of
-   constraints for each type variable.
-3. The constraint systems are solved to determine a type for each program
-   variable.
+__RTypeInference__ uses a modified [Damas-Milner][] type system for inference.
+Code analysis tools are provided by __[rstatic][]__ and algebraic data types
+are provided by __[typesys][]__. In the future this package may also accept
+type annotations from the __[types][]__ package where types cannot be inferred.
 
-The types of the program variables are returned in a dictionary. Since the
-algorithm expects a control-flow graph in single static-assignment form, each
-program variable corresponds to exactly one definition and thus one type at
-run-time.
 
-The greatest obstacle to inference is that R allows variables to take different
-types on branches:
+[Damas-Milner]: https://en.wikipedia.org/wiki/Hindley%E2%80%93Milner_type_system
+[rstatic]: https://github.com/nick-ulle/rstatic
+[typesys]: https://github.com/nick-ulle/typesys
+[types]: https://github.com/jimhester/types
+
+
+## Installation
+
+__RTypeInference__ is unstable and under active development, so it's not yet
+available on CRAN. To install, open an R prompt and run:
 
 ```r
-if (some_condition)
-  x = 10
-else
-  x = "Hello"
+install.packages("devtools")
 
-print(x)
+devtools::install_github("duncantl/RTypeInference")
 ```
-
-Variables that may have any of several different types after a control flow
-merge can blow up the number of types possible for other variables.
-
-
-## Old Description
-
-We want to determine the types of the inputs and output of a function.
-For the return type, we can look at the return type of the last
-expression.  The type of the result of that expression may depend on
-the inputs.  As a result, we have to recursively process all of the
-expressions in a function.
-
-We also want to identify input parameters that are 'constant',
-i.e. not modified by the function. Of course, in R the parameters are
-copied and so we don't modify the original object. However, it is
-useful to know whether the function actually uses the parameter as
-read-only or if it actually modifies the object.  We can use this to
-avoid copying the value in the call, e.g. when we compile.
-
-We also want to identify parameters that are truly modified in a
-non-functional manner, e.g. a reference object or a closure that may
-mutate variables in its environment(s).
-
-We want to store the type information so we can query it at different
-times.  We can store this information on each function, e.g. using the
-TypeInfo package.  We can also store it in a global variable, or in a
-separate database.
-
-
-See the Hindley-Milner algorithm.
