@@ -157,6 +157,20 @@ test_that("Complicated parameter inference", {
 })
 
 
+test_that("Passed in parameter types", {
+  node = rstatic::quote_cfg(
+    function(x) {
+      x
+    }
+  )
+
+  result = infer_dm(node, param_types = list("x" = typesys::IntegerType()))
+
+  # -----
+  expect_is(result@return_type, "typesys::IntegerType")
+})
+
+
 test_that("Branch assignment with equal types", {
   node = rstatic::quote_cfg(
     function() {

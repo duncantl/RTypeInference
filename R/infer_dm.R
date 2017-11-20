@@ -7,7 +7,7 @@
 #' @param counter (Counter) A counter for naming type variables.
 #'
 #' @export
-infer_dm = function(node, env, counter) {
+infer_dm = function(node, env, counter, param_types) {
   UseMethod("infer_dm")
 }
 
@@ -15,15 +15,21 @@ infer_dm = function(node, env, counter) {
 #' @export
 infer_dm.Function = function(node,
   env = typesys::TypeEnvironment$new(),
-  counter = rstatic::Counter$new()
+  counter = rstatic::Counter$new(),
+  param_types = list()
 ) {
   # Create a new type environment for this function.
   env = typesys::TypeEnvironment$new(parent = env)
 
   # Assign new type variables to the parameters.
   params = vapply(node$params, function(param) {
-    var_name = sprintf("t%i", counter$increment("t"))
-    type = typesys::TypeVar(var_name)
+    basename = param$basename
+    if (basename %in% names(param_types)) {
+      type = param_types[[basename]]
+    } else {
+      var_name = sprintf("t%i", counter$increment("t"))
+      type = typesys::TypeVar(var_name)
+    }
 
     name = param$name
     env[[name]] = type
@@ -52,7 +58,8 @@ infer_dm.Function = function(node,
 #' @export
 infer_dm.Call = function(node,
   env = typesys::TypeEnvironment$new(),
-  counter = rstatic::Counter$new()
+  counter = rstatic::Counter$new(),
+  param_types = list()
 ) {
   # Get the function's type at definition from the environment.
   def_type = infer_dm(node$fn, env, counter)
@@ -75,7 +82,8 @@ infer_dm.Call = function(node,
 #' @export
 infer_dm.Symbol = function(node,
   env = typesys::TypeEnvironment$new(),
-  counter = rstatic::Counter$new()
+  counter = rstatic::Counter$new(),
+  param_types = list()
 ) {
   # Walk up the type environments looking for the symbol.
   while ( !(node$name %in% names(env)) ) {
@@ -97,7 +105,8 @@ infer_dm.Symbol = function(node,
 #' @export
 infer_dm.Assign = function(node,
   env = typesys::TypeEnvironment$new(),
-  counter = rstatic::Counter$new()
+  counter = rstatic::Counter$new(),
+  param_types = list()
 ) {
   type = infer_dm(node$read, env, counter)
   type = typesys::quantify(type, env)
@@ -111,7 +120,8 @@ infer_dm.Assign = function(node,
 #' @export
 infer_dm.Phi = function(node,
   env = typesys::TypeEnvironment$new(),
-  counter = rstatic::Counter$new()
+  counter = rstatic::Counter$new(),
+  param_types = list()
 ) {
   # Unify the incoming types.
   #
@@ -130,7 +140,8 @@ infer_dm.Phi = function(node,
 #' @export
 infer_dm.If = function(node,
   env = typesys::TypeEnvironment$new(),
-  counter = rstatic::Counter$new()
+  counter = rstatic::Counter$new(),
+  param_types = list()
 ) {
   NULL
 }
@@ -149,7 +160,8 @@ infer_dm.While = infer_dm.If
 #' @export
 infer_dm.Logical = function(node,
   env = typesys::TypeEnvironment$new(),
-  counter = rstatic::Counter$new()
+  counter = rstatic::Counter$new(),
+  param_types = list()
 ) {
   typesys::BooleanType()
 }
@@ -158,7 +170,8 @@ infer_dm.Logical = function(node,
 #' @export
 infer_dm.Integer = function(node,
   env = typesys::TypeEnvironment(),
-  counter = rstatic::Counter$new()
+  counter = rstatic::Counter$new(),
+  param_types = list()
 ) {
   typesys::IntegerType()
 }
@@ -167,7 +180,8 @@ infer_dm.Integer = function(node,
 #' @export
 infer_dm.Numeric = function(node,
   env = typesys::TypeEnvironment(),
-  counter = rstatic::Counter$new()
+  counter = rstatic::Counter$new(),
+  param_types = list()
 ) {
   typesys::RealType()
 }
@@ -175,7 +189,8 @@ infer_dm.Numeric = function(node,
 #' @export
 infer_dm.Character = function(node,
   env = typesys::TypeEnvironment(),
-  counter = rstatic::Counter$new()
+  counter = rstatic::Counter$new(),
+  param_types = list()
 ) {
   typesys::StringType()
 }

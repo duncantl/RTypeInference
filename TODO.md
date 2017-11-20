@@ -6,7 +6,7 @@
 
 * Unify function parameters by name (right now we only unify by position)
 
-* Allow the user to specify types for specific parameters or variables by
+* [x] Allow the user to specify types for specific parameters or variables by
   basename rather than SSA name.
 
 * Use literal values to get additional type information. E.g., `rnorm(1, ...)`
