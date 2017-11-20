@@ -1,0 +1,117 @@
+---
+title: "Challenges"
+author: Nick Ulle
+date: August 11, 2016
+output: github_document
+---
+
+## Inferring Call Types
+
+Suppose a function's return type depends on its input type:
+
+```{r, eval=FALSE}
+bar = function(x) {
+  if (class(x) == "complex")
+    return (42+0i)
+
+  return (42L)
+}
+
+x = foo()
+y = bar(x)
+stopifnot(is(y, "integer"))
+```
+
+In this example, the type of `y` cannot be determined until after the type of
+`x` is determined. The subsequent assertion that `y` will have type `integer`
+doesn't guarantee the type of `y` before that line: it's possible the
+programmer made a mistake when assigning `x`, and type inference must be able
+to detect whether or not the assertion will pass. Indeed, inference should
+alert the programmer before run-time if the assertion will fail.
+
+A naive approach to this problem is to solve the partial constraint set
+immediately when the calls `foo` and `bar` are encountered. However, if
+constraints from subsequent expressions are necessary to infer the type of `x`,
+this is unlikely to work well [TODO: Examples?].
+
+A second approach is to lift the predicates that determine the types of the
+calls from the function bodies; they can then be inserted in an `IfType`. The
+resulting constraints would look like this:
+
+```
+x#1 ~ RealType
+y#1 ~ IfType(class(x) == "complex", ComplexType, IntegerType)
+y#1 ~ IntegerType
+```
+
+This has the benefit of making it easy to identify the run-time predicates that
+affect the constraints for the entire program. However, it strips the
+predicates of context; the `x` referred to in the predicate corresponds to a
+type variable for `foo`'s type constraints rather than the top-level
+constraints.
+
+Another option is to assign a type variable to the calls as if they were
+symbols. This leads to the system:
+
+```
+x#1 ~ TypeOf foo()
+y#1 ~ TypeOf bar(x#1)
+y#1 ~ IntegerType
+```
+
+This keeps type detection and inference separate, since the system can be
+solved _after_ detection. The system can be solved with an iterative procedure
+that unifies constraints and then infers call types.
+
+
+## If Statements
+
+### Value Predicates
+
+```{r, eval=FALSE}
+x = if (sample(0:1, 1)) "Text" else 8L
+```
+
+This could generate the constraint:
+
+```
+x#1 ~ IfType(sample(0:1, 1), StringType, IntegerType)
+```
+
+In general, these prevent inference from succeeding.
+
+### Type Predicates
+
+A special case of the example above occurs when the predicate depends only on
+type information:
+
+```{r, eval=FALSE}
+x = if (is(y, "character")) "Text" else 8L
+```
+
+### Other Predicates
+
+Are there any other cases where it's likely the predicate can be resolved
+before run-time? Technically, such predicates should be optimized out of the
+program anyways: they are useless tests.
+
+## Loops
+
+Suppose the iterator variable in a loop takes a different type on every
+iteration:
+
+```{r, eval=FALSE}
+my_list = list(TRUE, 1L, 1.0, 1.0+0i, "1.0")
+
+for (x in my_list) {
+  # ...
+}
+```
+
+This example poses several challenges. First, type inference must identify the
+type of `x` for every iteration, which means a type constraint must be
+generated for every iteration. Moreover, the data structure for the results of
+inference must accommodate this.
+
+Second, unless the loop body casts `x` to a common type (which may be
+implicit), the compiler must emit a block for every iteration.

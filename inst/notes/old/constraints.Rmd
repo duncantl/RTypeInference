@@ -1,0 +1,77 @@
+---
+title: "Type Constraints"
+author: Nick Ulle
+date: August 16, 2016
+output: github_document
+---
+
+This document examines how type constraints should be generated for
+assignments.
+
+Every assignment must have a symbol as its write operand [is this true for call
+assignments?]. Here we'll consider different cases of read operands. In all
+cases, it's assumed that assignment changes the type of the write symbol, so a
+new type variable is bound to that symbol and marked as current reaching type.
+
+## Literals
+
+```{r}
+x = 3.0
+```
+Literals are the most straightforward case because their type is known. A new
+constraint is added to the system with the literal's type.
+
+Assuming `x` previously had type `x1`:
+
+1. The write operand is bound to `x2`.
+2. The reaching type of `x` is set to `x2`.
+3. The constraint `x2 <=> RealType` is added to the constraint set.
+
+## Symbols
+
+```{r}
+x = y
+```
+Symbols are not much more complicated than literals. The write operand is
+handled as described for literals. The read operand is not mutated, so its type
+variable does not need to be changed. The constraint $x2 ~ y1$ is added to the
+constraint set.
+
+[What should happen if `y` has no reaching type?]
+
+## Binary Operations & Calls
+
+```{r}
+x = 3.0 + 4.1
+```
+The return type of the call is resolved immediately by the upcasting rules.
+
+### Unresolved Types
+
+```{r}
+x = 3.0 + y
+```
+
+Assuming `x`, `y` previously had types `x1`, `y1`:
+
+1. The write operand is bound to `x2`.
+2. The reaching type of `x` is set to `x2`.
+3. The constraint `x2 <=> UnresolvedCall("+", RealType, y1)` is added to the
+   constraint set.
+
+This defers inference for the return type of `+` until it's demanded by the
+unification algorithm. When the type is needed, (the hope is that) the type of
+`y1` will already have been inferred.
+
+We may also need to capture the environment the call was made in. For instance,
+consider this example:
+
+```{r}
+sum = function(...) "Hi, I'm sum!"
+
+sum(4, 3)
+```
+
+Overrides for functions may also occur in an ancestor of the inference
+environment, and these must be found and handled correctly. Thus lookup for
+calls needs to proceed from the environment associated with the code.

@@ -1,0 +1,49 @@
+---
+title: "If-Statement Examples"
+author: Nick Ulle
+date: August 18, 2016
+output: github_document
+---
+
+```{r}
+x = if (y) "Text" else 8L
+
+# or equivalently:
+
+if (a)
+  x = 4+2i
+else
+  x = 8L
+```
+
+This example is the simplest case of types changing due to an if-statement.
+Here we will focus on the second form, because the first form can always be
+rewritten as the second, and the second does not emphasize any one assignment
+(there may be several assignments in the body of an if-statement).
+
+Assuming that `x` previously had type `x#1`:
+
+1. The write operand in the `if` branch is bound to `x#2`.
+2. The reaching type of `x` is set to `x#2`.
+3. The constraint `x#2 <=> ComplexType` is added.
+
+4. The write operand in the `else` branch is bound to `x#3`.
+5. The reaching type of `x` is set to `x#3`.
+6. The constraint `x#3 <=> IntegerType` is added.
+
+7. At the end of the if-statement, the reaching type of `x` is set to `x#4`.
+8. The constraint `x#4 <=> RuntimeType(x#2, x#3, node)` is added, where `node`
+   is a reference to the `If` node in the AST.
+
+In most cases, there will be more than one assignment. For example:
+```{r}
+if (a) {
+  x = 4+2i
+  y = 12.0
+} else {
+  x = 8L
+  y = 12L
+}
+```
+
+The steps are similar to above, but must be carried out for both `x` and `y`.

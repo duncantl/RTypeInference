@@ -1,0 +1,30 @@
+---
+title: "Composite Constraints"
+author: Nick Ulle
+date: September 22, 2016
+output: github_document
+---
+
+This document discusses how constraints should be generated and resolved for
+sound inference of composite types.
+
+
+## Arrays (R Vectors)
+
+The simplest possible scenario for type inference on composite types is a
+direct call to a zero-filled vector constructor.
+```{r}
+x = numeric(4)
+```
+In this case, the type of the right-hand side is known and inference should:
+
+1. Bind `x#1` to the write operand.
+2. Bind `x#1` to `x`.
+3. Add the constraint `x#1 <=> ArrayType(RealType, 4)`
+
+This scenario becomes more difficult when the length argument is a variable.
+```{r}
+n = 4
+x = numeric(n)
+```
+

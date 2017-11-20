@@ -1,0 +1,14 @@
+---
+title: "Conditional Types Design Document"
+author: "Nick Ulle"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Fibonacci Vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+A fundamental challenge to type inference for R
+
+<!-- SEE type-stable.Rmd in notes -->

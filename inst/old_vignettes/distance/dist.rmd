@@ -1,0 +1,26 @@
+
+# Distance Function Inference
+
+This vignette illustrates type inference for a typical distance function.
+
+```{r}
+library(RTypeInference)
+source("distance.R")
+
+distance2
+```
+
+We'll use the `distance2` function.
+
+```{r}
+tc = TypeCollector()
+inferTypes(distance2, tc)
+```
+
+The output is shown below.
+
+```{r}
+tc
+```
+
+

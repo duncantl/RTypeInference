@@ -1,0 +1,222 @@
+---
+title: "RTypeInference Model"
+author: "Nick Ulle"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+<!-- Preamble -->
+
+\DeclareMathOperator{\vector}{vec}
+\DeclareMathOperator{\Numeric}{numeric}
+\DeclareMathOperator{\Integer}{integer}
+
+```{r, echo=FALSE, results="hide"}
+library(RTypeInference)
+```
+
+<!-- Body -->
+The purpose of this vignette is to describe how the goals of the RTypeInference
+package.
+
+Type inference is the process of extracting information about the types of
+variables in a script. The type information is important because it reveals
+which operations are valid for a given variable and how much memory needs to be
+allocated for that variable. In some languages, programmers are required to
+annotate variables with types, but this is not the case in R. Instead, the R
+interpreter keeps track of types at run-time, so programmers don't have to
+provide any annotations. The downside of this is that tracking types has a
+memory cost and checking types has a time cost.
+
+When we compile a script, we can examine more than just the current line (in
+contrast to interpreting a script). Often there are clues in the code that
+reveal the types of variables. We can use these clues to infer the types of
+some or even all variables. This process is called type inference.
+
+Type inference is an area of active research in the computer science community.
+An early paper on type inference was "A Theory of Type Polymorphism in
+Programming" (Milner 1977). Milner formally defines a type system and provides
+an algorithm for inferring types under the system. The system is polymorphic,
+which means that it allows functions that can accept arguments of any type.
+
+For instance, `append()` is an example of a polymorphic function in R. The
+first argument is typically a list, but the second argument can have any type.
+The type of the second argument has no bearing on how it is appended to the
+list.
+
+Milner's type system is designed for functional programming languages with no
+imperative expressions (i.e., assignments or other expressions that have side
+effects). Although R encourages a functional style of programming, it also has
+imperative expressions. This makes adapting Milner's system to R more
+difficult. Fortunately, there is a way to work around assignments, and since
+the R community actively discourages writing code with side effects, other side
+effects may be rare in practice. Strategies for dealing with imperative code
+are discussed in a later section.
+
+In Milner's system, types that are fully determined are called _monotypes_.
+These are atomic types like integers, real numbers, and Booleans. The set of
+monotypes also includes tagged unions, Cartesian products, functions, and lists
+of the atomic types. When a function is polymorphic, the parameterized types
+are called _polytypes_ or _type variables_.
+
+__Example__
+
+The `numeric()` function has exactly one parameter, `length`, which specifies
+the length of the created vector. The argument can be any scalar that can be
+coerced to an integer; the function checks the argument type at run-time to
+perform the coercion. In other words, the type of `length` is a tagged union.
+Several different types are permitted, but at run-time the argument must be
+passed with a tag identifying the type. We denote tagged unions with $+$. Thus
+we can type `length` as
+$$
+\Integer + \Numeric,
+$$
+although technically other types types are also allowed. They've been omitted
+here to keep the example succinct.
+
+The value returned from `numeric()` is always a numeric vector, which we denote
+by
+$$
+\vector[\Numeric].
+$$
+Using $\to$ to denote the function type, it follows that the type of
+`numeric()` is
+$$
+(\Integer + \Numeric) \to \vector[\Numeric]
+$$
+
+__Example__
+
+As an example of the type system, consider the `lapply()` function, with the
+simplifying assumption that the first argument is restricted to homogeneous
+vectors. That is, the first argument must have type $\vector[\alpha]$ where
+$\alpha$ is a type variable and $\vector[\cdot]$ denotes a vector of the given
+type. The second argument must be a function type, which we denote with $\to$.
+Since the second argument must be a function of elements of the first argument,
+it has type $\alpha \to \beta$, where $\beta$ is a new, unconstrained type
+variable. Combining all of this information, the type of the `lapply()`
+function must be
+
+$$
+(\vector[\alpha] \times (\alpha \to \beta)) \to \vector[\beta]
+$$
+
+
+That is, `lapply()` takes a vector of some type $\alpha$ and transforms it into
+a vector of some type $\beta$ based on the return type of the applied function.
+The types $\alpha$ and $\beta$ are not fully determined until the function is
+called, and can differ from one call to the next.
+
+Since `lapply()` works with non-homogeneous lists and allows passing
+additional, fixed arguments to the applied function, this example is not
+completely general. We will revisit this example later to explore how the type
+system can be generalized.
+
+
+
+```{r, eval = FALSE}
+ones = function(n) {
+  rep.int(1, n)
+}
+```
+<!-- sieve of eratosthenes -->
+
+-----
+
+## `infer_types()`
+
+To get the types for the variables in an R program, we use the `infer_types()`
+function. The input is the control flow graph for the R program, in SSA form.
+Computing the CFG is handled by the __rstatic__ package, and the details are
+discussed in that package's documentation. Here we will take those details for
+granted.
+
+The idea of type inference is to generate a system of constraints on the types
+used in the program, and then solve the system to get the types. The
+`infer_types()` function performs both of these steps, but they can also be
+carried out separately with `constrain()` and `solve()`, respectively.
+
+Each constraint comes from a different piece of evidence in the code about the
+types. For instance, an assignment `x = "hi"` signals that the variable `x` is
+a string. Many expressions allow us to narrow down the set of valid types for a
+variable, but don't specify the exact type. When we see `x + y`, we know that
+unless `+` has been redefined by the user, `x` and `y` must both be numbers.
+However, we cannot tell from this expression alone whether they are logical
+values, integers, floating point numbers, or complex numbers.
+
+R allows variables to be redefined with a different type at any point in a
+program, so most variables are associated with a sequence of types rather than
+a single type. Knowing the sequence of types for a variable is only useful if
+we also know where in the program each type occurs.
+
+To deal with this problem, constraints always refer to single static assignment
+(SSA) names rather than variable names. In SSA form, each (re)definition of a
+variable is given a unique name. Because of this, each SSA name can be
+unambiguously associated with a single type in a variable's sequence of types.
+
+SSA names are not the only strategy for keeping track of constraints and types.
+We could think of types as being associated with specific expressions within a
+program rather than variables. This is a conceptually different approach to the
+problem. In this approach, type inference must find a type for every expression
+in the program. This is not any more difficult, but does require additional
+bookkeeping with associated memory costs.
+
+In order to generate constraints, `constrain()` traverses the program's CFG and
+calls the S3 generic `constrain_ast()` on each expression. For now, we can
+customize how constraints are generated for arbitrary expressions by redefining
+the `constrain_ast()` methods as needed.
+
+<!-- FIXME: Need a better example! -->
+Consider a function that finds the area of an annulus when given the inner and
+outer radius
+
+```{r}
+circle_area = function(r_inner, r_outer) {
+  outer = pi * r_outer^2
+  inner = pi * r_inner^2
+
+  return (outer - inner)
+}
+```
+
+We can compute the constraints for this with
+
+```{r}
+cfg = rstatic::to_cfg(circle_area)
+
+cons = constrain(cfg)
+```
+
+Constraints are collected in a `ConstraintSet`, which has reference semantics
+to simplify writing recursive `constrain_ast()` methods. The order of the
+constraints within the set does not matter. This is important because it allows
+us to set constraints based on how a variable is used after the point where
+that variable was defined.
+
+In the example, we can see that the right-hand side of each constraint is
+printed like a function call. For now, types are not computed for calls during
+constraint generation; the computation is deferred until the system of
+constraints is solved.
+
+By using `constrain()` and `solve()` separately, we can add to and modify the
+constraints before solving. Constraints can be accessed by index with `[[`
+(although they cannot yet be assigned with `[[`). The method 
+
+---
+
+The returned `SolutionSet` lists the inferred type of each SSA name defined in
+the function.
+
+
+<!-- FIXME: OTHER STUFF
+The `add` function is _polymorphic_: the arguments are not constrained to any
+particular type. In other words, `add(3, 4)`, where both arguments are
+integers, will work just as well as `add(3.1, 5+1i)`, where the arguments are a
+real and a complex number.
+-->
+
+

@@ -1,0 +1,128 @@
+---
+title: "Type Inference Improvements"
+author: "Nick Ulle"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Type Inference Improvements}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r}
+library(RTypeInference)
+```
+
+## Multiple Functions
+
+The current version of the package doesn't move between functions
+automatically, so functions which call other functions in the same source file
+are effectively unsupported. This is an essential feature since idiomatic R
+code breaks tasks into short, composable functions.
+
+### Search Path
+
+The first issue is where the package should look for names.
+
+For interactive use, it's convenient to search for names in the global
+environment. 
+
+On the other hand, scripts have their own global environment when evaluated. If
+inference is run on a script from an interactive session, searching in the
+global environment might be unexpected behavior. However, it would be useful
+for on-the-fly modifications to scripts to test how inference responds.
+
+Also note that inference may need to work across several scripts, so the
+scripts will need to be loaded into a shared environment.
+
+An alternative to the above is to load scripts with `parse()`. Scripts may
+contain code that runs at eval, which probably shouldn't run during type
+inference. Using `parse()` avoids evaluation during inference. However, this
+also means the inference package is responsible for tracking down every name
+that's loaded by the script, e.g., using `source()`.
+
+### Types Data Structure
+
+The second issue is what data structure the package should use for keeping
+track of types for multiple scopes. Scopes have a tree-like hierarchy and this
+must be maintained in order to handle closures correctly.
+
+The simple solution is to use a named list of lists and TypeCollector objects.
+
+
+
+## Type Handler API
+
+Occasionally the user will want to define their own rules for how a function
+should be typed. A custom _handler function_ can be provided for each function
+where the default inference rules should be overridden. The handler function
+must fulfill a contract with the type inference package in order to work
+correctly.
+
+The current version's function table only holds types, so handler functions are
+wrapped in ConditionalType objects. 
+
+## Rules
+
+The rules used for inference are written in R. Some rules, such as those for
+mathematical operators, are built in and applied as part of the AST-walk.
+However, most rules are stored as separate hand-written R functions that return
+a named list of types.
+
+```{r, eval = FALSE}
+  "abs" = ConditionalType(
+    # complex|numeric -> numeric
+    # integer -> integer
+    function(args) {
+      # Here x should be an vector, not a list.
+      atom = element_type(args$x)
+
+      atom =
+        if (is(atom, "ComplexType") || is(atom, "RealType"))
+          RealType()
+        else if (is(atom, "IntegerType"))
+          IntegerType()
+
+      element_type(args$x) = atom
+      # FIXME:
+      value(args$x) = UnknownValue()
+      return(args$x)
+    }),
+```
+
+This makes it difficult to make inferences based on combinations of rules,
+because there is no procedure for combining rules that cannot already be
+resolved to a type. On the other hand, this allows allows arbitrarily complex
+rules to be encoded (resolving some rules could take as long as running the
+input program).
+
+There are several ways to address this. First, we could define a grammar for
+rules and build a simple parser. This leads to a formal system for resolving
+rules and might allow us to prove that our system is sound. However, it's not
+as flexible as the current system. Another advantage of this approach is that
+it might make automatic generation of rules comparatively easy.
+
+Second, we could use a system of attributes/tags on functions of interest to
+generate rules implicitly. 
+
+Third, we could preserve the current system.
+
+## 
+
+## Lists & Data Frames
+
+At present RTI can't infer any information about data frames.
+
+```{r}
+df_fun = function() {
+  data.frame()
+}
+
+tc = TypeCollector()
+inferTypes(df_fun, tc)
+```
+
+The real issue here is that RTI doesn't even try to detect data frames. So the
+first step towards a fix is to actually recognize data frames. This could be
+based on `data.frame` and also how `$` is used.
+

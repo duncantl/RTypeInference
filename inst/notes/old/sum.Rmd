@@ -1,0 +1,15 @@
+
+```{r}
+ast = ast::to_ast(quote({
+  x = 5.1
+  y = 6L
+  z = sum(x, y)
+}))
+
+ans = detect(ast)
+```
+
+
+```{r}
+x = 5.0 # x#1
+x = "hi" # x#2

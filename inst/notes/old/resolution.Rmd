@@ -1,0 +1,85 @@
+---
+title: "Type Resolution"
+author: Nick Ulle
+date: August 30, 2016
+output: github_document
+---
+
+## Literal Propagation
+
+Consider the simple system
+```
+x#1 <=> IntegerType
+y#1 <=> x#1
+```
+Solving this system proceeds as follows:
+
+1. Unify `x#1` and `IntegerType`; the substitution `x#1 => IntegerType` is
+   added to the solution set.
+2. Apply the solution set to the remaining constraints, which yields the system
+   ```
+   Soln:
+   x#1 => IntegerType
+   Cons:
+   y#1 <=> IntegerType
+   ```
+3. Repeat steps 1-2.
+
+What if a constraint is encountered that can't be solved? For example:
+```
+y#1 <=> x#1
+x#1 <=> IntegerType
+```
+This case shows the need to apply the new solution to the existing solution set
+at each step. That is,
+
+1. Unify `x#1` and `y#1`. Apply the new solution to both the constraint set and
+   the solution set, so:
+   ```
+   Soln:
+   y#1 => x#1
+   Cons:
+   x#1 <=> IntegerType
+   ```
+2. Unify `x#1` and `IntegerType`. Apply the new solution to both the contraint
+   set and the solution set, so:
+   ```
+   Soln:
+   y#1 => IntegerType
+   x#1 => IntegerType
+   ```
+
+## Unresolved Calls
+
+Consider this simple example:
+```
+y#1 <=> UnresolvedCall(length, x = x#1)
+```
+The `length` function always returns an integer, so the type of `x#1` is not
+even needed. Resolution should produce this solution:
+```
+y#1 => IntegerType
+```
+
+```{r}
+x = 3i
+y = 4 + x
+```
+The constraint set is:
+```
+x#1 <=> ComplexType
+y#1 <=> UnresolvedCall(+, RealType, x#1)
+```
+The solution set is:
+```
+x#1 => ComplexType
+y#1 => ComplexType
+```
+
+What should happen if one of the constraints has an as yet unknown type? And
+how can this happen in examples?
+```{r}
+# Assume x is a parameter.
+y = 4 + x
+```
+
