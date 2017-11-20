@@ -1,7 +1,7 @@
 instantiate = function(x, counter) {
   new_vars = lapply(x@quantified, function(q) {
     name = sprintf("t%i", counter$increment("t"))
-    typesys::TypeVar(name)
+    typesys::TypeVariable(name)
   })
   names(new_vars) = x@quantified
 

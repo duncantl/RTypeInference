@@ -88,7 +88,7 @@ test_that("Variable assigned polymorphic function", {
   expect_equal(length(f_type@args), 1)
   # TODO: Equality for types.
   # expect_equal(f_type@args[[1]], f_type@return_type)
-  expect_is(f_type@return_type, "typesys::TypeVar")
+  expect_is(f_type@return_type, "typesys::TypeVariable")
 })
 
 
@@ -110,10 +110,10 @@ test_that("Polymorphic function can be instantiated", {
   expect_equal(length(f_type@args), 1)
   # TODO: Equality for types.
   # expect_equal(f_type@args[[1]], f_type@return_type)
-  expect_is(f_type@return_type, "typesys::TypeVar")
+  expect_is(f_type@return_type, "typesys::TypeVariable")
 
   expect_is(tenv[["x_1"]], "typesys::IntegerType")
-  expect_is(tenv[["y_1"]], "typesys::RealType")
+  expect_is(tenv[["y_1"]], "typesys::NumericType")
 })
 
 
@@ -123,15 +123,15 @@ test_that("Parameter inference", {
   )
 
   global_tenv = typesys::TypeEnvironment$new(
-    "f" = Integer ~ Boolean
+    "f" = Integer ~ Logical
   )
 
   result = infer_dm(node, global_tenv)
 
   # -----
   expect_is(result@args[["x_1"]], "typesys::IntegerType")
-  expect_is(result@args[["y_1"]], "typesys::TypeVar")
-  expect_is(result@return_type, "typesys::BooleanType")
+  expect_is(result@args[["y_1"]], "typesys::TypeVariable")
+  expect_is(result@return_type, "typesys::LogicalType")
 })
 
 
@@ -145,7 +145,7 @@ test_that("Complicated parameter inference", {
 
   global_tenv = typesys::TypeEnvironment$new(
     "f" = a ~ a,
-    "g" = Integer ~ Boolean,
+    "g" = Integer ~ Logical,
     quantify = TRUE
   )
 
@@ -153,7 +153,7 @@ test_that("Complicated parameter inference", {
 
   # -----
   expect_is(result@args[["x_1"]], "typesys::IntegerType")
-  expect_is(result@return_type, "typesys::BooleanType")
+  expect_is(result@return_type, "typesys::LogicalType")
 })
 
 
@@ -186,7 +186,7 @@ test_that("Branch assignment with equal types", {
   result = infer_dm(node)
 
   # -----
-  expect_is(result@return_type, "typesys::RealType")
+  expect_is(result@return_type, "typesys::NumericType")
 })
 
 
@@ -203,7 +203,7 @@ test_that("Branch assignment with different types", {
   )
 
   # -----
-  expect_error(infer_dm(node), "Cannot unify[.]")
+  expect_error(infer_dm(node), "Cannot unify types 'String' and 'Numeric'")
 })
 
 

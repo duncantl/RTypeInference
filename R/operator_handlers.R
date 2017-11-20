@@ -29,11 +29,11 @@ upcast_math = function(types, op) {
   type =
     if (any_is(types, "typesys::ComplexType"))
       typesys::ComplexType()
-    else if (any_is(types, "typesys::RealType") || op %in% c("/", "^"))
-      typesys::RealType()
+    else if (any_is(types, "typesys::NumericType") || op %in% c("/", "^"))
+      typesys::NumericType()
     else if (any_is(types, "typesys::IntegerType"))
       typesys::IntegerType()
-    else if (any_is(types, "typesys::BooleanType"))
+    else if (any_is(types, "typesys::LogicalType"))
       typesys::IntegerType()
     else
       stop(sprintf("Invalid types for operator '%s'.", op))
@@ -55,7 +55,7 @@ function(x, tc, ...)
   if (op_name %in% c("||", "&&"))
     length = 1L
 
-  makeVector(BooleanType(), length)
+  makeVector(LogicalType(), length)
 }
 
 
@@ -75,7 +75,7 @@ function(x, tc, ...)
     arg_type = arg_types[[1]]
 
     length = 
-      if (is(element_type(arg_type), "BooleanType")) {
+      if (is(element_type(arg_type), "LogicalType")) {
         # For logical argument, length is number of TRUEs.
         sum(value(arg_type, NA))
       } else {

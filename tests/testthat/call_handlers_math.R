@@ -2,19 +2,19 @@ context("call handlers (math)")
 
 
 test_that("unary ops preserve scalar types", {
-  args = list(typesys::RealType())
+  args = list(typesys::NumericType())
 
   type_add = CALL_HANDLERS[["+"]](args)
   type_sub = CALL_HANDLERS[["-"]](args)
 
   # -----
-  expect_is(type_add, "typesys::RealType")
-  expect_is(type_sub, "typesys::RealType")
+  expect_is(type_add, "typesys::NumericType")
+  expect_is(type_sub, "typesys::NumericType")
 })
 
 
 test_that("binary_ops preserve same scalar types", {
-  args = list(typesys::RealType(), typesys::RealType())
+  args = list(typesys::NumericType(), typesys::NumericType())
 
   type_add = CALL_HANDLERS[["+"]](args)
   type_sub = CALL_HANDLERS[["-"]](args)
@@ -23,11 +23,11 @@ test_that("binary_ops preserve same scalar types", {
   type_exp = CALL_HANDLERS[["^"]](args)
 
   # -----
-  expect_is(type_add, "typesys::RealType")
-  expect_is(type_sub, "typesys::RealType")
-  expect_is(type_mul, "typesys::RealType")
-  expect_is(type_div, "typesys::RealType")
-  expect_is(type_exp, "typesys::RealType")
+  expect_is(type_add, "typesys::NumericType")
+  expect_is(type_sub, "typesys::NumericType")
+  expect_is(type_mul, "typesys::NumericType")
+  expect_is(type_div, "typesys::NumericType")
+  expect_is(type_exp, "typesys::NumericType")
 })
 
 
@@ -56,8 +56,8 @@ test_that("/ and ^ upcast to numeric or higher", {
   type_exp = CALL_HANDLERS[["^"]](args)
 
   # -----
-  expect_is(type_div, "typesys::RealType")
-  expect_is(type_exp, "typesys::RealType")
+  expect_is(type_div, "typesys::NumericType")
+  expect_is(type_exp, "typesys::NumericType")
 })
 
 # TODO: scalar-vector binary ops

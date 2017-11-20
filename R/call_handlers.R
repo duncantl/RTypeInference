@@ -5,23 +5,24 @@ FN_TYPES = list(
     "+" = c(a, b) ~ Join(a, b, Integer)
   , "-" = c(a, b) ~ Join(a, b, Integer)
   , "*" = c(a, b) ~ Join(a, b, Integer)
-  , "/" = c(a, b) ~ Join(a, b, Real)
-  , "^" = c(a, b) ~ Join(a, b, Real)
+  , "/" = c(a, b) ~ Join(a, b, Numeric)
+  , "^" = c(a, b) ~ Join(a, b, Numeric)
 
-  , ">"  = c(a, b) ~ Boolean # logical(0) in some cases
-  , "<"  = c(a, b) ~ Boolean
-  , ">=" = c(a, b) ~ Boolean
-  , "<=" = c(a, b) ~ Boolean
-  , "==" = c(a, b) ~ Boolean
-  , "!=" = c(a, b) ~ Boolean
-  , "!"  = a ~ Boolean # Allows integer/real/complex input
+  , ">"  = c(a, b) ~ Logical # logical(0) in some cases
+  , "<"  = c(a, b) ~ Logical
+  , ">=" = c(a, b) ~ Logical
+  , "<=" = c(a, b) ~ Logical
+  , "==" = c(a, b) ~ Logical
+  , "!=" = c(a, b) ~ Logical
+  , "!"  = a ~ Logical # Allows integer/real/complex input
 
-  , "&&" = c(a, b) ~ Boolean
-  , "||" = c(a, b) ~ Boolean
+  , "&&" = c(a, b) ~ Logical
+  , "||" = c(a, b) ~ Logical
 
+  # TODO: Handle vectorized operations.
   # TODO: How can we describe optional types?
   # TODO: How can we use constants? `runif(1, ...)` always returns a scalar.
-  #, "runif" = c(n, min, max) ~ Vec(Real)
+  #, "runif" = c(n, min, max) ~ Vec(Numeric)
 )
 
 mkNumberType =
@@ -38,39 +39,15 @@ function(args, rtype = "numeric")
 }
 
 #XXX Complete
-RTypeMap = list( logical = typesys::BooleanType,
+RTypeMap = list( logical = typesys::LogicalType,
                  integer = typesys::IntegerType,
-                 numeric = typesys::RealType) 
+                 numeric = typesys::NumericType) 
 mapRTypeToTypesys =
 function(rtype, map = RTypeMap)
 {
   map[[rtype]]()
 }
 
-
-# FIXME:
-#CALL_HANDLERS = list(
-#  "+" = typesys::FunctionType(list(typesys::TypeVar("a"), typesys::TypeVar("b")),
-#    typesys::TypeVar("a"))
-#
-#  "+" = typesys::FunctionType(a + b ~ a)
-#
-#
-#  , ">" = typesys::FunctionType(a + b ~ Boolean)
-#  , "<" = typesys::FunctionType(a + b ~ Boolean)
-#  , ">=" = typesys::FunctionType(a + b ~ Boolean)
-#  , "<=" = typesys::FunctionType(a + b ~ Boolean)
-#  , "==" = typesys::FunctionType(a + b ~ Boolean)
-#  , "!=" = typesys::FunctionType(a + b ~ Boolean)
-#
-#  , "!" = typesys::FunctionType(Boolean ~ Boolean)
-#  , "&&" = typesys::FunctionType(Boolean + Boolean ~ Boolean)
-#  , "||" = typesys::FunctionType(Boolean + Boolean ~ Boolean)
-#
-#  , "as.integer" = typesys::FunctionType(Boolean + ... ~ Integer)
-#
-#  , "runif" = typesys::FunctionType(Integer + Real + Real ~ Real)
-#)
 
 CALL_HANDLERS = list(
   "+" = function(args, constraints = NULL) upcast_math(args, "+")
@@ -80,21 +57,21 @@ CALL_HANDLERS = list(
   , "^" = function(args, constraints = NULL) upcast_math(args, "^")
   , "%%" = function(args, constraints = NULL) upcast_math(args, "%%")
 
-  , ">" = function(args, constraints = NULL) typesys::BooleanType()
-  , "<" = function(args, constraints = NULL) typesys::BooleanType()
-  , ">=" = function(args, constraints = NULL) typesys::BooleanType()
-  , "<=" = function(args, constraints = NULL) typesys::BooleanType()
-  , "==" = function(args, constraints = NULL) typesys::BooleanType()
-  , "!=" = function(args, constraints = NULL) typesys::BooleanType()
-  , "!" = function(args, constraints = NULL) typesys::BooleanType()
+  , ">" = function(args, constraints = NULL) typesys::LogicalType()
+  , "<" = function(args, constraints = NULL) typesys::LogicalType()
+  , ">=" = function(args, constraints = NULL) typesys::LogicalType()
+  , "<=" = function(args, constraints = NULL) typesys::LogicalType()
+  , "==" = function(args, constraints = NULL) typesys::LogicalType()
+  , "!=" = function(args, constraints = NULL) typesys::LogicalType()
+  , "!" = function(args, constraints = NULL) typesys::LogicalType()
     
-  , "&&" = function(args, constraints = NULL) typesys::BooleanType()
-  , "||" = function(args, constraints = NULL) typesys::BooleanType()                    
+  , "&&" = function(args, constraints = NULL) typesys::LogicalType()
+  , "||" = function(args, constraints = NULL) typesys::LogicalType()                    
 
   , "as.integer" = function(args, constraints = NULL) typesys::IntegerType()
     
-  , "runif" = function(args, constraints = NULL) typesys::RealType()
-  , "Rf_runif" = function(args, constraints = NULL) typesys::RealType()
+  , "runif" = function(args, constraints = NULL) typesys::NumericType()
+  , "Rf_runif" = function(args, constraints = NULL) typesys::NumericType()
   , "Rf_allocVector" = function(args, constraints = NULL) typesys::SEXPType()
   , "mkList" = function(args, constraints = NULL) typesys::LISTSEXPType()            
     
@@ -103,8 +80,8 @@ CALL_HANDLERS = list(
     to = args[[2]]
 
     type =
-      if (is(from, "typesys::RealType")) # || is(to, "typesys::RealType"))
-        typesys::RealType()
+      if (is(from, "typesys::NumericType")) # || is(to, "typesys::NumericType"))
+        typesys::NumericType()
       else if (is(from, "typesys::IntegerType"))
         typesys::IntegerType()
       else
@@ -149,7 +126,7 @@ if(length(args) > 2) warning("need to handle multi-dimensional access for [")
 
   , "exp" = function(args, constraints = NULL) {
       browser()
-    return (typesys::RealType())
+    return (typesys::NumericType())
   }
 )
 
@@ -179,8 +156,8 @@ function(..., .default = CALL_HANDLERS)
 #    atom = element_type(args$x)
 
 #    atom =
-#      if (is(atom, "ComplexType") || is(atom, "RealType"))
-#        RealType()
+#      if (is(atom, "ComplexType") || is(atom, "NumericType"))
+#        NumericType()
 #      else if (is(atom, "IntegerType"))
 #        IntegerType()
 
@@ -193,11 +170,11 @@ function(..., .default = CALL_HANDLERS)
 ## Value-dependent return type.
 #"rnorm" = ConditionalType(
 #  function(args, constraints = NULL) {
-#    makeVector(RealType(), value(args$n, NA))
+#    makeVector(NumericType(), value(args$n, NA))
 #  }),
 #"numeric" = ConditionalType(
 #  function(args, constraints = NULL) {
-#    makeVector(RealType(), value(args$length, NA))
+#    makeVector(NumericType(), value(args$length, NA))
 #  }),
 
 #"matrix" = ConditionalType(
@@ -224,7 +201,7 @@ function(..., .default = CALL_HANDLERS)
 #  # `:()` downcasts to integer whenever possible, and works on vector
 #  # arguments by taking the first elements.
 #  function(args, constraints = NULL) {
-#    # FIXME: This function can also return RealType.
+#    # FIXME: This function can also return NumericType.
 #    x = args[[1]]
 #    y = args[[2]]
 

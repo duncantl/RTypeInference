@@ -28,7 +28,7 @@ infer_dm.Function = function(node,
       type = param_types[[basename]]
     } else {
       var_name = sprintf("t%i", counter$increment("t"))
-      type = typesys::TypeVar(var_name)
+      type = typesys::TypeVariable(var_name)
     }
 
     name = param$name
@@ -68,7 +68,7 @@ infer_dm.Call = function(node,
   arg_types = lapply(node$args, infer_dm, env, counter)
 
   var_name = sprintf("fn%i", counter$increment("fn"))
-  ret_type = typesys::TypeVar(var_name)
+  ret_type = typesys::TypeVariable(var_name)
   call_type = typesys::FunctionType(arg_types, ret_type)
 
   # Unify the function type with the argument types.
@@ -163,7 +163,7 @@ infer_dm.Logical = function(node,
   counter = rstatic::Counter$new(),
   param_types = list()
 ) {
-  typesys::BooleanType()
+  typesys::LogicalType()
 }
 
 
@@ -183,7 +183,7 @@ infer_dm.Numeric = function(node,
   counter = rstatic::Counter$new(),
   param_types = list()
 ) {
-  typesys::RealType()
+  typesys::NumericType()
 }
 
 #' @export
