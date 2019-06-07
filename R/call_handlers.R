@@ -2,22 +2,22 @@
 
 FN_TYPES = list(
   # TODO: How do we handle unary operators?
-    "+" = c(a, b) ~ Join(a, b, Integer)
-  , "-" = c(a, b) ~ Join(a, b, Integer)
-  , "*" = c(a, b) ~ Join(a, b, Integer)
-  , "/" = c(a, b) ~ Join(a, b, Numeric)
-  , "^" = c(a, b) ~ Join(a, b, Numeric)
+##    "+" = c(a, b) ~ Join(a, b, Integer)
+##  , "-" = c(a, b) ~ Join(a, b, Integer)
+##  , "*" = c(a, b) ~ Join(a, b, Integer)
+##  , "/" = c(a, b) ~ Join(a, b, Numeric)
+##  , "^" = c(a, b) ~ Join(a, b, Numeric)
 
-  , ">"  = c(a, b) ~ Logical # logical(0) in some cases
-  , "<"  = c(a, b) ~ Logical
-  , ">=" = c(a, b) ~ Logical
-  , "<=" = c(a, b) ~ Logical
-  , "==" = c(a, b) ~ Logical
-  , "!=" = c(a, b) ~ Logical
-  , "!"  = a ~ Logical # Allows integer/real/complex input
+   ">"  = c(a, b) ~ RLogical # logical(0) in some cases
+  , "<"  = c(a, b) ~ RLogical
+  , ">=" = c(a, b) ~ RLogical
+  , "<=" = c(a, b) ~ RLogical
+  , "==" = c(a, b) ~ RLogical
+  , "!=" = c(a, b) ~ RLogical
+  , "!"  = a ~ RLogical # Allows integer/real/complex input
 
-  , "&&" = c(a, b) ~ Logical
-  , "||" = c(a, b) ~ Logical
+  , "&&" = c(a, b) ~ RLogical
+  , "||" = c(a, b) ~ RLogical
 
   # TODO: Handle vectorized operations.
   # TODO: How can we describe optional types?
@@ -39,14 +39,14 @@ function(args, rtype = "numeric")
 }
 
 #XXX Complete
-RTypeMap = list( logical = typesys::LogicalType,
-                 integer = typesys::IntegerType,
-                 numeric = typesys::NumericType) 
-mapRTypeToTypesys =
-function(rtype, map = RTypeMap)
-{
-  map[[rtype]]()
-}
+## RTypeMap = list( logical = typesys::LogicalType,
+##                  integer = typesys::IntegerType,
+##                  numeric = typesys::NumericType) 
+## mapRTypeToTypesys =
+## function(rtype, map = RTypeMap)
+## {
+##   map[[rtype]]()
+## }
 
 
 CALL_HANDLERS = list(
@@ -57,33 +57,33 @@ CALL_HANDLERS = list(
   , "^" = function(args, constraints = NULL) upcast_math(args, "^")
   , "%%" = function(args, constraints = NULL) upcast_math(args, "%%")
 
-  , ">" = function(args, constraints = NULL) typesys::LogicalType()
-  , "<" = function(args, constraints = NULL) typesys::LogicalType()
-  , ">=" = function(args, constraints = NULL) typesys::LogicalType()
-  , "<=" = function(args, constraints = NULL) typesys::LogicalType()
-  , "==" = function(args, constraints = NULL) typesys::LogicalType()
-  , "!=" = function(args, constraints = NULL) typesys::LogicalType()
-  , "!" = function(args, constraints = NULL) typesys::LogicalType()
+  , ">" = function(args, constraints = NULL) typesys::RLogical
+  , "<" = function(args, constraints = NULL) typesys::RLogical
+  , ">=" = function(args, constraints = NULL) typesys::RLogical
+  , "<=" = function(args, constraints = NULL) typesys::RLogical
+  , "==" = function(args, constraints = NULL) typesys::RLogical
+  , "!=" = function(args, constraints = NULL) typesys::RLogical
+  , "!" = function(args, constraints = NULL) typesys::RLogical
     
-  , "&&" = function(args, constraints = NULL) typesys::LogicalType()
-  , "||" = function(args, constraints = NULL) typesys::LogicalType()                    
+  , "&&" = function(args, constraints = NULL) typesys::RLogical
+  , "||" = function(args, constraints = NULL) typesys::RLogical
 
-  , "as.integer" = function(args, constraints = NULL) typesys::IntegerType()
+  , "as.integer" = function(args, constraints = NULL) typesys::RInteger
     
-  , "runif" = function(args, constraints = NULL) typesys::NumericType()
-  , "Rf_runif" = function(args, constraints = NULL) typesys::NumericType()
-  , "Rf_allocVector" = function(args, constraints = NULL) typesys::SEXPType()
-  , "mkList" = function(args, constraints = NULL) typesys::LISTSEXPType()            
+  , "runif" = function(args, constraints = NULL) typesys::RNumeric
+  , "Rf_runif" = function(args, constraints = NULL) typesys::RNumeric
+##   , "Rf_allocVector" = function(args, constraints = NULL) typesys::SEXPType()
+##   , "mkList" = function(args, constraints = NULL) typesys::LISTSEXPType()            
     
   , ":" = function(args, constraints = NULL) {
     from = args[[1]]
     to = args[[2]]
 
     type =
-      if (is(from, "typesys::NumericType")) # || is(to, "typesys::NumericType"))
-        typesys::NumericType()
-      else if (is(from, "typesys::IntegerType"))
-        typesys::IntegerType()
+      if (is(from, "typesys::RNumeric")) # || is(to, "typesys::NumericType"))
+        typesys::RNumeric
+      else if (is(from, "typesys::RInteger"))
+        typesys::RInteger
       else
         stop("Invalid types for `:`.")
 
@@ -109,11 +109,11 @@ if(length(args) > 2) warning("need to handle multi-dimensional access for [")
 
 
   , "length" = function(args, constraints = NULL) {
-    return (typesys::IntegerType())
+    return (typesys::RInteger)
   }
 
   , "which" = function(args, constraints = NULL) {
-    type = typesys::ArrayType(typesys::IntegerType(), NA)
+    type = typesys::ArrayType(typesys::RInteger, NA)
 
     return (type)
   }
@@ -126,7 +126,7 @@ if(length(args) > 2) warning("need to handle multi-dimensional access for [")
 
   , "exp" = function(args, constraints = NULL) {
       browser()
-    return (typesys::NumericType())
+    return (typesys::RNumeric)
   }
 )
 
