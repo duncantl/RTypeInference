@@ -73,8 +73,17 @@ function(node
   # TODO: Constrain tvar to equality if there is a parameter definition type.
   tdef = get_def(helper, node$ssa_name)
   if (!is.null(tdef)) {
-    # TODO: Get m, the set of active parameters.
-    con = typesys::ImplicitInstance(tvar, tdef, list())
+    if (length(typesys::vars(tdef)) == 0L) {
+      # No variables in the RHS so just make an equality constraint.
+      # We could check this case in the solver instead, but it's currently not
+      # clear what the benefit would be.
+      con = typesys::Equivalence(tvar, tdef)
+
+    } else {
+      # TODO: Get m, the set of active parameters.
+      con = typesys::ImplicitInstance(tvar, tdef, list())
+    }
+
     constraints = append(constraints, con)
   }
 
