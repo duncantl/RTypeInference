@@ -12,11 +12,11 @@ InferHelper = function(counter = rstatic::Counter$new()) {
 }
 
 #' @export
-add_def = function(helper, name, type) {
+add_def = function(helper, name, type, is_parameter = FALSE) {
   # Check if name already has an entry.
   idx = match(name, names(helper), 0L)
   if (idx == 0L) {
-    helper[[name]] = list(def = type, uses = list())
+    helper[[name]] = helper_record(def = type, is_parameter = is_parameter)
 
   } else {
     record = helper[[idx]]
@@ -24,6 +24,7 @@ add_def = function(helper, name, type) {
       stop(sprintf("definition type already set for variable '%s'.", name))
 
     record[["def"]] = type
+    record[["is_parameter"]] = is_parameter
     helper[[idx]] = record
   }
 
@@ -36,10 +37,17 @@ get_def = function(helper, name) {
 }
 
 #' @export
+get_is_parameter = function(helper, name) {
+  is_parameter = helper[[name]][["is_parameter"]]
+
+  if (is.null(is_parameter)) NA else is_parameter
+}
+
+#' @export
 add_use = function(helper, name, tvar) {
   idx = match(name, names(helper), 0L)
   if (idx == 0L) {
-    helper[[name]] = list(def = NULL, uses = list(tvar))
+    helper[[name]] = helper_record(uses = list(tvar))
 
   } else {
     record = helper[[idx]]
@@ -56,7 +64,14 @@ get_uses = function(helper, name) {
   helper[[name]][["uses"]]
 }
 
-#' @export
-new_name = function(helper, prefix = "t") {
-  paste0(prefix, helper@counter$increment(prefix))
+
+# Private Functions ----------------------------------------
+new_variable = function(helper, prefix = "t", ...) {
+  name = rstatic::next_name(helper@counter, name = prefix, ...)
+  typesys::Variable(name)
+}
+
+
+helper_record = function(def = NULL, uses = list(), is_parameter = NA) {
+  list(def = def, uses = uses, is_parameter = is_parameter)
 }

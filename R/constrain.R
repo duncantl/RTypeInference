@@ -52,7 +52,7 @@ function(node
   })
 
   # Create new type variable for return.
-  tvar = typesys::Variable(new_name(helper))
+  tvar = new_variable(helper)
 
   # Add constraint t1 ~ (targs -> tvar)
   tfun = typesys::RFunction(targs, tvar)
@@ -64,24 +64,39 @@ function(node
 
 .constrain.Symbol = function(node, constraints, helper) {
   # Create new type variable.
-  tvar = typesys::Variable(new_name(helper))
+  tvar = new_variable(helper)
 
   # Add to uses set.
   helper = add_use(helper, node$ssa_name, tvar)
 
-  # Constrain tvar to an implicit instance if there is a definition type.
-  # TODO: Constrain tvar to equality if there is a parameter definition type.
-  tdef = get_def(helper, node$ssa_name)
-  if (!is.null(tdef)) {
-    if (length(typesys::vars(tdef)) == 0L) {
-      # No variables in the RHS so just make an equality constraint.
-      # We could check this case in the solver instead, but it's currently not
-      # clear what the benefit would be.
+  is_parameter = get_is_parameter(helper, node$ssa_name)
+  if (is.na(is_parameter)) {
+    # Symbol does not correspond to a definition.
+    # Do nothing.
+
+  } else {
+    if (is_parameter) {
+      # Symbol corresponds to a parameter, so add equivalence constraint.
+      tdef = get_def(helper, node$ssa_name)
       con = typesys::Equivalence(tvar, tdef)
 
     } else {
-      # TODO: Get m, the set of active parameters.
-      con = typesys::ImplicitInstance(tvar, tdef, list())
+      # Symbol corresponds to a variable, so add instance constraint.
+      tdef = get_def(helper, node$ssa_name)
+      if (length(typesys::vars(tdef)) == 0L) {
+        # No variables in the RHS so just make an equality constraint.
+        # We could check this case in the solver instead, but it's currently not
+        # clear what the benefit would be.
+        con = typesys::Equivalence(tvar, tdef)
+
+      } else {
+        # FIXME: Consider scopes when determining active parameters.
+        # TODO: Make a separate function to get active parameters:
+        is_parameter = vapply(helper, `[[`, NA, "is_parameter")
+        m = lapply(helper[is_parameter], `[[`, "def")
+
+        con = typesys::ImplicitInstance(tvar, tdef, m)
+      }
     }
 
     constraints = append(constraints, con)
@@ -101,13 +116,33 @@ function(node
   list(type = tdef, constraints = constraints, helper = helper)
 }
 
+
 .constrain.Function = function(node, constraints, helper) {
   # Create a type variable for each parameter.
-  
-  # Record these type variables as *parameter* definitions.
+  tparams = lapply(node$params$contents, function(param) {
+    tvar = new_variable(helper)
 
-  # Constrain uses 
+    # FIXME: Helper might be tainted with outer scope variables. Need to keep
+    # track of scopes somehow.
+    helper <<- add_def(helper, param$ssa_name, tvar, is_parameter = TRUE)
+
+    tvar
+  })
+
+  # Infer types for the body.
+  c(type, constraints, helper) := .constrain(node$body, constraints, helper)
+
+  # TODO: Record parameter names.
+  tfun = typesys::RFunction(tparams, type)
+
+  # FIXME: Remove parameters from the active set.
+  for (p in node$params$contents) {
+    helper = rm_def(p$ssa_name)
+  }
+
+  list(type = tfun, constraints = constraints, helper = helper)
 }
+
 
 # Literals ----------------------------------------
 
