@@ -137,7 +137,7 @@ function(node
 
   # FIXME: Remove parameters from the active set.
   for (p in node$params$contents) {
-    helper = rm_def(p$ssa_name)
+    helper = rm_def(helper, p$ssa_name)
   }
 
   list(type = tfun, constraints = constraints, helper = helper)
