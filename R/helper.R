@@ -11,7 +11,6 @@ InferHelper = function(counter = rstatic::Counter$new()) {
   new("RTypeInference::InferHelper", counter = counter)
 }
 
-#' @export
 add_def = function(helper, name, type, is_parameter = FALSE) {
   # Check if name already has an entry.
   idx = match(name, names(helper), 0L)
@@ -31,19 +30,26 @@ add_def = function(helper, name, type, is_parameter = FALSE) {
   helper
 }
 
-#' @export
+rm_def = function(helper, name) {
+  idx = match(name, names(helper), 0L)
+  if (idx == 0L)
+    return (helper)
+
+  helper@.Data = helper@.Data[-idx]
+
+  helper
+}
+
 get_def = function(helper, name) {
   helper[[name]][["def"]]
 }
 
-#' @export
 get_is_parameter = function(helper, name) {
   is_parameter = helper[[name]][["is_parameter"]]
 
   if (is.null(is_parameter)) NA else is_parameter
 }
 
-#' @export
 add_use = function(helper, name, tvar) {
   idx = match(name, names(helper), 0L)
   if (idx == 0L) {
@@ -58,14 +64,12 @@ add_use = function(helper, name, tvar) {
   helper
 }
 
-#' @export
 get_uses = function(helper, name) {
   # FIXME: Return list() when no entries for name?
   helper[[name]][["uses"]]
 }
 
 
-# Private Functions ----------------------------------------
 new_variable = function(helper, prefix = "t", ...) {
   name = rstatic::next_name(helper@counter, name = prefix, ...)
   typesys::Variable(name)
