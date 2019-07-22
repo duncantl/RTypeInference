@@ -1,7 +1,42 @@
 
 .print = function(x, ...) cat(format(x, ...), "\n")
 
+.show = function(object) cat(format(object, indent = 0), "\n")
+
 .format_tag = function(x) sprintf("<%s>", class(x)[1])
+
+#' @export
+setMethod("show", signature("RTypeInference::InferHelper"), .show)
+
+#' @export
+setMethod("format", signature("RTypeInference::InferHelper"),
+function(x, ...)
+{
+  tag = paste0(.format_tag(x), "\n")
+
+  if (length(x) == 0)
+    return (tag)
+
+  usedef = vapply(x@.Data, function(elt) {
+    if (is.null(elt$def))
+      def = "no definition\n  "
+    else
+      def = paste0("defined as ", format(elt$def), "\n  ")
+
+    if (length(elt$uses) == 0)
+      return (paste0(def, "no uses"))
+
+    uses = vapply(elt$uses, format, NA_character_)
+    uses = paste(uses, collapse = ", ")
+    paste0(def, "used as ", uses)
+  }, NA_character_)
+
+  # `NAME` defined as X
+  #   used as Y
+  msg = paste0("`", names(x), "` ", usedef, collapse = "\n\n")
+
+  paste0(tag, "\n", msg, "\n")
+})
 
 #' @export
 format.ConstraintSet = function(x, ...) {
