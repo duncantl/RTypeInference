@@ -28,7 +28,72 @@ function(node
   list(constraints = constraints, helper = helper)
 }
 
+
 .constrain = function(node, constraints, helper) UseMethod(".constrain")
+
+
+.constrain.BlockList =
+function(node, constraints, helper)
+{
+  # Let's try the naive thing and just call constrain on each block.
+
+  # Process everything except the exit block.
+  # TODO: Find a more elegant way to split off the exit block.
+  blocks = node$contents[-node$exit_index]
+  for (block in blocks)
+    c(, constraints, helper) := .constrain(block, constraints, helper)
+
+  # Process the exit block.
+  exit = rstatic::exit_block(node)
+  c(type, constraints, helper) := .constrain(exit, constraints, helper)
+
+  list(type = type, constraints = constraints, helper = helper)
+}
+
+
+.constrain.Block =
+function(node, constraints, helper)
+{
+  for(exp in node$contents)
+    c(type, constraints, helper) := .constrain(exp, constraints, helper)
+
+  list(type = type, constraints = constraints, helper = helper)
+}
+
+
+.constrain.If =
+function(node, constraints, helper)
+{
+  .constrain(node$condition, constraints, helper)
+
+  # TODO: An if-expression returns the union of the types at the end of each
+  # branch. An if-statement returns no type (instead the types are captured in
+  # phi-expressions).
+}
+
+
+.constrain.Return =
+function(node, constraints, helper)
+{
+  # TODO: Same as .constrain.Assign(), so don't repeat the definition.
+
+  # Generate constraints for the definition.
+  c(tdef, constraints, helper) := .constrain(node$read, constraints, helper)
+
+  # Record generic type for variable.
+  helper = add_def(helper, node$write$ssa_name, tdef)
+
+  list(type = tdef, constraints = constraints, helper = helper)
+}
+
+
+.constrain.Branch =
+function(node, constraints, helper)
+{
+  # Do nothing.
+  list(type = typesys::RNull, constraints = constraints, helper = helper)
+}
+
 
 .constrain.Brace = function(node, constraints, helper) {
   # Call .constrain on each element.
@@ -93,6 +158,9 @@ function(node
         # FIXME: Consider scopes when determining active parameters.
         # TODO: Make a separate function to get active parameters:
         is_parameter = vapply(helper, `[[`, NA, "is_parameter")
+        # Symbols with no known definition don't count as parameters (so
+        # globals can be polymorphic).
+        is_parameter = is_parameter & !is.na(is_parameter)
         m = lapply(helper[is_parameter], `[[`, "def")
 
         con = typesys::ImplicitInstance(tvar, tdef, m)

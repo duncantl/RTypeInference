@@ -53,6 +53,8 @@ get_is_parameter = function(helper, name) {
 add_use = function(helper, name, tvar) {
   idx = match(name, names(helper), 0L)
   if (idx == 0L) {
+    # Assume this is not a parameter, since parameters typically get added
+    # first.
     helper[[name]] = helper_record(uses = list(tvar))
 
   } else {
