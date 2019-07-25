@@ -27,7 +27,7 @@ function(x, ...)
       return (paste0(def, "no uses"))
 
     uses = vapply(elt$uses, format, NA_character_)
-    uses = paste(uses, collapse = ", ")
+    uses = paste(uses, collapse = "; ")
     paste0(def, "used as ", uses)
   }, NA_character_)
 
