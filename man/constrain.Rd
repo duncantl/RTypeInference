@@ -4,15 +4,12 @@
 \alias{constrain}
 \title{Generate Type Constraint Set from Expression}
 \usage{
-constrain(node, helper = InferHelper(counter),
-  counter = rstatic::Counter$new())
+constrain(node, helper = InferHelper())
 }
 \arguments{
 \item{node}{ASTNode. Expression from which to generate type constraints.}
 
 \item{helper}{InferHelper. Helper object for constraint generation.}
-
-\item{counter}{Counter. Counter for uniquely naming type variables.}
 }
 \value{
 A list with two elements. The first is the list of constraints, and

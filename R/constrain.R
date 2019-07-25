@@ -10,7 +10,6 @@
 #' 
 #' @param node ASTNode. Expression from which to generate type constraints.
 #' @param helper InferHelper. Helper object for constraint generation.
-#' @param counter Counter. Counter for uniquely naming type variables.
 #'
 #' @return A list with two elements. The first is the list of constraints, and
 #' the second is the final state of the helper object.
@@ -18,13 +17,11 @@
 #' @export
 constrain =
 function(node
-  , helper = InferHelper(counter)
-  , counter = rstatic::Counter$new()
+  , helper = InferHelper()
   ) 
 {
   c(type, constraints, helper) := .constrain(node, list(), helper)
 
-  # TODO: Return uses list instead of entire helper.
   list(constraints = constraints, helper = helper)
 }
 
