@@ -29,7 +29,11 @@ function(node
 }
 
 
-.constrain = function(node, constraints, helper) UseMethod(".constrain")
+.constrain =
+function(node, constraints, helper)
+{
+  UseMethod(".constrain")
+}
 
 
 .constrain.BlockList =
@@ -54,6 +58,9 @@ function(node, constraints, helper)
 .constrain.Block =
 function(node, constraints, helper)
 {
+  for (phi in node$phi)
+    c(, constraints, helper) := .constrain(phi, constraints, helper)
+
   for(exp in node$contents)
     c(type, constraints, helper) := .constrain(exp, constraints, helper)
 
@@ -64,26 +71,54 @@ function(node, constraints, helper)
 .constrain.If =
 function(node, constraints, helper)
 {
-  .constrain(node$condition, constraints, helper)
+  c(type, constraints, helper) :=
+    .constrain(node$condition, constraints, helper)
+
+  # Constrain condition to be a logical value.
+  con = typesys::Equivalence(type, typesys::RLogical)
+  constraints = append(constraints, con)
 
   # TODO: An if-expression returns the union of the types at the end of each
   # branch. An if-statement returns no type (instead the types are captured in
   # phi-expressions).
+  list(type = typesys::RNull, constraints = constraints, helper = helper)
 }
 
 
-.constrain.Return =
+.constrain.For =
 function(node, constraints, helper)
 {
-  # TODO: Same as .constrain.Assign(), so don't repeat the definition.
+  # Generate constraints for the iterator.
+  c(tdef, constraints, helper) := .constrain(node$iterator, constraints,
+    helper)
 
-  # Generate constraints for the definition.
-  c(tdef, constraints, helper) := .constrain(node$read, constraints, helper)
-
-  # Record generic type for variable.
-  helper = add_def(helper, node$write$ssa_name, tdef)
+  # Record generic type for the iteration variable.
+  #
+  # FIXME: The type should be an element of tdef, not tdef itself!
+  helper = add_def(helper, node$variable$ssa_name, tdef)
 
   list(type = tdef, constraints = constraints, helper = helper)
+}
+
+
+.constrain.Phi =
+function(node, constraints, helper)
+{
+  # Record use for each of the inputs.
+  types = vector("list", length(node$contents))
+  for (i in seq_along(node$contents)) {
+    elt = node$contents[[i]]
+    c(type, constraints, helper) := .constrain(elt, constraints, helper)
+    types[[i]] = type
+  }
+
+  # Create a union from the input types.
+  type = typesys::OneOf(types)
+
+  # Now proceed like this is an Assign node.
+  helper = add_def(helper, node$write$ssa_name, type)
+
+  list(type = type, constraints = constraints, helper = helper)
 }
 
 
@@ -183,6 +218,9 @@ function(node, constraints, helper)
 
   list(type = tdef, constraints = constraints, helper = helper)
 }
+
+
+.constrain.Return = .constrain.Assign
 
 
 .constrain.Function = function(node, constraints, helper) {
