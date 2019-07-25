@@ -20,8 +20,8 @@ Depends:
     R (>= 3.2.0)
 Imports:
     methods,
-    rstatic,
-    typesys (>= 0.3.0),
+    rstatic (>= 0.0.0.9059),
+    typesys (>= 0.3.0-0027),
     R6,
     pryr
 Suggests:
