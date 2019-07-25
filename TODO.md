@@ -1,5 +1,50 @@
 # TODO
 
+* [Easy] Provide support for while-loops.
+
+* Test constraint generation when there are nested function definitions.
+
+* Provide a way to perform inference across multiple functions and combine
+  results (e.g., inference on a script).
+
+* Provide hard-coded types for built-in R functions.
+  * Especially for `[`, `[[`
+
+* Match function argument types by name (current matching is only positional).
+
+* Provide and infer types that represent vectors, lists, data frames
+
+* Constraint generation for object dimensions
+
+* Constraint generation is sensitive to the order of the CFG blocks.
+  Sort blocks topologically before constraint generation or change when
+  constraints are generated. For instance, a 2-pass system that first assigns
+  type variables and then generates constraints should solve the problem.
+
+* [Difficult] It's unclear how to handle constraint generation and solving for
+  variables updated inside of for-loops. On the first pass, these should use
+  the definition from outside the loop. On subsequent passes (until
+  convergence), the type needs to be updated based on the definition from
+  inside the loop.
+
+  Phi-functions mark these "loops" in data flow, but I've yet to figure out a
+  good way to handle them in the constraint generator and the solver.
+
+  I don't think this is explored in the literature, since Damas-Milner is not
+  typically used for languages with for-loops.
+
+* Duncan's favorite: add option to type integer-valued literals as RInteger
+  rather than RNumeric even if the "L" suffix is missing.
+
+* [Bug] It appears that type variables outside of Function types are being
+  instantiated by the solver, which is probably a bug.
+
+* [Bug] Fix `rstatic::to_blocks` so that code doesn't need to be wrapped in a
+  function.
+
+
+## OLD TODO (before 2019)
+
 * Generate a default top TypeEnvironment based on the global environment, or
   else add type signatures to this TypeEnvironment on demand.
     - [partially done] Handle global variables such as in `function() 1 + pi`
