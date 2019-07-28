@@ -35,7 +35,9 @@ rm_def = function(helper, name) {
   if (idx == 0L)
     return (helper)
 
+  new_names = names(helper)[-idx]
   helper@.Data = helper@.Data[-idx]
+  names(helper) = new_names
 
   helper
 }
