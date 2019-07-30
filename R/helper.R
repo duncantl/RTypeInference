@@ -15,14 +15,15 @@ add_def = function(helper, name, type, is_parameter = FALSE) {
   # Check if name already has an entry.
   idx = match(name, names(helper), 0L)
   if (idx == 0L) {
-    helper[[name]] = helper_record(def = type, is_parameter = is_parameter)
+    helper[[name]] = helper_record(defined_as = type
+      , is_parameter = is_parameter)
 
   } else {
     record = helper[[idx]]
-    if (!is.null(record[["def"]]))
+    if (!is.null(record[["defined_as"]]))
       stop(sprintf("definition type already set for variable '%s'.", name))
 
-    record[["def"]] = type
+    record[["defined_as"]] = type
     record[["is_parameter"]] = is_parameter
     helper[[idx]] = record
   }
@@ -43,7 +44,7 @@ rm_def = function(helper, name) {
 }
 
 get_def = function(helper, name) {
-  helper[[name]][["def"]]
+  helper[[name]][["defined_as"]]
 }
 
 get_is_parameter = function(helper, name) {
@@ -57,11 +58,11 @@ add_use = function(helper, name, tvar) {
   if (idx == 0L) {
     # Assume this is not a parameter, since parameters typically get added
     # first.
-    helper[[name]] = helper_record(uses = list(tvar))
+    helper[[name]] = helper_record(used_as = list(tvar))
 
   } else {
     record = helper[[idx]]
-    record[["uses"]] = append(record[["uses"]], tvar)
+    record[["used_as"]] = append(record[["used_as"]], tvar)
     helper[[idx]] = record
   }
 
@@ -70,7 +71,7 @@ add_use = function(helper, name, tvar) {
 
 get_uses = function(helper, name) {
   # FIXME: Return list() when no entries for name?
-  helper[[name]][["uses"]]
+  helper[[name]][["used_as"]]
 }
 
 
@@ -80,6 +81,11 @@ new_variable = function(helper, prefix = "t", ...) {
 }
 
 
-helper_record = function(def = NULL, uses = list(), is_parameter = NA) {
-  list(def = def, uses = uses, is_parameter = is_parameter)
+helper_record =
+function(
+  defined_as = NULL
+  , used_as = list()
+  , is_parameter = NA)
+{
+  list(defined_as = defined_as, used_as = used_as, is_parameter = is_parameter)
 }

@@ -18,17 +18,17 @@ function(x, ...)
     return (tag)
 
   usedef = vapply(x@.Data, function(elt) {
-    if (is.null(elt$def))
-      def = "no definition\n  "
+    if (is.null(elt$defined_as))
+      defn_as = "no definition\n  "
     else
-      def = paste0("defined as ", format(elt$def), "\n  ")
+      defn_as = paste0("defined as ", format(elt$defined_as), "\n  ")
 
-    if (length(elt$uses) == 0)
-      return (paste0(def, "no uses"))
+    if (length(elt$used_as) == 0)
+      return (paste0(defn_as, "no uses"))
 
-    uses = vapply(elt$uses, format, NA_character_)
-    uses = paste(uses, collapse = "; ")
-    paste0(def, "used as ", uses)
+    used_as = vapply(elt$used_as, format, NA_character_)
+    used_as = paste(used_as, collapse = "; ")
+    paste0(defn_as, "used as ", used_as)
   }, NA_character_)
 
   # `NAME` defined as X

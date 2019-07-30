@@ -7,13 +7,13 @@ setMethod("do_substitution", signature("RTypeInference::InferHelper"),
 function(term, sub)
 {
   term@.Data = lapply(term@.Data, function(x) {
-    def = x$def
-    if (!is.null(def))
-      def = sub(def)
+    defn_as = x$defined_as
+    if (!is.null(defn_as))
+      defn_as = sub(defn_as)
 
-    uses = lapply(x$uses, sub)
+    used_as = lapply(x$used_as, sub)
 
-    helper_record(def, uses, x$is_parameter)
+    helper_record(defn_as, used_as, x$is_parameter)
   })
 
   term
