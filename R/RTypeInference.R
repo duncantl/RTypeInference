@@ -4,5 +4,5 @@
 
 #' @importFrom methods is
 #' @importFrom utils modifyList
-#' @importMethodsFrom typesys format do_substitution
+#' @importMethodsFrom typesys format do_substitution csolve
 NULL
