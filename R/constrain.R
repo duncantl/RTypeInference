@@ -22,7 +22,7 @@ function(node
 {
   c(type, constraints, helper) := .constrain(node, list(), helper)
 
-  list(constraints = constraints, helper = helper)
+  Result(constraints, helper)
 }
 
 
