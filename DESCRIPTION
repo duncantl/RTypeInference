@@ -1,6 +1,6 @@
 Package: RTypeInference
 Title: Infer Types of Inputs and Outputs for R Expressions
-Version: 0.5.0-0019
+Version: 0.5.0-0020
 Date: 2016-06-12
 Authors@R: c(
   person("Nick", "Ulle", role = c("aut", "cre"),
@@ -36,9 +36,9 @@ Collate:
     'call_handlers.R'
     'constrain.R'
     'helper.R'
+    'result.R'
+    'csolve.R'
     'do_substitution.R'
     'format.R'
     'operator_handlers.R'
-    'result.R'
-    'solve.R'
     'utilities.R'

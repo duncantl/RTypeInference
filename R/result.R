@@ -1,3 +1,7 @@
+#' @include helper.R
+NULL
+
+
 #' @exportClass RTypeInference::Result
 setClass("RTypeInference::Result",
   slots = list(
