@@ -11,7 +11,11 @@ InferHelper = function(counter = rstatic::Counter$new()) {
   new("RTypeInference::InferHelper", counter = counter)
 }
 
-add_def = function(helper, name, type, is_parameter = FALSE) {
+
+#' @export
+set_defined_as =
+function(helper, name, type, is_parameter = FALSE)
+{
   # Check if name already has an entry.
   idx = match(name, names(helper), 0L)
   if (idx == 0L) {
@@ -31,7 +35,19 @@ add_def = function(helper, name, type, is_parameter = FALSE) {
   helper
 }
 
-rm_def = function(helper, name) {
+
+#' @export
+get_defined_as =
+function(helper, name)
+{
+  helper[[name]][["defined_as"]]
+}
+
+
+#' @export
+remove_record =
+function(helper, name)
+{
   idx = match(name, names(helper), 0L)
   if (idx == 0L)
     return (helper)
@@ -43,15 +59,15 @@ rm_def = function(helper, name) {
   helper
 }
 
-get_def = function(helper, name) {
-  helper[[name]][["defined_as"]]
-}
+
+
 
 get_is_parameter = function(helper, name) {
   is_parameter = helper[[name]][["is_parameter"]]
 
   if (is.null(is_parameter)) NA else is_parameter
 }
+
 
 add_use = function(helper, name, tvar) {
   idx = match(name, names(helper), 0L)

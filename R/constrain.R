@@ -92,7 +92,7 @@ function(node, constraints, helper)
   # Record generic type for the iteration variable.
   #
   # FIXME: The type should be an element of tdef, not tdef itself!
-  helper = add_def(helper, node$variable$ssa_name, tdef)
+  helper = set_defined_as(helper, node$variable$ssa_name, tdef)
 
   list(type = tdef, constraints = constraints, helper = helper)
 }
@@ -113,7 +113,7 @@ function(node, constraints, helper)
   type = typesys::OneOf(types)
 
   # Now proceed like this is an Assign node.
-  helper = add_def(helper, node$write$ssa_name, type)
+  helper = set_defined_as(helper, node$write$ssa_name, type)
 
   list(type = type, constraints = constraints, helper = helper)
 }
@@ -172,14 +172,13 @@ function(node, constraints, helper)
     # Do nothing.
 
   } else {
+    tdef = get_defined_as(helper, node$ssa_name)
     if (is_parameter) {
       # Symbol corresponds to a parameter, so add equivalence constraint.
-      tdef = get_def(helper, node$ssa_name)
       con = typesys::Equivalence(tvar, tdef)
 
     } else {
       # Symbol corresponds to a variable, so add instance constraint.
-      tdef = get_def(helper, node$ssa_name)
       if (length(typesys::vars(tdef)) == 0L) {
         # No variables in the RHS so just make an equality constraint.
         # We could check this case in the solver instead, but it's currently not
@@ -211,7 +210,7 @@ function(node, constraints, helper)
   c(tdef, constraints, helper) := .constrain(node$read, constraints, helper)
 
   # Record generic type for variable.
-  helper = add_def(helper, node$write$ssa_name, tdef)
+  helper = set_defined_as(helper, node$write$ssa_name, tdef)
 
   list(type = tdef, constraints = constraints, helper = helper)
 }
@@ -227,7 +226,8 @@ function(node, constraints, helper)
 
     # FIXME: Helper might be tainted with outer scope variables. Need to keep
     # track of scopes somehow.
-    helper <<- add_def(helper, param$ssa_name, tvar, is_parameter = TRUE)
+    helper <<- set_defined_as(helper, param$ssa_name, tvar,
+      is_parameter = TRUE)
 
     tvar
   })
@@ -240,7 +240,7 @@ function(node, constraints, helper)
 
   # FIXME: Remove parameters from the active set.
   for (p in node$params$contents) {
-    helper = rm_def(helper, p$ssa_name)
+    helper = remove_record(helper, p$ssa_name)
   }
 
   list(type = tfun, constraints = constraints, helper = helper)
