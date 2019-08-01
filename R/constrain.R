@@ -28,6 +28,13 @@ function(node, constraints, map)
 }
 
 
+.constrain.Parenthesis =
+function(node, constraints, map)
+{
+  .constrain(node$args$contents[[1L]], constraints, map)
+}
+
+
 .constrain.BlockList =
 function(node, constraints, map)
 {
