@@ -1,6 +1,6 @@
 Package: RTypeInference
 Title: Infer Types of Inputs and Outputs for R Expressions
-Version: 0.5.0-0024
+Version: 0.5.0-0025
 Date: 2016-06-12
 Authors@R: c(
   person("Nick", "Ulle", role = c("aut", "cre"),
@@ -17,11 +17,11 @@ Description: This package infers the types of inputs and outputs for R
 URL: https://github.com/duncantl/RTypeInference
 License: GPL-2
 Depends:
-    R (>= 3.2.0)
+    R (>= 3.2.0),
+    typesys (>= 0.3.0-0030)
 Imports:
     methods,
     rstatic (>= 0.0.0.9059),
-    typesys (>= 0.3.0-0030),
     R6,
     pryr
 Suggests:
