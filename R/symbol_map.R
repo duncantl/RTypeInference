@@ -12,6 +12,32 @@ SymbolMap = function(counter = rstatic::Counter$new()) {
 }
 
 
+#' Get All Parameters in a SymbolMap
+#'
+#' This function gets all entries in a `SymbolMap` that correspond to function
+#' parameters.
+#'
+#' @param map (SymbolMap) The map to search for parameter entries.
+#' @param include_na (logical) Should entries with `is_parameter = NA` be
+#' included in the result?
+#'
+#' @return A list of entries.
+#'
+#' @export
+get_parameters =
+function(map, include_na = FALSE)
+{
+  is_parameter = vapply(map, `[[`, NA, "is_parameter")
+
+  if (include_na)
+    is_parameter = is_parameter | is.na(is_parameter)
+  else
+    is_parameter = is_parameter & !is.na(is_parameter)
+
+  map[is_parameter]
+}
+
+
 #' @export
 set_defined_as =
 function(map, name, type, is_parameter = FALSE)

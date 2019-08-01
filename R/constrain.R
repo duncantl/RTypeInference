@@ -187,12 +187,11 @@ function(node, constraints, map)
 
       } else {
         # FIXME: Consider scopes when determining active parameters.
-        # TODO: Make a separate function to get active parameters:
-        is_parameter = vapply(map, `[[`, NA, "is_parameter")
+
         # Symbols with no known definition don't count as parameters (so
         # globals can be polymorphic).
-        is_parameter = is_parameter & !is.na(is_parameter)
-        m = lapply(map[is_parameter], `[[`, "def")
+        params = get_parameters(map, include_na = FALSE)
+        m = lapply(params, `[[`, "defined_as")
 
         con = typesys::ImplicitInstance(tvar, tdef, m)
       }
