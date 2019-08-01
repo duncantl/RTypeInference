@@ -38,10 +38,35 @@ function(map, include_na = FALSE)
 }
 
 
+#' Set Type a Symbol Is Defined As in a SymbolMap
+#'
+#' This function sets the `defined_as` field in a `SymbolMap` entry.
+#'
+#' @param map (SymbolMap) A map to modify.
+#' @param name (character) The symbol whose entry should be modified.
+#' @param type (Term | formula) The new 'defined as' type. Formulas are
+#' automatically converted to types with [typesys::formula_to_type()].
+#' @param is_parameter (logical) Is this symbol a parameter?
+#'
+#' @return The updated `SymbolMap`.
+#' @examples
+#' map = SymbolMap()
+#'
+#' # Set 'x' defined as an Integer.
+#' map = set_defined_as(map, "x", RInteger)
+#'
+#' # Set 'length' defined as a function from ANY to Numeric.
+#' #
+#' # Type variables in the type indicate polymorphism. In this example, 'b' can
+#' # be replaced by any type at each call site for 'length'.
+#' map = set_defined_as(map, "length", b ~ RNumeric)
 #' @export
 set_defined_as =
 function(map, name, type, is_parameter = FALSE)
 {
+  if (inherits(type, "formula"))
+    type = typesys::formula_to_type(type)
+
   # Check if name already has an entry.
   idx = match(name, names(map), 0L)
   if (idx == 0L) {
@@ -51,7 +76,7 @@ function(map, name, type, is_parameter = FALSE)
   } else {
     entry = map[[idx]]
     if (!is.null(entry[["defined_as"]]))
-      stop(sprintf("definition type already set for variable '%s'.", name))
+      warning(sprintf("defined_as already set for symbol '%s'.", name))
 
     entry[["defined_as"]] = type
     entry[["is_parameter"]] = is_parameter
