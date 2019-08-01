@@ -1,4 +1,5 @@
 #' @include symbol_map.R
+#' @include result.R
 NULL
 
 
@@ -17,4 +18,12 @@ function(term, sub)
   })
 
   term
+})
+
+
+#' @export
+setMethod("do_substitution", signature("RTypeInference::Result"),
+function(term, sub)
+{
+  callGeneric(term@map, sub)
 })
