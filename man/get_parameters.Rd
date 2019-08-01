@@ -9,13 +9,13 @@ get_parameters(map, include_na = FALSE)
 \arguments{
 \item{map}{(SymbolMap) The map to search for parameter entries.}
 
-\item{include_na}{(logical) Should entries with `is_parameter = NA` be
+\item{include_na}{(logical) Should entries with \code{is_parameter = NA} be
 included in the result?}
 }
 \value{
 A list of entries.
 }
 \description{
-This function gets all entries in a `SymbolMap` that correspond to function
+This function gets all entries in a \code{SymbolMap} that correspond to function
 parameters.
 }

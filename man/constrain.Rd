@@ -13,7 +13,7 @@ constrain(node, map = SymbolMap())
 variables.}
 }
 \value{
-An S4 `Result` object, with slots `contraints` and `map`. The former
+An S4 \code{Result} object, with slots \code{contraints} and \code{map}. The former
 is the list of constraints, and the latter is the mapping between program
 variables and type variables.
 }
