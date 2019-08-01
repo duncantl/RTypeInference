@@ -2,17 +2,19 @@
 NULL
 
 
-#' @exportClass RTypeInference::Result
-setClass("RTypeInference::Result",
+#' @exportClass RTypeInference::ConstrainResult
+setClass("RTypeInference::ConstrainResult",
   slots = list(
-    constraints = "list"
+    type = "typesys::Term"
+    , constraints = "list"
     , map = "RTypeInference::SymbolMap"
   ))
 
 
 #' @export
 Result =
-function(constraints, map)
+function(type, constraints, map)
 {
-  new("RTypeInference::Result", constraints = constraints, map = map)
+  new("RTypeInference::Result", type = type, constraints = constraints
+    , map = map)
 }

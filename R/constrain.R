@@ -15,9 +15,7 @@
 constrain =
 function(node, map = SymbolMap()) 
 {
-  c(type, constraints, map) := .constrain(node, list(), map)
-
-  Result(constraints, map)
+  .constrain(node, list(), map)
 }
 
 
@@ -43,44 +41,55 @@ function(node, constraints, map)
   # Process everything except the exit block.
   # TODO: Find a more elegant way to split off the exit block.
   blocks = node$contents[-node$exit_index]
-  for (block in blocks)
-    c(, constraints, map) := .constrain(block, constraints, map)
+  for (block in blocks) {
+    result = .constrain(block, constraints, map)
+    constraints = result@constraints
+    map = result@map
+  }
 
   # Process the exit block.
   exit = rstatic::exit_block(node)
-  c(type, constraints, map) := .constrain(exit, constraints, map)
+  result = .constrain(exit, constraints, map)
 
-  list(type = type, constraints = constraints, map = map)
+  result
 }
 
 
 .constrain.Block =
 function(node, constraints, map)
 {
-  for (phi in node$phi)
-    c(, constraints, map) := .constrain(phi, constraints, map)
+  for (phi in node$phi) {
+    result = .constrain(phi, constraints, map)
+    constraints = result@constraints
+    map = result@map
+  }
 
-  for(exp in node$contents)
-    c(type, constraints, map) := .constrain(exp, constraints, map)
 
-  list(type = type, constraints = constraints, map = map)
+  for(exp in node$contents) {
+    result = .constrain(exp, constraints, map)
+    constraints = result@constraints
+    map = result@map
+  }
+
+  result
 }
 
 
 .constrain.If =
 function(node, constraints, map)
 {
-  c(type, constraints, map) :=
-    .constrain(node$condition, constraints, map)
+  result = .constrain(node$condition, constraints, map)
 
   # Constrain condition to be a logical value.
-  con = typesys::Equivalence(type, typesys::RLogical)
-  constraints = append(constraints, con)
+  con = typesys::Equivalence(result@type, typesys::RLogical)
+  result@constraints = append(result@constraints, con)
 
   # TODO: An if-expression returns the union of the types at the end of each
   # branch. An if-statement returns no type (instead the types are captured in
   # phi-expressions).
-  list(type = typesys::RNull, constraints = constraints, map = map)
+  result@type = typesys::RNull
+
+  result
 }
 
 
@@ -88,15 +97,14 @@ function(node, constraints, map)
 function(node, constraints, map)
 {
   # Generate constraints for the iterator.
-  c(tdef, constraints, map) := .constrain(node$iterator, constraints,
-    map)
+  result = .constrain(node$iterator, constraints, map)
 
   # Record generic type for the iteration variable.
   #
   # FIXME: The type should be an element of tdef, not tdef itself!
-  map = set_defined_as(map, node$variable$ssa_name, tdef)
+  result@map = set_defined_as(result@map, node$variable$ssa_name, result@type)
 
-  list(type = tdef, constraints = constraints, map = map)
+  result
 }
 
 
@@ -104,20 +112,24 @@ function(node, constraints, map)
 function(node, constraints, map)
 {
   # Record use for each of the inputs.
-  types = vector("list", length(node$contents))
-  for (i in seq_along(node$contents)) {
+  n = length(node$contents)
+  types = vector("list", n)
+  for (i in seq(n)) {
     elt = node$contents[[i]]
-    c(type, constraints, map) := .constrain(elt, constraints, map)
-    types[[i]] = type
+
+    result = .constrain(elt, constraints, map)
+    types[[i]] = result@type
+    constraints = result@constraints
+    map = result@map
   }
 
   # Create a union from the input types.
-  type = typesys::OneOf(types)
+  result@type = typesys::OneOf(types)
 
   # Now proceed like this is an Assign node.
-  map = set_defined_as(map, node$write$ssa_name, type)
+  result@map = set_defined_as(result@map, node$write$ssa_name, result@type)
 
-  list(type = type, constraints = constraints, map = map)
+  result
 }
 
 
@@ -125,7 +137,7 @@ function(node, constraints, map)
 function(node, constraints, map)
 {
   # Do nothing.
-  list(type = typesys::RNull, constraints = constraints, map = map)
+  ConstrainResult(typesys::RNull, constraints, map)
 }
 
 
@@ -133,34 +145,43 @@ function(node, constraints, map)
 function(node, constraints, map)
 {
   # Call .constrain on each element.
-  for (exp in node$contents)
-    c(type, constraints, map) := .constrain(exp, constraints, map)
+  for (exp in node$contents) {
+    result = .constrain(exp, constraints, map)
+    constraints = result@constraints
+    map = result@map
+  }
 
-  list(type = type, constraints = constraints, map = map)
+  result
 }
+
 
 .constrain.Call = function(node, constraints, map) {
   # Infer type for called function.
   # FIXME: What if called function is anonymous?
-  c(t1, constraints, map) := .constrain(node$fn, constraints, map)
+  result = .constrain(node$fn, constraints, map)
+  t1 = result@type
 
   # Infer types for arguments.
-  targs = lapply(node$args$contents, function(exp) {
-    c(targ, constraints, map) := .constrain(exp, constraints, map)
-    constraints <<- constraints
-    map <<- map
-    targ
-  })
+  n = length(node$args$contents)
+  targs = vector("list", n)
+
+  for (i in seq_len(n)) {
+    exp = node$args$contents[[i]]
+
+    result = .constrain(exp, result)
+    targs[[i]] = result@type
+  }
 
   # Create new type variable for return.
-  tvar = new_variable(map)
+  tvar = new_variable(result@map)
+  result@type = tvar
 
   # Add constraint t1 ~ (targs -> tvar)
   tfun = typesys::RFunction(targs, tvar)
   con = typesys::Equivalence(t1, tfun)
-  constraints = append(constraints, con)
+  result@constraints = append(result@constraints, con)
 
-  list(type = tvar, constraints = constraints, map = map)
+  result
 }
 
 
@@ -207,7 +228,7 @@ function(node, constraints, map)
     constraints = append(constraints, con)
   }
 
-  list(type = tvar, constraints = constraints, map = map)
+  ConstrainResult(type, constraints, map)
 }
 
 
@@ -215,12 +236,12 @@ function(node, constraints, map)
 function(node, constraints, map)
 {
   # Generate constraints for the definition.
-  c(tdef, constraints, map) := .constrain(node$read, constraints, map)
+  result = .constrain(node$read, constraints, map)
 
   # Record generic type for variable.
-  map = set_defined_as(map, node$write$ssa_name, tdef)
+  result@map = set_defined_as(result@map, node$write$ssa_name, result@type)
 
-  list(type = tdef, constraints = constraints, map = map)
+  result
 }
 
 
@@ -236,24 +257,23 @@ function(node, constraints, map)
 
     # FIXME: Helper might be tainted with outer scope variables. Need to keep
     # track of scopes somehow.
-    map <<- set_defined_as(map, param$ssa_name, tvar,
-      is_parameter = TRUE)
+    map <<- set_defined_as(map, param$ssa_name, tvar, is_parameter = TRUE)
 
     tvar
   })
 
   # Infer types for the body.
-  c(type, constraints, map) := .constrain(node$body, constraints, map)
+  result = .constrain(node$body, constraints, map)
 
   # TODO: Record parameter names.
-  tfun = typesys::RFunction(tparams, type)
+  result@type = typesys::RFunction(tparams, result@type)
 
   # FIXME: Remove parameters from the active set.
   for (p in node$params$contents) {
-    map = remove_entry(map, p$ssa_name)
+    result@map = remove_entry(result@map, p$ssa_name)
   }
 
-  list(type = tfun, constraints = constraints, map = map)
+  result
 }
 
 
@@ -262,26 +282,26 @@ function(node, constraints, map)
 .constrain.Character =
 function(node, constraints, map)
 {
-  list(type = typesys::RString, constraints = constraints, map = map)
+  ConstrainResult(typesys::RString, constraints, map)
 }
 
 
 .constrain.Numeric =
 function(node, constraints, map)
 {
-  list(type = typesys::RNumeric, constraints = constraints, map = map)
+  ConstrainResult(typesys::RNumeric, constraints, map)
 }
 
 
 .constrain.Integer =
 function(node, constraints, map)
 {
-  list(type = typesys::RInteger, constraints = constraints, map = map)
+  ConstrainResult(typesys::RInteger, constraints, map)
 }
 
 
 .constrain.Logical =
 function(node, constraints, map)
 {
-  list(type = typesys::RLogical, constraints = constraints, map = map)
+  ConstrainResult(typesys::RLogical, constraints, map)
 }
