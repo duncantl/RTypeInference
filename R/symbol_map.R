@@ -1,0 +1,108 @@
+
+setOldClass("Counter")
+
+setClass("RTypeInference::SymbolMap", contains = "list",
+  slots = list(
+    counter = "Counter"
+  ))
+
+#' @export
+SymbolMap = function(counter = rstatic::Counter$new()) {
+  new("RTypeInference::SymbolMap", counter = counter)
+}
+
+
+#' @export
+set_defined_as =
+function(map, name, type, is_parameter = FALSE)
+{
+  # Check if name already has an entry.
+  idx = match(name, names(map), 0L)
+  if (idx == 0L) {
+    map[[name]] = SymbolMapEntry(defined_as = type
+      , is_parameter = is_parameter)
+
+  } else {
+    entry = map[[idx]]
+    if (!is.null(entry[["defined_as"]]))
+      stop(sprintf("definition type already set for variable '%s'.", name))
+
+    entry[["defined_as"]] = type
+    entry[["is_parameter"]] = is_parameter
+    map[[idx]] = entry
+  }
+
+  map
+}
+
+
+#' @export
+get_defined_as =
+function(map, name)
+{
+  map[[name]][["defined_as"]]
+}
+
+
+#' @export
+remove_entry =
+function(map, name)
+{
+  idx = match(name, names(map), 0L)
+  if (idx == 0L)
+    return (map)
+
+  new_names = names(map)[-idx]
+  map@.Data = map@.Data[-idx]
+  names(map) = new_names
+
+  map
+}
+
+
+
+
+get_is_parameter = function(map, name) {
+  is_parameter = map[[name]][["is_parameter"]]
+
+  if (is.null(is_parameter)) NA else is_parameter
+}
+
+
+add_use = function(map, name, tvar) {
+  idx = match(name, names(map), 0L)
+  if (idx == 0L) {
+    # Assume this is not a parameter, since parameters typically get added
+    # first.
+    map[[name]] = SymbolMapEntry(used_as = list(tvar))
+
+  } else {
+    entry = map[[idx]]
+    entry[["used_as"]] = append(entry[["used_as"]], tvar)
+    map[[idx]] = entry
+  }
+
+  map
+}
+
+get_uses = function(map, name) {
+  # FIXME: Return list() when no entries for name?
+  map[[name]][["used_as"]]
+}
+
+
+new_variable = function(map, prefix = "t", ...) {
+  name = rstatic::next_name(map@counter, name = prefix, ...)
+  typesys::Variable(name)
+}
+
+
+#' @export
+SymbolMapEntry =
+function(
+  defined_as = NULL
+  , used_as = list()
+  , is_parameter = NA)
+{
+  list(defined_as = defined_as, used_as = used_as, is_parameter = is_parameter)
+}

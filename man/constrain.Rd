@@ -4,16 +4,18 @@
 \alias{constrain}
 \title{Generate Type Constraint Set from Expression}
 \usage{
-constrain(node, helper = InferHelper())
+constrain(node, map = SymbolMap())
 }
 \arguments{
-\item{node}{ASTNode. Expression from which to generate type constraints.}
+\item{node}{(ASTNode) An expression from which to generate type constraints.}
 
-\item{helper}{InferHelper. Helper object for constraint generation.}
+\item{map}{(SymbolMap) A mapping between program variables and type
+variables.}
 }
 \value{
-A list with two elements. The first is the list of constraints, and
-the second is the final state of the helper object.
+An S4 `Result` object, with slots `contraints` and `map`. The former
+is the list of constraints, and the latter is the mapping between program
+variables and type variables.
 }
 \description{
 This function generates a set of type constraints from the given expression,

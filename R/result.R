@@ -1,4 +1,4 @@
-#' @include helper.R
+#' @include symbol_map.R
 NULL
 
 
@@ -6,13 +6,13 @@ NULL
 setClass("RTypeInference::Result",
   slots = list(
     constraints = "list"
-    , helper = "RTypeInference::InferHelper"
+    , map = "RTypeInference::SymbolMap"
   ))
 
 
 #' @export
 Result =
-function(constraints, helper)
+function(constraints, map)
 {
-  new("RTypeInference::Result", constraints = constraints, helper = helper)
+  new("RTypeInference::Result", constraints = constraints, map = map)
 }

@@ -1,9 +1,9 @@
-#' @include helper.R
+#' @include symbol_map.R
 NULL
 
 
 #' @export
-setMethod("do_substitution", signature("RTypeInference::InferHelper"),
+setMethod("do_substitution", signature("RTypeInference::SymbolMap"),
 function(term, sub)
 {
   term@.Data = lapply(term@.Data, function(x) {
@@ -13,7 +13,7 @@ function(term, sub)
 
     used_as = lapply(x$used_as, sub)
 
-    helper_record(defn_as, used_as, x$is_parameter)
+    SymbolMapEntry(defn_as, used_as, x$is_parameter)
   })
 
   term

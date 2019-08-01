@@ -6,10 +6,10 @@
 .format_tag = function(x) sprintf("<%s>", class(x)[1])
 
 #' @export
-setMethod("show", signature("RTypeInference::InferHelper"), .show)
+setMethod("show", signature("RTypeInference::SymbolMap"), .show)
 
 #' @export
-setMethod("format", signature("RTypeInference::InferHelper"),
+setMethod("format", signature("RTypeInference::SymbolMap"),
 function(x, ...)
 {
   tag = paste0(.format_tag(x), "\n")
