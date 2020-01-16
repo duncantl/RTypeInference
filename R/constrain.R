@@ -74,7 +74,7 @@ function(node, constraints, map)
     .constrain(node$condition, constraints, map)
 
   # Constrain condition to be a logical value.
-  con = typesys::Equivalence(type, typesys::RLogical)
+  con = typesys::Equivalence(type, typesys::RLogical, src = node)
   constraints = append(constraints, con)
 
   # TODO: An if-expression returns the union of the types at the end of each
@@ -157,7 +157,7 @@ function(node, constraints, map)
 
   # Add constraint t1 ~ (targs -> tvar)
   tfun = typesys::RFunction(targs, tvar)
-  con = typesys::Equivalence(t1, tfun)
+  con = typesys::Equivalence(t1, tfun, src = node)
   constraints = append(constraints, con)
 
   list(type = tvar, constraints = constraints, map = map)
@@ -182,15 +182,15 @@ function(node, constraints, map)
     tdef = get_defined_as(map, node$ssa_name)
     if (is_parameter) {
       # Symbol corresponds to a parameter, so add equivalence constraint.
-      con = typesys::Equivalence(tvar, tdef)
+      con = typesys::Equivalence(tvar, tdef, src = node)
 
     } else {
       # Symbol corresponds to a variable, so add instance constraint.
       if (length(typesys::vars(tdef)) == 0L) {
         # No variables in the RHS so just make an equality constraint.
-        # We could check this case in the solver instead, but it's currently not
-        # clear what the benefit would be.
-        con = typesys::Equivalence(tvar, tdef)
+        # We could check this case in the solver instead, but it's currently
+        # not clear what the benefit would be.
+        con = typesys::Equivalence(tvar, tdef, src = node)
 
       } else {
         # FIXME: Consider scopes when determining active parameters.
@@ -200,7 +200,7 @@ function(node, constraints, map)
         params = get_parameters(map, include_na = FALSE)
         m = lapply(params, `[[`, "defined_as")
 
-        con = typesys::ImplicitInstance(tvar, tdef, m)
+        con = typesys::ImplicitInstance(tvar, tdef, m, src = node)
       }
     }
 
