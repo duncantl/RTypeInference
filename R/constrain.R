@@ -114,7 +114,7 @@ function(node, constraints, map)
   # Create a union from the input types.
   type = typesys::OneOf(types)
 
-  # Now proceed like this is an Assign node.
+  # Now proceed like this is an Assignment node.
   map = set_defined_as(map, node$write$ssa_name, type)
 
   list(type = type, constraints = constraints, map = map)
@@ -211,7 +211,7 @@ function(node, constraints, map)
 }
 
 
-.constrain.Assign =
+.constrain.Assignment =
 function(node, constraints, map)
 {
   # Generate constraints for the definition.
@@ -224,7 +224,7 @@ function(node, constraints, map)
 }
 
 
-.constrain.Return = .constrain.Assign
+.constrain.Return = .constrain.Assignment
 
 
 .constrain.Function =
