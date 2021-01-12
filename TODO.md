@@ -1,5 +1,13 @@
 # TODO
 
+* Add support for vectors
+
+* Add function to get return type
+
+* Add function to find constraints for a variable
+
+* Add references to code that causes constraints
+
 * [Easy] Provide support for while-loops.
 
 * Test constraint generation when there are nested function definitions.

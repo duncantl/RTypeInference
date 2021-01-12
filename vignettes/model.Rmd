@@ -1,5 +1,5 @@
 ---
-title: "RTypeInference Model"
+title: "RTypeInference"
 author: "Nick Ulle"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
@@ -9,57 +9,228 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, echo=FALSE, results="hide"}
+## Using RTypeInference
+
+The **RTypeInference** package provides type inference for R code.
+
+The type inference strategy is based on Damas-Milner type inference. This
+strategy collects information about the type of each expression in the source
+code, combining information about related expressions.
+
+As an example, consider the expression `x <- 3.14`. The value `3.14` has type
+double in R.  Since the expression assigns `3.14` to the variable `x`, we can
+conclude that the variable `x` must also have type `numeric`. 
+
+Let's try out **RTypeInference** for this example.
+
+First, we need to use **rstatic**'s `quote_blocks` function to quote the
+expression. The `quote_blocks` function converts the expression into static
+single-assignment (SSA) form. A key feature of SSA form is that it numbers each
+variable assignment, so that different definitions of the same variable have
+distinct names. This is convenient for type inference because R allows
+variables to be assigned different types at different points in the source
+code.
+
+Second, we call **RTypeInference**'s `constrain` function on the quoted
+expression in order to collect information about the types.
+
+Here's the complete code for the two steps described:
+```{r, message = FALSE}
+library(rstatic)
 library(RTypeInference)
 ```
 
-## `infer_types()`
+```{r}
+ex = quote_blocks(x <- 3.14)
+constrain(ex)
+```
 
-To get the types for the variables in an R program, we use the `infer_types()`
-function. The input is the control flow graph for the R program, in SSA form.
-Computing the CFG is handled by the __rstatic__ package, and the details are
-discussed in that package's documentation. Here we will take those details for
-granted.
+The `constrain` function returns a `Result` object, an S4 object that
+represents intermediate results in **RTypeInference**. The object has two
+slots. We'll examine the first slot, `constraints` in a later example. The
+second slot, `map`, contains a mapping between variables in the source code and
+types.
 
-The idea of type inference is to generate a system of constraints on the types
-used in the program, and then solve the system to get the types. The
-`infer_types()` function performs both of these steps, but they can also be
-carried out separately with `constrain()` and `solve()`, respectively.
+The mapping reports that the variable `x_1` is assigned ("defined as") a
+numeric value. Here `x_1` corresponds to the variable `x` in the original
+expression. The `_1` is the number added by the SSA form.
 
-Each constraint comes from a different piece of evidence in the code about the
-types. For instance, an assignment `x = "hi"` signals that the variable `x` is
-a string. Many expressions allow us to narrow down the set of valid types for a
-variable, but don't specify the exact type. When we see `x + y`, we know that
-unless `+` has been redefined by the user, `x` and `y` must both be numbers.
-However, we cannot tell from this expression alone whether they are logical
-values, integers, floating point numbers, or complex numbers.
+The mapping also reports that the variable `x_1` is used (that is, read from)
+later in the code. This is a limitation of the current version of
+**RTypeInference**, likely to be fixed in later versions. For the curious
+reader, here's what's happening: **RTypeInference** assumes that any source
+code passed in for type inference is part of a function definition. The SSA
+form makes R's implicit return rule for functions explicit by inserting a
+variable `._return_` into the code and assigning the last expression to
+`._return_`. Thus type inference processes the assignment `x <- 3.14` and also
+the assignment `._return_ <- x`. That's why there's an extra entry for
+`._return_` in the mapping.
 
-R allows variables to be redefined with a different type at any point in a
-program, so most variables are associated with a sequence of types rather than
-a single type. Knowing the sequence of types for a variable is only useful if
-we also know where in the program each type occurs.
+The mapping is an S4 object of class `SymbolMap`. The class inherits `list`,
+and uses one named element for each variable in the source code.
 
-To deal with this problem, constraints always refer to single static assignment
-(SSA) names rather than variable names. In SSA form, each (re)definition of a
-variable is given a unique name. Because of this, each SSA name can be
-unambiguously associated with a single type in a variable's sequence of types.
+Let's extend the example with another variable. Consider this code:
+```{r, eval = FALSE}
+x <- 3.14
+y <- x
+```
 
-SSA names are not the only strategy for keeping track of constraints and types.
-We could think of types as being associated with specific expressions within a
-program rather than variables. This is a conceptually different approach to the
-problem. In this approach, type inference must find a type for every expression
-in the program. This is not any more difficult, but does require additional
-bookkeeping with associated memory costs.
+The steps to run inference on this code are the same as before. Since the code
+has multiple lines, it needs to be surrounded by curly braces when passed to
+`quote_blocks`:
 
-In order to generate constraints, `constrain()` traverses the program's CFG and
-calls the S3 generic `constrain_ast()` on each expression. For now, we can
-customize how constraints are generated for arbitrary expressions by redefining
-the `constrain_ast()` methods as needed.
+```{r}
+ex = quote_blocks({
+  x <- 3.14
+  y <- x
+})
+ans = constrain(ex)
+ans
+```
 
-<!-- FIXME: Need a better example! -->
-Consider a function that finds the area of an annulus when given the inner and
-outer radius
+Let's look at how the results correspond to the code. As before, the map
+reports that `x_1` is defined as `RNumeric`. The map also reports that the type
+of `x_1` is used somewhere, as `t1`. The `t1` is a placeholder, called a _type
+variable_, for the type of `x_1`. Type variables provide the type inference
+system with three kinds of flexibility:
 
+1. _As placeholders for types that haven't been inferred yet._ For instance, if
+   the type of `x` was not clear from the assignment in the code above, we
+   might still want to record the fact that `y` has the same type as `x`. These
+   type variables are the ones type inference ultimately tries to "solve" for,
+   replacing them with concrete types.
+
+2. _As indicators of polymorphism._ A polymorphic function is one that accepts
+   more than one type of argument. In Damas-Milner type systems, polymorphism
+   is all or nothing: a polymorphic function must be able to accept any type,
+   and type variables are used to indicate polymorphism. Type variables that
+   indicate polymorphism remain even after type inference is complete. In R,
+   polymorphic functions are often restricted to a specific set of types rather
+   than accepting any type.
+
+3. _As indirection that makes the type inference system more robust._
+   **RTypeInference** generates a new type variable each time a program
+   variable is _used_, even if an earlier assignment establishes the type of
+   that program variable. By not propagating the type information gathered from
+   the assignment immediately, the step in type inference that collects
+   information from source code is decoupled from the step in type inference
+   that "solves" for the types by propagating the collected information. As a
+   result, the information collection step always analyzes the entire source
+   code, even if the source code contains type errors.
+
+A _constraint_ is a relationship between a pair of types (including type
+variables). Through the `constrain` function, type inference collects
+constraints based on the expressions in the source code. These appear in the
+`constraints` slot of the result. 
+
+In the example code, the assignment `y_1 = x_1` causes type inference to
+generate a type variable `t1` as a placeholder for the type of `x_1`. Since the
+earlier assignment `x_1 = 3.14` reveals that the type of `x_1` is numeric, the
+type inference system also generates a constraint that `t1` is equivalent to
+the type `RNumeric`. This constraint is the first element of the `constraints`
+slot. Let's examine the constraint: 
+```{r}
+ans@constraints[[1]]
+```
+
+Each constraint records a relationship between a pair of types; these two
+elements correspond to slots `t1` and `t2` (no relation the type variable `t1`)
+on the constraint object. The **typesys** class `Equivalence` represents an
+equivalence constraint: the two types must be the same. Here we can see that
+`t1` and `t2` contain the type variable `t1` and the type `RNumeric`,
+respectively.
+
+Constraints also have a slot `src` with a reference to the source code
+expression that caused the constraint to be generated. In this case, the source
+code expression that caused the constraint to be generated is the expression
+`x_1`, which is part of the assignment `y_1 <- x_1`:
+```{r}
+con1 = ans@constraints[[1]]
+con1@src
+con1@src$parent
+```
+
+As mentioned earlier, **RTypeInference** assumes the source code being analyzed
+is part of a function definition, so we also see constraints related to the
+return value (constraints 2 and 3 here). For instance, consider the second
+constraint:
+```{r}
+con2 = ans@constraints[[2]]
+con2
+
+con2@src$parent
+```
+
+This constraint shows that **RTypeInference** thinks `y_1` is the return value
+(since it is the value of the last expression). The type inference system
+generates another type variable, `t2`, as a placeholder for the type of `y_1`
+in the return call. The earlier assignment `y_1 <- x_1` established that `t2`
+must have the same type as `t1`, so the inference system also generates this
+constraint.
+
+Notice that the constraint is not an `Equivalence` but instead an
+`ImplicitInstance`. This kind of constraint allows for polymorphism. From the
+perspective of `constrain`, the type variable `t1` is an unknown type, to be
+established later on by solving for the type variables. As a consequence, `t1`
+could be a polymorphic function type. In that case, `t2` is an instance of `t1`
+(instantiated with concrete argument types, to be inferred based on how `y_1`
+is called). This distinction between an `Equivalence` and an `ImplicitInstance`
+is only important for function types; if `t2` is not a function type, then the
+inference system will treat the `ImplicitInstance` the same way it would an
+`Equivalence`. 
+
+The result from `constrain` is an intermediate result in type inference. We've
+presented it here because it is important to understand for anyone that wants
+to tinker with the type inference system, and because even on its own it
+contains useful information, such as where program variables are used.
+
+To get to the final result from type inference, we need to have
+**RTypeInference** solve the system of constraints. At a high level, the
+strategy to solve the system is to treat each constraint as a substitution:
+given a constraint, the type variables on one side can be replaced with the
+types (or type variables) on the other side in all other constraints, and the
+original constraint removed. Repeating this process eventually yields a
+composition of substitutions that "solves" the constraint system, so that all
+type variables equivalent to a concrete type are replaced by that type.
+
+The **RTypeInference** function `csolve` computes the substitution that solves
+the type inference problem. This function should be called directly on the
+result from `constrain`. For instance, in the example:
+```{r}
+sub = csolve(ans)
+sub
+```
+
+The result is a **typesys** `Substitution` object, which records the
+equivalence between each type variable and type. Recall that the `SymbolMap` in
+the result from `constrain` is our mapping between program variables and type
+information. Thus to relate the substitution from `csolve` back to the program
+variables in the source code, we need to call the substitution on the
+`SymbolMap`. For convenience, we can also call the substitution on the entire
+`Result` object. Here's the code:
+```{r}
+# sub(ans@map)
+# OR
+sub(ans)
+```
+
+The substituted `SymbolMap` is the final result from type inference. In this
+case, inference is able to determine that `x_1`, `y_1`, and the return value
+are all numeric.
+
+This section described the basic workflow for **RTypeInference**: call
+`constrain` to collect type information from the code, call `csolve` to use the
+constraints to solve for the type variables, and finally, apply the resulting
+substitution to the `SymbolMap` from `constrain` to relate the type variables
+back to the program variables.
+
+
+## A More Sophisticated Example
+
+
+Now let's look at an example with a variable whose type is not made obvious
+from an assignment. The code is a function that computes the area of an
+annulus:
 ```{r}
 circle_area = function(r_inner, r_outer) {
   outer = pi * r_outer^2
@@ -69,40 +240,80 @@ circle_area = function(r_inner, r_outer) {
 }
 ```
 
-We can compute the constraints for this with
-
+We can use the `to_blocks` function to convert the function code to SSA form
+(rather than retyping the whole thing for `quote_blocks`). Then we can call
+`constrain` as before:
 ```{r}
-cfg = rstatic::to_blocks(circle_area)
-
-cons = constrain(cfg)
+ex = to_blocks(circle_area)
+ans = constrain(ex)
+ans
 ```
 
-Constraints are collected in a `ConstraintSet`, which has reference semantics
-to simplify writing recursive `constrain_ast()` methods. The order of the
-constraints within the set does not matter. This is important because it allows
-us to set constraints based on how a variable is used after the point where
-that variable was defined.
+As in the previous example, the result is a `Result` object with slots
+`constraints` and `map`. All symbols in the source code, including names of
+functions, are recorded in the symbol map, so it has many more entries here.
+Variables in the global environment, like `*`, `pi`, and `^` here, are recorded
+as having no definition in the provided source code.
 
-In the example, we can see that the right-hand side of each constraint is
-printed like a function call. For now, types are not computed for calls during
-constraint generation; the computation is deferred until the system of
-constraints is solved.
+Note: A bug in the current version of **RTypeInference** causes the parameters
+to be left out of the `SymbolMap`. This is related to trying to support nested
+function definitions and multiple scopes in type inference. I *think* the right
+way to handle this is to have the constraint generator create a new `SymbolMap`
+for each nested function, with a parent field (mimicking R's environments), but
+haven't tested this.
 
-By using `constrain()` and `solve()` separately, we can add to and modify the
-constraints before solving. Constraints can be accessed by index with `[[`
-(although they cannot yet be assigned with `[[`). The method 
+In order to make type inference more accurate, we can provide the `constrain`
+function with type information about variables up front (a future version of
+the package could optionally inspect an environment to collect some of this
+information automatically, or have a database of type information for built-in
+functions).
 
----
+For instance, suppose we want to specify that `pi` is a numeric value. We can
+do this by creating a `SymbolMap` before calling `constrain`, and passing the
+map to `constrain`. Here's the code to create the symbol map and add a
+definition for `pi`:
+```{r}
+m = SymbolMap()
+m = set_defined_as(m, "pi", RNumeric)
+```
 
-The returned `SolutionSet` lists the inferred type of each SSA name defined in
-the function.
+The `set_defined_as` function assigns a type to a specific program variable in
+the `SymbolMap`. The corresponding `get_defined_as` retrieves the type a
+program variable is defined as from a `SymbolMap`.
 
+With the map defined, we can pass this information into the type inference
+system when we call `constrain`:
+```{r}
+constrain(ex, m)
+```
 
-<!-- FIXME: OTHER STUFF
-The `add` function is _polymorphic_: the arguments are not constrained to any
-particular type. In other words, `add(3, 4)`, where both arguments are
-integers, will work just as well as `add(3.1, 5+1i)`, where the arguments are a
-real and a complex number.
--->
+Similarly, we might want let the type inference system know that (in this case)
+`*` is a function that takes two numeric values and returns a numeric value. We
+can do that by adding another entry to the symbol map before calling
+`constrain`:
+```{r}
+m = set_defined_as(m, "*", RFunction(RNumeric, RNumeric, RNumeric))
+```
 
+The **typesys** `RFunction` constructor creates a function type; the last
+argument is always treated as the return type and the others as the argument.
+In the current version of **typesys**, argument types are only matched
+positionally, not by name. Let's generate the constraints with the updated
+symbol map:
+```{r}
+ans = constrain(ex, m)
+```
 
+Although we haven't provided complete information to the type inference system
+(for instance, we did not provide a type for `^`), the system can still recover
+a lot of information from the code and what we did provide. Let's solve for the
+type variables to see what we get:
+```{r}
+sub = csolve(ans)
+sub(ans)
+```
+
+In the result, we can see that the system determined that `^` is a function,
+and that its second argument and result must be numeric. The system was unable
+to determine the type of the first argument to `^`, because the parameters
+`r_outer` and `r_inner` could potentially have any type.
